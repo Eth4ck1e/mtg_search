@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.11" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.8.10 WSL (Ubuntu-20.04): (/home/eth4ck1e/.virtualenvs/mtg_search/bin/python)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.9 (mtg_search)" project-jdk-type="Python SDK" />
 </project>
