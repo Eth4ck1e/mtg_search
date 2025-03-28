@@ -1,0 +1,9 @@
+torch==2.4.1
+torch-directml==0.2.5.dev240914
+transformers==4.46.3
+datasets==3.1.0
+pandas==2.0.3
+numpy==1.26.4
+requests==2.32.3
+urllib3==2.2.3
+accelerate==1.5.2
