@@ -1,11 +1,17 @@
 # mtg_search/src/vector_db/query_vector_db.py
+import os
 import pandas as pd
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import faiss
 import numpy as np
-import os
 import sys
+
+# Set environment variables before any imports to avoid OpenMP conflicts
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['PYTORCH_MPS_NUM_THREADS'] = '1'
+# Temporary workaround to allow duplicate OpenMP runtime (unsafe, for testing)
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
 # Adjust sys.path to find src
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -57,9 +63,15 @@ def query_vector_db(query, top_k=10, model=None, tokenizer=None, index=None, met
     with torch.no_grad():
         outputs = model(**inputs, output_hidden_states=True)
         query_embedding = outputs.hidden_states[-1].mean(dim=1).cpu().numpy()  # Mean pooling
+    print(f"Query embedding shape: {query_embedding.shape}")
+    print(f"Query embedding (first 5 values): {query_embedding[0][:5]}")  # Debug: print first 5 values
 
     # Search FAISS index
     distances, indices = index.search(query_embedding, top_k)
+    print(f"FAISS distances: {distances[0]}")  # Debug: print distances
+    print(f"FAISS indices: {indices[0]}")  # Debug: print indices
+
+    # Map indices to cards
     results = []
     for idx, distance in zip(indices[0], distances[0]):
         card = metadata.iloc[idx]
@@ -70,20 +82,3 @@ def query_vector_db(query, top_k=10, model=None, tokenizer=None, index=None, met
             'similarity': 1 / (1 + distance)  # Convert distance to similarity score (0-1)
         })
     return results
-
-
-if __name__ == "__main__":
-    # Command-line interface for terminal testing
-    if len(sys.argv) < 2:
-        print("Usage: python query_vector_db.py <query> [top_k]")
-        print("Example: python query_vector_db.py 'red cards with flicker-like effects' 10")
-        sys.exit(1)
-
-    query = sys.argv[1]
-    top_k = int(sys.argv[2]) if len(sys.argv) > 2 else 10
-
-    results = query_vector_db(query, top_k)
-    print(f"\nQuery: {query}")
-    print("Top matches:")
-    for result in results:
-        print(f"- {result['name']} (Similarity: {result['similarity']:.4f})")

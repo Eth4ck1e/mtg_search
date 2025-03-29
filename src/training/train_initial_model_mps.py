@@ -30,7 +30,7 @@ RULINGS_DATA = os.path.join(PROJECT_ROOT, 'data', 'processed', 'training', 'ruli
 MODEL_OUTPUT_DIR = os.path.join(PROJECT_ROOT, 'models', 'checkpoints', 'model_output')
 INITIAL_MODEL_DIR = os.path.join(PROJECT_ROOT, 'models', 'initial_model')
 
-MODEL_NAME = "deepseek-ai/deepseek-llm-7b-base"
+MODEL_NAME = "distilbert-base-uncased"
 MAX_LENGTH = 64
 BATCH_SIZE = 1
 GRADIENT_ACCUMULATION_STEPS = 4

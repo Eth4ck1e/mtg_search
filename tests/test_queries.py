@@ -1,13 +1,13 @@
-# mtg_search/tests/demo_queries.py
+# mtg_search/tests/test_queries.py
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.vector_db.query_vector_db import query_vector_db
 
-def demo_queries():
-    # List of demo queries
-    demo_queries = [
+def test_queries():
+    # List of test queries
+    test_queries = [
         "red cards with flicker-like effects",
         "blue creatures with flying",
         "green cards that draw cards",
@@ -17,7 +17,7 @@ def demo_queries():
     top_k = 5
 
     # Run each query and print results
-    for query in demo_queries:
+    for query in test_queries:
         print(f"\nQuery: {query}")
         results = query_vector_db(query, top_k)
         print("Top matches:")
@@ -36,4 +36,4 @@ if __name__ == "__main__":
             print(f"- {result['name']} (Similarity: {result['similarity']:.4f})")
     else:
         # Run demo queries
-        demo_queries()
+        test_queries()
