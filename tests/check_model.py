@@ -1,13 +1,9 @@
 # mtg_search/check_model.py
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModel, AutoTokenizer
 import os
 import numpy as np
-
-# Define paths
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # Go up one level from tests/
-MODEL_DIR = os.path.join(PROJECT_ROOT, 'models', 'initial_model')
-BASE_MODEL_NAME = "deepseek-ai/deepseek-llm-7b-base"
+from src import config  # Use absolute import
 
 def check_model(model_path, model_name="Model"):
     # Load model and tokenizer
@@ -15,7 +11,7 @@ def check_model(model_path, model_name="Model"):
     print(f"\nChecking {model_name}...")
     print(f"Using device: {device}")
     try:
-        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float16).to(device)
+        model = AutoModel.from_pretrained(model_path).to(device)
         tokenizer = AutoTokenizer.from_pretrained(model_path)
     except Exception as e:
         print(f"Error loading {model_name}: {e}")
@@ -34,10 +30,10 @@ def check_model(model_path, model_name="Model"):
 
     # Test a small input to check for NaN outputs
     test_input = "Test input for embedding generation"
-    inputs = tokenizer(test_input, padding=True, truncation=True, max_length=64, return_tensors="pt").to(device)
+    inputs = tokenizer(test_input, padding=True, truncation=True, max_length=config.MAX_LENGTH, return_tensors="pt").to(device)
     with torch.no_grad():
-        outputs = model(**inputs, output_hidden_states=True)
-        embedding = outputs.hidden_states[-1].mean(dim=1).cpu().numpy()
+        outputs = model(**inputs)
+        embedding = outputs.last_hidden_state.mean(dim=1).cpu().numpy()
     print(f"Test embedding shape: {embedding.shape}")
     print(f"Test embedding (first 5 values): {embedding[0][:5]}")
     if np.any(np.isnan(embedding)):
@@ -46,8 +42,8 @@ def check_model(model_path, model_name="Model"):
     return model, tokenizer
 
 if __name__ == "__main__":
-    # Check the base model (deepseek-llm-7b-base)
-    base_model, base_tokenizer = check_model(BASE_MODEL_NAME, "Base Model (deepseek-llm-7b-base)")
+    # Check the base model
+    base_model, base_tokenizer = check_model(config.MODEL_NAME, f"Base Model ({config.MODEL_NAME})")
 
     # Check the fine-tuned model (initial_model)
-    fine_tuned_model, fine_tuned_tokenizer = check_model(MODEL_DIR, "Fine-Tuned Model (initial_model)")
+    fine_tuned_model, fine_tuned_tokenizer = check_model(config.MODEL_DIR, "Fine-Tuned Model (initial_model)")

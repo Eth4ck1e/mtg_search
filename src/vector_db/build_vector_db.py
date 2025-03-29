@@ -1,147 +1,109 @@
-# mtg_search/src/vector_db/build_vector_db.py
 import pandas as pd
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import faiss
-import numpy as np
 import os
-import json
-import sys
-import time
+import logging
+from sentence_transformers import SentenceTransformer
+import numpy as np
+import faiss
 
-# Adjust sys.path to find src.data_processing
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from src.config import TRAINING_DATA_DIR, MODEL_DIR, VECTOR_DB_DIR
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-RAW_DATA_DIR = os.path.join(PROJECT_ROOT, 'data', 'raw', 'bulk_jsons')
-VECTOR_DB_DIR = os.path.join(PROJECT_ROOT, 'data', 'vector_db')  # Both files here
-MODEL_DIR = os.path.join(PROJECT_ROOT, 'models', 'initial_model')
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
-MODEL_NAME = "deepseek-ai/deepseek-llm-7b-base"
-MAX_LENGTH = 64
-
-
-def create_input_text(card):
-    parts = [
-        f"Name: {card.get('name', '')}",
-        f"Type: {card.get('type_line', '')}",
-        f"Cost: {card.get('mana_cost', '')}" if card.get('mana_cost') else "",
-        f"Colors: {', '.join(card.get('colors', [])) if card.get('colors') else ''}",
-        f"Effect: {card.get('oracle_text', '')}",
-        f"Keywords: {', '.join(card.get('keywords', [])) if card.get('keywords') else ''}"
-    ]
-    return " | ".join(part for part in parts if part)
+# File path configuration
+ORACLE_CARDS_PATH = os.path.join(TRAINING_DATA_DIR, "complete_set.csv")
+VECTOR_DB_PATH = os.path.join(VECTOR_DB_DIR, "vector_db.faiss")
+INDEX_DIMENSION = 768  # This assumes the model outputs 768-dimensional embeddings
 
 
-def format_time(seconds):
-    """Convert seconds to a human-readable time format (e.g., '5m 30s')."""
-    minutes = int(seconds // 60)
-    seconds = int(seconds % 60)
-    return f"{minutes}m {seconds}s"
+def load_oracle_cards(file_path):
+    """
+    Load oracle_cards.csv into a pandas DataFrame.
+    """
+    if not os.path.exists(file_path):
+        logging.error(f"File not found: {file_path}")
+        return None
+
+    try:
+        df = pd.read_csv(file_path)
+        logging.info(f"Loaded {len(df)} rows from {file_path}.")
+        return df
+    except Exception as e:
+        logging.error(f"Failed to load {file_path}: {e}")
+        return None
 
 
-def build_vector_db():
-    # Load trained model and tokenizer
-    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-    print(f"Using device: {device}")
-    model = AutoModelForCausalLM.from_pretrained(MODEL_DIR, torch_dtype=torch.float16).to(device)
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR)
-    model.eval()
+def load_model(model_path):
+    """
+    Load a SentenceTransformer model from the given path.
+    """
+    try:
+        model = SentenceTransformer(model_path)
+        logging.info(f"Successfully loaded model from {model_path}.")
+        return model
+    except Exception as e:
+        logging.error(f"Failed to load model from {model_path}: {e}")
+        return None
 
-    # Load oracle cards
-    oracle_file = os.path.join(RAW_DATA_DIR, 'oracle-cards.json')
-    if not os.path.exists(oracle_file):
-        print("oracle-cards.json not found. Downloading...")
-        from src.data_processing.download_bulk_data import download_all
-        download_all()
-    with open(oracle_file, 'r') as f:
-        oracle_cards = json.load(f)
 
-    # Load existing metadata if it exists
-    metadata_file = os.path.join(VECTOR_DB_DIR, 'card_metadata.csv')
-    if os.path.exists(metadata_file):
-        existing_metadata = pd.read_csv(metadata_file)
-        existing_oracle_ids = set(existing_metadata['oracle_id'].values)
-    else:
-        existing_metadata = None
-        existing_oracle_ids = set()
+def create_vector_database(df, model, vector_db_path):
+    """
+    Create a FAISS-based vector database from the DataFrame's text column.
+    """
+    # Ensure the 'text' column exists
+    if 'text' not in df.columns:
+        logging.error("'text' column is missing from the dataframe. Cannot proceed.")
+        return False
 
-    # Identify new cards
-    new_cards = [card for card in oracle_cards if card.get('oracle_id', '') not in existing_oracle_ids]
-    print(f"Found {len(new_cards)} new cards to process out of {len(oracle_cards)} total cards.")
+    # Compute vectors using the model
+    try:
+        logging.info("Computing embeddings for the text data...")
+        text_data = df['text'].fillna("").tolist()  # Handle NaN values
+        embeddings = model.encode(text_data, convert_to_numpy=True, show_progress_bar=True)
+        logging.info(f"Computed embeddings with shape: {embeddings.shape}.")
+    except Exception as e:
+        logging.error(f"Failed to compute embeddings: {e}")
+        return False
 
-    if not new_cards:
-        print("No new cards to process. Vector database is up to date.")
+    # Initialize FAISS index
+    try:
+        logging.info("Initializing FAISS index...")
+        index = faiss.IndexFlatL2(INDEX_DIMENSION)  # L2 distance
+        assert index.is_trained
+
+        # Add embeddings to the index
+        logging.info("Adding embeddings to the FAISS index...")
+        index.add(embeddings)
+        logging.info(f"Added {index.ntotal} embeddings to the FAISS index.")
+
+        # Save the FAISS index to file
+        logging.info(f"Saving FAISS index to {vector_db_path}...")
+        faiss.write_index(index, vector_db_path)
+        logging.info("FAISS index saved successfully.")
+        return True
+    except Exception as e:
+        logging.error(f"Failed to create or save FAISS index: {e}")
+        return False
+
+
+def main():
+    # Step 1: Load oracle_cards.csv
+    df = load_oracle_cards(ORACLE_CARDS_PATH)
+    if df is None:
         return
 
-    # Generate input texts for new cards
-    texts = [create_input_text(card) for card in new_cards]
+    # Step 2: Load the local model
+    model = load_model(MODEL_DIR)
+    if model is None:
+        return
 
-    # Generate embeddings with progress tracking
-    embeddings = []
-    batch_size = 16  # Small batches for 32GB
-    total_batches = (len(texts) + batch_size - 1) // batch_size
-    batch_times = []  # Track time per batch
-
-    for i in range(0, len(texts), batch_size):
-        start_time = time.time()
-        batch_texts = texts[i:i + batch_size]
-        inputs = tokenizer(batch_texts, padding=True, truncation=True, max_length=MAX_LENGTH, return_tensors="pt").to(
-            device)
-        with torch.no_grad():
-            outputs = model(**inputs, output_hidden_states=True)
-            embedding = outputs.hidden_states[-1].mean(dim=1).cpu().numpy()  # Mean pooling
-        embeddings.append(embedding)
-        torch.mps.empty_cache()  # Clear memory per batch
-
-        # Calculate batch time and update average
-        batch_time = time.time() - start_time
-        batch_times.append(batch_time)
-        avg_batch_time = sum(batch_times) / len(batch_times)
-        batches_remaining = total_batches - (i // batch_size + 1)
-        eta_seconds = avg_batch_time * batches_remaining
-
-        # Print progress on the same line
-        progress_msg = (f"\rProcessed batch {i // batch_size + 1}/{total_batches} | "
-                        f"Batch time: {format_time(batch_time)} | "
-                        f"Avg batch time: {format_time(avg_batch_time)} | "
-                        f"ETA: {format_time(eta_seconds)}")
-        sys.stdout.write(progress_msg)
-        sys.stdout.flush()
-
-    # Ensure a newline after the loop
-    print()
-
-    embeddings = np.vstack(embeddings)
-    print(f"Generated embeddings shape: {embeddings.shape}")
-
-    # Load or create FAISS index
-    faiss_file = os.path.join(VECTOR_DB_DIR, 'card_vectors.faiss')
-    if os.path.exists(faiss_file):
-        index = faiss.read_index(faiss_file)
+    # Step 3: Create vector database
+    success = create_vector_database(df, model, VECTOR_DB_PATH)
+    if success:
+        logging.info("Vector database created successfully.")
     else:
-        dimension = embeddings.shape[1]
-        index = faiss.IndexFlatL2(dimension)  # L2 distance
-
-    # Add new embeddings to the index
-    index.add(embeddings)
-    print(f"Total vectors in FAISS index: {index.ntotal}")
-
-    # Save the updated FAISS index
-    os.makedirs(VECTOR_DB_DIR, exist_ok=True)
-    faiss.write_index(index, faiss_file)
-
-    # Update metadata
-    new_metadata = pd.DataFrame([
-        {'name': card.get('name', ''), 'oracle_id': card.get('oracle_id', '')} for card in new_cards
-    ])
-    if existing_metadata is not None:
-        updated_metadata = pd.concat([existing_metadata, new_metadata], ignore_index=True)
-    else:
-        updated_metadata = new_metadata
-    updated_metadata.to_csv(metadata_file, index=False)
-    print(f"Updated metadata with {len(updated_metadata)} total cards in data/vector_db/card_metadata.csv.")
+        logging.error("Failed to create the vector database.")
 
 
 if __name__ == "__main__":
-    build_vector_db()
+    main()
