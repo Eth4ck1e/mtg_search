@@ -1,104 +1,85 @@
+# mtg_search/src/data_processing/compile_initial_training_data.py
 import pandas as pd
 import json
 import os
+import re
 from src import config
-import logging
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-
+# Dictionary of keyword abilities and their definitions
+keyword_definitions = {
+    "Flying": "(This creature can't be blocked except by creatures with flying or reach.)",
+    "Trample": "(This creature can deal excess combat damage to the player or planeswalker it's attacking.)",
+    "Haste": "(This creature can attack and {T} as soon as it comes under your control.)",
+    "Vigilance": "(Attacking doesn't cause this creature to tap.)",
+    "Reach": "(This creature can block creatures with flying.)",
+    "Flash": "(You may cast this spell any time you could cast an instant.)",
+    "Menace": "(This creature can't be blocked except by two or more creatures.)",
+    "Deathtouch": "(Any amount of damage this deals to a creature is enough to destroy it.)",
+    "Lifelink": "(Damage dealt by this creature also causes you to gain that much life.)",
+    "Hexproof": "(This creature can't be the target of spells or abilities your opponents control.)",
+    "Indestructible": "(This creature can't be destroyed by damage or effects that say 'destroy'.)",
+    "Defender": "(This creature can't attack.)",
+    "First Strike": "(This creature deals combat damage before creatures without first strike.)",
+    "Double Strike": "(This creature deals both first-strike and regular combat damage.)",
+    # Add more keywords as needed
+}
 
 def compile_data():
-    # Define raw JSON file path
-    raw_json_path = os.path.join(config.BULK_JSONS_DIR, 'oracle-cards.json')
-
-    # Check if the raw JSON file exists
-    if not os.path.exists(raw_json_path):
-        logging.error(f"Raw JSON file not found at {raw_json_path}")
-        return
-
-    # Load JSON data with error handling
-    try:
-        with open(raw_json_path, 'r') as f:
-            json_data = json.load(f)
-    except json.JSONDecodeError:
-        logging.error(f"Failed to decode JSON data from {raw_json_path}")
-        return
-    except Exception as e:
-        logging.error(f"An error occurred while reading the JSON file: {e}")
-        return
+    # Load the raw JSON data
+    raw_json_path = os.path.join(config.RAW_DATA_DIR, 'oracle-cards.json')
+    with open(raw_json_path, 'r') as f:
+        json_data = json.load(f)
 
     # Convert JSON to DataFrame
     df = pd.DataFrame(json_data)
-    logging.info(f"Loaded JSON data into DataFrame with {len(df)} rows.")
+    print(f"Starting number of entries: {len(df)}")
 
-    # Save the raw data as a CSV for future use
-    raw_csv_path = os.path.join(config.TRAINING_DATA_DIR, 'oracle_cards.csv')
-    try:
-        os.makedirs(config.TRAINING_DATA_DIR, exist_ok=True)
-        df.to_csv(raw_csv_path, index=False)
-        logging.info(f"Saved raw data as CSV to {raw_csv_path}")
-    except Exception as e:
-        logging.error(f"Failed to save CSV to {raw_csv_path}: {e}")
-        return
+    # Convert all columns to strings to avoid type issues
+    for col in df.columns:
+        df[col] = df[col].apply(lambda x: ', '.join(str(i) for i in x) if isinstance(x, list) else str(x) if pd.notna(x) else '')
 
-    # Helper function to format a row into text
+    # Filter out non-card entries (e.g., tokens, planes, dungeons, stickers)
+    non_card_types = ['Token', 'Plane', 'Dungeon', 'Stickers']
+    non_card_pattern = '|'.join([re.escape(t) for t in non_card_types])
+    specific_non_card_types = ['Card // Card']
+    df = df[~df['type_line'].str.contains(non_card_pattern, case=False, na=False)]
+    df = df[~df['type_line'].isin(specific_non_card_types)]
+    print(f"Filtered out non-card entries. Remaining rows: {len(df)}")
+
+    # Keep only English-language cards
+    df = df[df['lang'] == 'en']
+    print(f"Filtered to English-language cards. Remaining rows: {len(df)}")
+
+    # Filter out entries with no oracle_text (since we're focusing on abilities)
+    df = df[df['oracle_text'].str.strip() != '']
+    print(f"Filtered out entries with no oracle_text. Remaining rows: {len(df)}")
+
+    # Keep only the relevant columns: oracle_id, keywords, oracle_text
+    relevant_columns = ['oracle_id', 'keywords', 'oracle_text']
+    df = df[relevant_columns]
+    print(f"Kept relevant columns: {relevant_columns}")
+
+    # Clean and format the data for training
     def format_text(row):
-        # Clean the name by removing double '//'
-        name = row.get('name', '').replace(' // ', ' / ') if pd.notna(row.get('name', '')) else ''
+        oracle_id = row['oracle_id']
+        keywords = row.get('keywords', '')
+        effect = row.get('oracle_text', '')
 
-        # Handle missing or NaN values
-        type_line = row.get('type_line', '') if pd.notna(row.get('type_line', '')) else ''
-        mana_cost = row.get('mana_cost', '') if pd.notna(row.get('mana_cost', '')) else ''
-        oracle_text = row.get('oracle_text', '') if pd.notna(row.get('oracle_text', '')) else ''
+        # Add definitions to keywords
+        keywords_with_defs = [f"{kw} {keyword_definitions.get(kw, '')}" for kw in keywords.split(', ') if kw]
+        keywords_str = ', '.join(keywords_with_defs) if keywords_with_defs else 'None'
 
-        # Handle colors and keywords, ensuring they are properly joined if lists
-        colors = row.get('colors', [])
-        colors = ', '.join(colors) if isinstance(colors, list) and len(colors) > 0 else ''
+        return f"Oracle ID: {oracle_id} | Keywords: {keywords_str} | Effect: {effect}"
 
-        keywords = row.get('keywords', [])
-        keywords = ', '.join(keywords) if isinstance(keywords, list) and len(keywords) > 0 else ''
+    # Add the text column to the DataFrame
+    df['text'] = df.apply(format_text, axis=1)
 
-        # Format the text field
-        text = (
-            f"Name: {name} | "
-            f"Type: {type_line} | "
-            f"Cost: {mana_cost} | "
-            f"Colors: {colors} | "
-            f"Effect: {oracle_text} | "
-            f"Keywords: {keywords}"
-        )
-        return text
-
-    # Apply the format_text function to the entire dataset
-    try:
-        df['text'] = df.apply(format_text, axis=1)
-    except Exception as e:
-        logging.error(f"Failed to format text for the complete dataset: {e}")
-        return
-
-    # Save the processed complete data
-    complete_set_path = os.path.join(config.TRAINING_DATA_DIR, 'complete_set.csv')
-    try:
-        df[['text']].to_csv(complete_set_path, index=False)
-        logging.info(f"Complete dataset saved to {complete_set_path}")
-    except Exception as e:
-        logging.error(f"Failed to save complete dataset to {complete_set_path}: {e}")
-        return
-
-    # Select a subset for initial training (e.g., first 1000 rows)
-    subset_df = df.head(1000)
-    logging.info(f"Selected subset for training with {len(subset_df)} rows.")
-
-    # Save the initial_subset CSV
-    processed_path = os.path.join(config.TRAINING_DATA_DIR, 'initial_subset.csv')
-    try:
-        subset_df[['text']].to_csv(processed_path, index=False)
-        logging.info(f"Processed initial subset saved to {processed_path}")
-    except Exception as e:
-        logging.error(f"Failed to save processed subset data to {processed_path}: {e}")
-        return
-
+    # Save the processed data as complete_set.csv
+    processed_dir = os.path.join(config.PROCESSED_DATA_DIR)
+    os.makedirs(processed_dir, exist_ok=True)
+    raw_csv_path = os.path.join(processed_dir, 'complete_set.csv')
+    df.to_csv(raw_csv_path, index=False)
+    print(f"Saved raw data as CSV to {raw_csv_path}")
 
 if __name__ == "__main__":
     compile_data()

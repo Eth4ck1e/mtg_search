@@ -19,7 +19,7 @@ class DebugCallback(TrainerCallback):
         self.dataloader_iter = iter(kwargs['train_dataloader'])
 
     def on_step_end(self, args, state, control, model=None, **kwargs):
-        if state.global_step % 10 == 0:  # Debug every 10 steps
+        if state.global_step % 50 == 0:  # Debug every 50 steps
             model.eval()
             with torch.no_grad():
                 try:
@@ -31,18 +31,27 @@ class DebugCallback(TrainerCallback):
                     batch = next(self.dataloader_iter)
                 inputs = {k: v.to(model.device) for k, v in batch.items()}
                 outputs = model(**inputs)
-                logits = outputs.logits
                 loss = outputs.loss
-                print(f"\nStep {state.global_step}:")
-                print(f"Loss: {loss.item()}")
-                print(f"Sample logits (first token, first 5 values): {logits[0, 0, :5]}")
-                has_nan = torch.isnan(logits).any().item()
-                has_inf = torch.isinf(logits).any().item()
-                print(f"Logits contain nan: {has_nan}")
-                print(f"Logits contain inf: {has_inf}")
+                print(f"\nStep {state.global_step}: Loss: {loss.item()}")
             model.train()
 
-            (min(3, len(tokenized_dataset)))
+
+def load_data():
+    # Load the processed data from complete_set.csv
+    data_path = os.path.join(config.PROCESSED_DATA_DIR, 'complete_set.csv')
+    if not os.path.exists(data_path):
+        raise FileNotFoundError(f"Data file not found at {data_path}")
+
+    df = pd.read_csv(data_path, encoding='utf-8')
+    # Ensure the 'text' column exists and is not empty
+    if 'text' not in df.columns:
+        raise ValueError("The 'text' column is missing from complete_set.csv")
+    df = df[df['text'].str.strip() != '']
+
+    # Convert to a datasets.Dataset object
+    dataset = Dataset.from_pandas(df)
+    print(f"Loaded dataset with {len(dataset)} examples")
+    return dataset
 
 
 def tokenize_function(examples):
@@ -53,99 +62,79 @@ def tokenize_function(examples):
 def train():
     global tokenizer
     tokenizer = AutoTokenizer.from_pretrained(config.MODEL_NAME)
-    model = AutoModelForMaskedLM.from_pretrained(config.MODEL_NAME)  # Use float32
-    device = torch.device("cpu")  # Switch to CPU to avoid MPS issues
+    model = AutoModelForMaskedLM.from_pretrained(config.MODEL_NAME)
+
+    # Check for MPS availability and set device
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+        print("Using MPS device for training")
+    else:
+        device = torch.device("cpu")
+        print("MPS not available, using CPU for training")
     model.to(device)
 
+    # Load the dataset
     dataset = load_data()
 
-    # Debug: Print the first few examples in the dataset before tokenization
-    print("First few examples in dataset (before tokenization):")
-    for i in range(min(3, len(dataset))):
-        example = dataset[i]
-        print(f"Example {i}: text={example['text'][:100]}...")
-
+    # Tokenize the dataset
     tokenized_dataset = dataset.map(tokenize_function, batched=True, remove_columns=['text'])
+    print(f"Tokenized dataset with {len(tokenized_dataset)} examples")
 
-    # Debug: Print the first few examples in the tokenized dataset
-    print("First few examples in tokenized dataset:")
+    # Debug: Inspect a few tokenized examples
+    print("First few tokenized examples:")
     for i in range(min(3, len(tokenized_dataset))):
         example = tokenized_dataset[i]
-        # Count non-padding tokens (where attention_mask == 1)
         non_padding_length = sum(example['attention_mask'])
         print(
-            f"Example {i}: input_ids={example['input_ids'][:10]}... attention_mask={example['attention_mask'][:10]}... total_length={len(example['input_ids'])} non_padding_length={non_padding_length}")
+            f"Example {i}: input_ids={example['input_ids'][:10]}... "
+            f"attention_mask={example['attention_mask'][:10]}... "
+            f"total_length={len(example['input_ids'])} "
+            f"non_padding_length={non_padding_length}"
+        )
 
     tokenized_dataset.set_format("torch")
 
-    # Data collator for masked language modeling (automatically masks tokens and creates labels)
+    # Data collator for masked language modeling
     data_collator = DataCollatorForLanguageModeling(
         tokenizer=tokenizer,
         mlm=True,  # Enable masked language modeling
-        mlm_probability=0.3,  # Mask 30% of tokens
+        mlm_probability=0.15,  # Mask 15% of tokens (standard for BERT-style MLM)
         pad_to_multiple_of=8,  # Ensure padding aligns with model requirements
     )
 
-    # Debug: Inspect the first batch before and after data collation
-    batch_before = [tokenized_dataset[i] for i in range(min(4, len(tokenized_dataset)))]
-    print("First batch before data collation:")
-    print(f"Sample input_ids (before): {batch_before[0]['input_ids'][:10]}")
-    print(f"Sample attention_mask (before): {batch_before[0]['attention_mask'][:10]}")
-
-    batch_after = data_collator(batch_before)
-    print("First batch after data collation:")
-    print(f"input_ids shape: {batch_after['input_ids'].shape}")
-    print(f"labels shape: {batch_after['labels'].shape}")
-    print(f"Sample input_ids (after): {batch_after['input_ids'][0][:10]}")
-    print(f"Sample labels (after): {batch_after['labels'][0][:10]}")
-    # Count the number of masked tokens (where labels != -100)
-    num_masked = sum(1 for label in batch_after['labels'][0] if label != -100)
-    print(f"Number of masked tokens in first sequence: {num_masked}")
-
-    # Debug: Inspect the model's forward pass
-    model.eval()
-    with torch.no_grad():
-        inputs = {k: v.to(device) for k, v in batch_after.items()}
-        outputs = model(**inputs)
-        logits = outputs.logits
-        print("Model outputs (logits) for first sequence:")
-        print(f"Logits shape: {logits.shape}")
-        print(f"Sample logits (first token, first 5 values): {logits[0, 0, :5]}")
-        # Check for nan or inf in logits
-        has_nan = torch.isnan(logits).any().item()
-        has_inf = torch.isinf(logits).any().item()
-        print(f"Logits contain nan: {has_nan}")
-        print(f"Logits contain inf: {has_inf}")
-
+    # Training arguments
     training_args = TrainingArguments(
         output_dir=config.CHECKPOINT_DIR,
-        num_train_epochs=1,  # Reduced to 1 epoch for faster iteration
-        per_device_train_batch_size=8,  # Increased batch size to reduce steps
-        per_device_eval_batch_size=8,  # Increased eval batch size
+        num_train_epochs=3,  # Keep 3 epochs since training is fast
+        per_device_train_batch_size=8,
+        per_device_eval_batch_size=8,
         warmup_steps=500,
         weight_decay=0.01,
-        learning_rate=2e-6,  # Further lower the learning rate
+        learning_rate=5e-5,
         logging_dir='./logs',
-        logging_steps=50,  # Log every 50 steps
-        logging_first_step=False,  # Avoid logging on the first step
-        logging_strategy="steps",  # Ensure logging is controlled by steps
-        save_steps=5000,  # Save every 5000 steps
+        logging_steps=20,  # Log every 20 steps for more frequent updates
+        logging_first_step=False,
+        logging_strategy="steps",
+        save_steps=5000,
         save_total_limit=2,
-        max_grad_norm=0.1,  # Stricter gradient clipping
+        max_grad_norm=1.0,
         dataloader_num_workers=config.DATALOADER_NUM_WORKERS,
-        fp16=False,  # Disable FP16
+        fp16=False,  # Disable FP16 (MPS doesn't support it well)
     )
 
+    # Initialize the trainer
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=tokenized_dataset,
-        data_collator=data_collator,  # Use data collator for MLM
-        callbacks=[DebugCallback()],  # Add debug callback to inspect training
+        data_collator=data_collator,
+        callbacks=[DebugCallback()],
     )
 
+    # Train the model
     trainer.train()
 
+    # Save the model and tokenizer
     os.makedirs(config.MODEL_DIR, exist_ok=True)
     model.save_pretrained(config.MODEL_DIR)
     tokenizer.save_pretrained(config.MODEL_DIR)
