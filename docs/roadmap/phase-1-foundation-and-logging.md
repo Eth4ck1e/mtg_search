@@ -1,7 +1,7 @@
 # Phase 1 — Foundation & Logging Infrastructure
 
 **Weeks:** 1–2
-**Status:** Not started
+**Status:** Complete (pending journal-entry signoff and origin push)
 
 ## Goal
 
@@ -11,14 +11,14 @@ By end of phase: Postgres + pgvector is running locally, the project skeleton ma
 
 ## Deliverables
 
-- [ ] Python virtualenv + `requirements.txt` (initial set)
-- [ ] Local Postgres 16 + `pgvector` extension running (Docker Compose)
-- [ ] `src/logging_utils.py` — structured JSON-lines logger; pipeline-run context manager
-- [ ] `experiment_runs` table created via migration in `src/db/migrations/`
-- [ ] `docs/journal/TEMPLATE.md` and at least one real entry (kickoff)
-- [ ] `data/raw/oracle-cards-YYYYMMDD.json` downloaded
-- [ ] `docs/journal/<date>-corpus-survey.md` — corpus characterization writeup
-- [ ] `.gitignore` excluding `data/raw/`, `logs/`, `venv/`, `__pycache__/`, `*.pyc`, `.env`
+- [x] Python virtualenv + dependency pins (replaced `requirements.txt` with `pyproject.toml`; `.venv` pinned to Python 3.11.9)
+- [x] Local Postgres 16 + `pgvector` extension running (Docker Compose — `docker-compose.yml`, image `pgvector/pgvector:pg16`, vector ext 0.8.2)
+- [x] `src/logging_utils.py` — structured JSON-lines logger; pipeline-run context manager
+- [x] `experiment_runs` table created via migration in `src/db/migrations/` (`0001_initial.sql`); writer in `src/db/experiment_log.py`
+- [x] `docs/journal/TEMPLATE.md` and at least one real entry (kickoff)
+- [x] `data/raw/oracle-cards-2026-05-17.json` downloaded (172,955,737 bytes, sha256 `da0f03ad…`)
+- [x] `docs/journal/2026-05-17-corpus-survey.md` — corpus characterization writeup
+- [x] `.gitignore` excluding `data/raw/`, `logs/`, `venv/`, `__pycache__/`, `*.pyc`, `.env`
 
 ## Sub-tasks
 
@@ -92,4 +92,6 @@ By end of phase: Postgres + pgvector is running locally, the project skeleton ma
 
 ## Journal entries
 
-- (none yet — add links as written)
+- [Redesign kickoff and pre-Phase-1 cleanup](../journal/2026-05-17-redesign-kickoff.md)
+- [POC retrospective](../journal/2026-05-17-poc-retrospective.md)
+- [Corpus survey and Phase 2 filter rules](../journal/2026-05-17-corpus-survey.md)
