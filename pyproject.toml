@@ -1,0 +1,89 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mtg_search"
+version = "0.2.0"
+description = "Natural-language semantic search for Magic: The Gathering cards. Three-tower retrieval (SQL pre-filter + HyDE + embedding) on pgvector. CSCI 5953 independent study."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Mitchell Trafford" }]
+keywords = ["semantic-search", "vector-search", "pgvector", "magic-the-gathering", "hyde", "retrieval"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    # Database
+    "psycopg[binary]>=3.2",
+    "pgvector>=0.3",
+
+    # Embeddings
+    "sentence-transformers>=3.0",
+    "torch>=2.2",                  # CPU build by default; override per-platform if GPU
+
+    # LLM (HyDE query rewriter)
+    "anthropic>=0.40",
+
+    # Config & data
+    "pydantic>=2.7",
+    "pydantic-settings>=2.4",
+    "python-dotenv>=1.0",
+    "pyyaml>=6.0",
+
+    # Data ingestion
+    "requests>=2.32",
+    "tqdm>=4.66",
+    "ijson>=3.3",                  # streaming JSON parser — needed for 500MB+ Scryfall bulk
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+    "pre-commit>=3.7",
+]
+
+[project.urls]
+Homepage = "https://github.com/Eth4ck1e/mtg_search"
+Repository = "https://github.com/Eth4ck1e/mtg_search"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+exclude = ["archive*", "tests*", "scripts*", "docs*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["archive/"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific
+]
+ignore = [
+    "E501",  # line length is enforced by formatter, not linter
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"

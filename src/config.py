@@ -1,21 +1,113 @@
-# mtg_search/src/config.py
-import os
+"""Project configuration.
 
-# Model configuration
-MODEL_NAME = "distilbert-base-uncased"  # Base model to use for training and inference
-MODEL_TYPE = "bert"  # Model type ("bert" for DistilBERT, "causal_lm" for DeepSeek/Gemma)
+Single source of truth for environment-driven settings. Values are loaded
+from environment variables (and a local .env file in development) and
+validated by Pydantic. Import the singleton `settings` everywhere; do not
+re-read environment variables or reconstruct paths elsewhere.
 
-# Data and processing parameters
-MAX_LENGTH = 64  # Maximum sequence length for tokenization
+Paths are exposed as properties so they always derive consistently from
+the repo root. Only the user-tunable values (database URL, API keys,
+model identifiers, hyperparameters) are env-driven.
+"""
 
-# Directory paths
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
-RAW_DATA_DIR = os.path.join(DATA_DIR, 'raw', 'bulk_jsons')  # For raw data (e.g., oracle-cards.json, complete_set.csv)
-PROCESSED_DATA_DIR = os.path.join(DATA_DIR, 'processed', 'training', 'initial')  # For processed data (e.g., initial_subset.csv)
-VECTOR_DB_DIR = os.path.join(DATA_DIR, 'vector_db')  # For vector database (e.g., card_vectors.faiss, card_metadata.csv)
-MODEL_DIR = os.path.join(PROJECT_ROOT, 'models', 'initial_model')  # For trained model
-CHECKPOINT_DIR = os.path.join(PROJECT_ROOT, 'models', 'checkpoints', 'model_output')  # For training checkpoints
+from __future__ import annotations
 
-# Training parameters
-DATALOADER_NUM_WORKERS = 0  # Number of workers for DataLoader (0 to avoid multiprocessing issues on macOS)
+from functools import lru_cache
+from pathlib import Path
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+    # ---- Database ---------------------------------------------------------
+
+    database_url: str = Field(
+        default="postgresql://postgres:postgres@localhost:5432/mtg_search",
+        description="Postgres URL. Must point at a DB with the pgvector extension enabled.",
+    )
+
+    # ---- LLM (HyDE query rewriter) ---------------------------------------
+
+    anthropic_api_key: str | None = Field(
+        default=None,
+        description="API key for the HyDE query rewriter. Optional until Phase 4.",
+    )
+    hyde_model: str = Field(
+        default="claude-haiku-4-5-20251001",
+        description="Claude model identifier used for HyDE query rewriting.",
+    )
+
+    # ---- Embeddings -------------------------------------------------------
+
+    embedding_model: str = Field(
+        default="sentence-transformers/multi-qa-distilbert-cos-v1",
+        description="HuggingFace sentence-transformer model for card text and HyDE outputs.",
+    )
+    embedding_dim: int = Field(
+        default=768,
+        description="Dimension produced by embedding_model. Must match the pgvector column.",
+    )
+    max_length: int = Field(
+        default=512,
+        description="Token truncation budget. The POC used 64 — documented failure mode.",
+    )
+    embed_batch_size: int = Field(default=32)
+
+    # ---- Preprocessing ----------------------------------------------------
+
+    preprocess_version: str = Field(
+        default="v1",
+        description="Version string bumped whenever build_embedding_text logic changes. Triggers re-embedding.",
+    )
+
+    # ---- Derived paths (not env-driven) ----------------------------------
+
+    @property
+    def repo_root(self) -> Path:
+        return Path(__file__).resolve().parent.parent
+
+    @property
+    def data_dir(self) -> Path:
+        return self.repo_root / "data"
+
+    @property
+    def raw_data_dir(self) -> Path:
+        return self.data_dir / "raw"
+
+    @property
+    def eval_dir(self) -> Path:
+        return self.data_dir / "eval"
+
+    @property
+    def keywords_dir(self) -> Path:
+        return self.data_dir / "keywords"
+
+    @property
+    def logs_dir(self) -> Path:
+        return self.repo_root / "logs"
+
+    @property
+    def prompts_dir(self) -> Path:
+        return self.repo_root / "prompts"
+
+    @property
+    def embedding_version(self) -> str:
+        """Composite version identifier stored alongside each embedding."""
+        return f"{self.embedding_model}|preproc={self.preprocess_version}"
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    """Cached accessor — instantiate once per process."""
+    return Settings()
+
+
+settings = get_settings()
