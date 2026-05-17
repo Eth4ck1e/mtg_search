@@ -84,3 +84,4 @@ Turn the raw Scryfall bulk file into a queryable Postgres schema with one row pe
 ## Journal entries
 
 - [Cards schema and the per-face row decision](../journal/2026-05-17-cards-schema.md)
+- [Keyword reminder-text augmentation and manual overrides](../journal/2026-05-17-keyword-augmentation.md)
