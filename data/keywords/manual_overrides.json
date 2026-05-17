@@ -1,0 +1,6 @@
+{
+  "version": "v1",
+  "generated_at": "2026-05-17T17:57:09+00:00",
+  "keywords": {},
+  "_note": "Hand-maintained overrides for keywords that never received reminder text in any printing. Keys must match Scryfall's canonical keyword capitalisation."
+}
