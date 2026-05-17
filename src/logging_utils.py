@@ -157,6 +157,16 @@ class PipelineRun:
             raise RuntimeError("PipelineRun.event() called outside `with` block")
         self._emit({"event": name, "script": self.script_name, **payload})
 
+    @property
+    def processed_count(self) -> int:
+        """Current value of the processed counter."""
+        return self._processed
+
+    @property
+    def skipped_counts(self) -> dict[str, int]:
+        """Snapshot of skip counters keyed by reason."""
+        return dict(self._skipped)
+
     # ----- internals ------------------------------------------------------
 
     def _emit(self, record: dict[str, Any]) -> None:
