@@ -1,0 +1,29 @@
+# Phase 3 baseline retrieval configuration.
+#
+# Raw query -> sentence-transformers/multi-qa-distilbert-cos-v1 ->
+# pgvector cosine search across the full cards table (no SQL filter,
+# no HyDE rewriting). This is the floor every subsequent retrieval
+# improvement (HyDE, SQL pre-filter, fine-tuning) is measured against.
+#
+# Future configs add `retrieval.type: sql_filter`, `hyde`, `hyde_sql`,
+# etc. — Phase 4+ work.
+
+name: "baseline"
+
+description: >
+  Phase 3 baseline: embed the user's raw query with multi-qa-distilbert-cos-v1
+  and run cosine search across all 31,832 face rows. Dedupe by oracle_id
+  (closest face wins) and return top-K. No SQL pre-filter and no HyDE.
+
+eval_set: "data/eval/queries_v1_draft.yaml"
+
+retrieval:
+  type: "embedding_only"
+  k: 10
+  oversample: 50   # over-fetch this many face rows before dedup; safe for K=10
+
+notes: >
+  First measured number for the project. Pure-structural queries (q_019, q_020,
+  q_021) are expected to score ~0 by design — embedding alone cannot enforce
+  numeric or color constraints. Hybrid queries (q_025, q_026) similarly low
+  until Phase 4's SQL+HyDE cooperation lands.
