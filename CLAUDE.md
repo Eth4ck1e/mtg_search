@@ -68,35 +68,67 @@ The shape consistency across all logs is what makes week 14's `scripts/generate_
 
 ## 8. Working Timeline
 
-Phase-by-phase breakdown lives in `docs/roadmap/`. Each phase file has goals, deliverables, sub-tasks, decision log, and a **"Notes for final report"** section that captures what to extract from this phase when the paper gets written.
+The project is structured as **seven milestones (M0–M7)** rather than calendar weeks. The original 14-week schedule (in the roadmap files below) assumed a student writing every line by hand; LLM-assisted artifact production runs roughly 6× faster, so the calendar pace and the comprehension pace would diverge without explicit checkpoints. Each milestone-transition is gated by a **checkpoint** the curator must clear before the next milestone begins — see [`docs/process/milestone-checkpoints.md`](docs/process/milestone-checkpoints.md) for the framework and the current open checkpoint specification.
 
-Treat the schedule as a guide, not a contract. Phases will slip. The deliverables and the logging discipline matter more than the week numbers.
+**Milestone status (as of M3 complete, awaiting M3 → M4 review):**
 
-- [Phase 0 — Overview & Index](docs/roadmap/phase-0-overview.md)
-- [Phase 1 — Foundation & Logging Infrastructure](docs/roadmap/phase-1-foundation-and-logging.md) (weeks 1–2)
-- [Phase 2 — Ingestion & Schema](docs/roadmap/phase-2-ingestion-and-schema.md) (weeks 3–4)
-- [Phase 3 — Baseline Embedding & Evaluation Harness](docs/roadmap/phase-3-baseline-and-eval.md) (weeks 5–6)
-- [Phase 4 — HyDE & SQL Pre-Filter](docs/roadmap/phase-4-hyde-and-prefilter.md) (weeks 7–8)
-- [Phase 5 — Systematic Evaluation & Reporting](docs/roadmap/phase-5-systematic-eval.md) (weeks 9–10)
-- [Phase 6 — Evidence-Driven Optimization](docs/roadmap/phase-6-optimization.md) (weeks 11–13)
-- [Phase 7 — Finalization & Paper](docs/roadmap/phase-7-finalization.md) (weeks 14–15)
+| ID | Milestone | Roadmap mapping | Status |
+|---|---|---|---|
+| M0 | Project skeleton, POC archived, CLAUDE.md installed | Phase 0 + pre-Phase-1 cleanup | ✓ Complete |
+| M1 | DB + logging + corpus characterized | [Phase 1](docs/roadmap/phase-1-foundation-and-logging.md) | ✓ Complete |
+| M2 | Corpus ingested + preprocessing pipeline | [Phase 2](docs/roadmap/phase-2-ingestion-and-schema.md) | ✓ Complete |
+| M3 | First baseline measured (`experiment_runs.id=13`) | [Phase 3](docs/roadmap/phase-3-baseline-and-eval.md) | ✓ Complete |
+| M4 | HyDE + SQL pre-filter | [Phase 4](docs/roadmap/phase-4-hyde-and-prefilter.md) | Gated by M3 → M4 checkpoint |
+| M5 | Systematic evaluation + report generation | [Phase 5](docs/roadmap/phase-5-systematic-eval.md) | Pending |
+| M6 | Evidence-driven optimisations | [Phase 6](docs/roadmap/phase-6-optimization.md) | Pending |
+| M7 | Final paper + presentation | [Phase 7](docs/roadmap/phase-7-finalization.md) | Pending |
+
+The roadmap files remain the source of truth for per-phase sub-task lists and "Notes for final report" sections. They no longer drive the schedule. **Treat deliverables and logging discipline as the contract; week numbers in the roadmap are historical context only.**
 
 ## 9. Repo Layout
 
 ```
 mtg_search/
+├── CLAUDE.md                            # This file — architecture + working conventions
+├── pyproject.toml                       # Pinned deps; Python >= 3.11
+├── docker-compose.yml                   # pgvector/pgvector:pg16 on localhost:5432
+├── .env / .env.example                  # Postgres credentials (.env gitignored)
+├── archive/poc_v1/                      # POC snapshot, preserved
+├── configs/
+│   └── baseline.yaml                    # Phase 3 baseline retrieval config
 ├── data/
-│   ├── raw/                  # Scryfall bulk JSON (gitignored, large)
-│   ├── eval/                 # Hand-curated (query, relevant_oracle_ids) pairs
-│   └── keywords/             # Auto-extracted reminder-text dict + manual overrides
+│   ├── raw/                             # Scryfall bulk JSON (gitignored, large)
+│   ├── processed/                       # Corpus survey JSON (gitignored, regenerable)
+│   ├── eval/                            # Hand-curated eval set + tooling outputs
+│   │   ├── queries_v1_draft.yaml        # 26 queries with tri-state relevance
+│   │   ├── methodology_references.md    # The 3 IR-eval papers backing tri-state
+│   │   └── review_batch_*.html          # Visual review (gitignored, regenerable)
+│   └── keywords/                        # Reminder-text dict + manual overrides
 ├── docs/
-│   ├── journal/              # Dated decision/analysis entries (committed)
-│   └── roadmap/              # Phase files (committed)
-├── scripts/                  # Entry-point scripts: ingest.py, embed.py, evaluate.py, ...
-├── src/                      # Library code: schema, query_rewriter, search, logging_utils
-├── tests/
-├── logs/                     # Pipeline run logs (jsonl, gitignored)
-└── CLAUDE.md
+│   ├── archive/                         # Original proposal + similar historical
+│   ├── journal/                         # Dated decision/analysis entries
+│   ├── process/                         # Workflow rulebooks (milestone-checkpoints.md)
+│   └── roadmap/                         # Phase files (M0–M7 mapping in §8 above)
+├── scripts/                             # Entry-point scripts
+│   ├── migrate.py                       # SQL migration runner
+│   ├── download_scryfall.py             # Streamed bulk JSON fetch
+│   ├── survey_corpus.py                 # Corpus characterisation
+│   ├── ingest.py                        # Bulk → cards table UPSERT
+│   ├── build_keyword_dict.py            # Reminder-text extraction
+│   ├── embed.py                         # Corpus embedding pipeline
+│   ├── eval_lookup.py                   # Scryfall candidate finder
+│   ├── render_review.py                 # Eval-set HTML reviewer
+│   └── evaluate.py                      # Run a config, write experiment_runs row
+├── src/
+│   ├── config.py                        # Pydantic Settings (single source of truth)
+│   ├── logging_utils.py                 # PipelineRun JSONL context manager
+│   ├── preprocess_text.py               # build_embedding_text + load_keyword_dict
+│   ├── data_processing/                 # scryfall_classify, ingest_transform, keyword_extract
+│   ├── db/                              # experiment_log writer + SQL migrations
+│   ├── eval/                            # Pure-Python metric calculation
+│   └── utils/                           # select_device etc.
+├── tests/                               # ~80 tests, mix of unit + integration
+└── logs/                                # JSONL pipeline-run logs (gitignored)
 ```
 
 ## 10. Working Style
