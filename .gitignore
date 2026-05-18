@@ -26,6 +26,7 @@ env/
 data/raw/
 data/processed/
 data/vector_db/
+data/eval/review_batch_*.html
 models/
 logs/
 

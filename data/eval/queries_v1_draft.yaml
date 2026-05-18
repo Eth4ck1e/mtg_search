@@ -1,0 +1,1818 @@
+version: "v1-draft"
+queries:
+  - id: q_014
+    query: "flicker effects"
+    difficulty: hard
+    category: jargon
+    batch: 1
+    notes: "Tests reminder-text augmentation for blink/exile-and-return — the canonical hard case from the POC retrospective."
+    scryfall_queries:
+      - 'o:"exile target creature you control"'
+      - 'o:"exile another target creature you control" o:"return"'
+      - 'name:"Restoration Angel" or name:"Eldrazi Displacer" or name:"Felidar Guardian" or name:"Brago, King Eternal" or name:"Yorion, Sky Nomad" or name:"Charming Prince" or name:"Eerie Interlude" or name:"Ghostway"'
+    relevant:
+      # --- Spells / artifacts (exile target creature you control) ---
+      - id: 1aa1cf50-ee79-4bef-826b-5f1a9e1aa1a5
+        why: "Acrobatic Maneuver — flicker + cantrip"
+      - id: 00b36996-43c6-42a5-892c-c7c8864cf973
+        why: "Blur — blue flicker + cantrip"
+      - id: 6879f5ce-7a1b-4606-bad1-885779b0d456
+        why: "Cloudshift — canonical 1-mana flicker"
+      - id: cd1eda60-53e4-44d0-9b2c-7a57395e291f
+        why: "Conjurer's Closet — permanent end-step flicker"
+      - id: 094c4486-6cae-4268-850e-ff0082e5ad10
+        why: "Daydream — flicker + counter, with Flashback"
+      - id: 0fd57894-b917-41c8-a394-360d1d31b236
+        why: "Ephemerate — modern-format flicker staple, Rebound double-trigger"
+      - id: 64824ae5-efab-4b55-9d3c-b9c690bad857
+        why: "Essence Flux — Spirit-tribal flicker"
+      - id: 60a69ddc-3289-4786-944d-27a82c5f0dc8
+        why: "Eternal Acrobat Toast — combat-trigger flicker (Stickers)"
+      - id: 46f77c8c-6817-4aea-a80a-d91f508ccbd0
+        why: "Go Ninja Go — modal, one mode is flicker"
+      - id: 0214805d-d207-42da-a25f-2a8e1990904e
+        why: "Justiciar's Portal — flicker + first strike rider"
+      - id: f17e6c85-4813-4b0f-a0e9-d295822e9bb5
+        why: "Liberate — exile now, return at end step (functional flicker)"
+      - id: a3ec6b5d-08ec-4ae0-b1db-c4b87a1849c7
+        why: "Momentary Blink — the 'Blink' namesake"
+      - id: 9d8e0d63-809c-44b1-8d33-55e5d717ff70
+        why: "Now You See Me — Unfinity flicker with +1/+1 counters"
+      - id: e71863a7-0de1-4ab5-95e8-c39e6810d899
+        why: "Pegasus Guardian // Rescue the Foal — Adventure side is a flicker"
+      - id: e1708ad9-35d4-4243-92ca-ddf9d129aa32
+        why: "Personify — white instant flicker pattern"
+      # --- ETB / activated / triggered flicker creatures ---
+      - id: eb036e02-f43e-46a2-90f1-931579467c9b
+        why: "Baboon Spirit — activated flicker (delayed return)"
+      - id: 6df57d67-2fd9-4e7a-b67b-f361fc30e496
+        why: "Distinguished Conjurer — activated flicker"
+      - id: b11c250c-f191-4c52-ba02-a9176f163447
+        why: "Emiel the Blessed — repeatable activated flicker for {3}"
+      - id: 27e83bae-0ffe-4cc7-a6c0-cbca25f2ba4e
+        why: "Gilraen, Dúnedain Protector — activated flicker with counter rider"
+      - id: 0156c94b-e64c-49de-a46c-a203c5e05e98
+        why: "Kykar, Zephyr Awakener — cast-trigger modal flicker"
+      - id: 20194297-f2a4-4473-95bc-7c6835e5b6b3
+        why: "Lilysplash Mentor — activated flicker with +1/+1 rider"
+      - id: f96a2aa6-3259-4bb6-92cd-4d17215d04d0
+        why: "Nephalia Smuggler — activated flicker"
+      - id: 92019547-f6db-4ea6-8356-d0a90ace5662
+        why: "Soulherder — end-step trigger flicker, grows on exiles"
+      - id: f8a88521-80e5-419b-ab4e-f4b3aba8afa0
+        why: "Wispweaver Angel — ETB flicker"
+      # --- Canonical named flicker cards ---
+      - id: fcb0c7db-bd07-4c25-b7f8-b6c207e4f6be
+        why: "Brago, King Eternal — combat-trigger mass flicker"
+      - id: c48d844c-3976-4fa5-8e0d-3f0e535e7619
+        why: "Charming Prince — ETB modal flicker (one of three modes)"
+      - id: 0634091a-a74c-4cea-b6d1-7324a725554a
+        why: "Eerie Interlude — instant mass flicker"
+      - id: 9b1f552a-bddc-4fcb-ac67-b4a65b2f48ba
+        why: "Eldrazi Displacer — canonical activated flicker, taps the target"
+      - id: 33869ba6-13e5-4e48-8963-92f7965648fb
+        why: "Felidar Guardian — ETB permanent flicker (combo notoriety)"
+      - id: c8981af1-b0aa-4c19-8520-a7fb59018bc8
+        why: "Ghostway — instant mass flicker (your whole board)"
+      - id: dfbd3afc-9905-4cff-a4f4-df08a4d0a7fa
+        why: "Restoration Angel — ETB flicker, modern-format staple"
+      - id: e15504a7-2b67-4185-b916-172145f10b19
+        why: "Yorion, Sky Nomad — ETB mass flicker"
+    borderline:
+      - id: fa3d8a6f-dc5b-4890-a806-f785a41660c7
+        why: "Helvault — exile + eventual return; functions as pseudo-flicker in blink piles but primary identity is save-from-wrath storage"
+      - id: e23bf6bd-bc97-425d-902a-c6b606e82b65
+        why: "Cold Storage — same shape as Helvault; can be used as flicker substitute but primarily save-from-wrath"
+      - id: c4033d97-769f-4811-8b11-f85b8817b7a2
+        why: "Endless Sands — land version of Cold Storage, same ambiguity"
+    rejected:
+      - id: 0a094c5f-cefb-4ba1-90c8-dd78ae8efe95
+        why: "Kaya — exile with no return mechanism at all; this is removal, not flicker"
+      - id: 1ca97394-4e8c-4698-bea1-554f9b10927b
+        why: "Lukka — exile then polymorph; the original creature never returns, a different creature appears instead"
+
+  - id: q_001
+    query: "creatures with flying"
+    difficulty: easy
+    category: fragmented
+    batch: 2
+    notes: "Broad-concept query (~3,360 fliers in corpus). Relevant list is a representative sample sorted by EDHREC popularity — measures whether the system surfaces well-known fliers in top results."
+    scryfall_queries:
+      - 't:creature kw:flying order:edhrec'
+    relevant:
+      - id: d3a0b660-358c-41bd-9cd2-41fbf3491b1a
+        why: "Birds of Paradise — iconic 1-mana flier"
+      - id: 0636b6c3-0662-420a-b30d-f0a14e7c512d
+        why: "Mirkwood Bats — flying tribal payoff"
+      - id: 3a940dfa-a026-4969-8981-ef90cdfbe9ef
+        why: "Ornithopter of Paradise — flying mana rock"
+      - id: a984db23-40ea-428d-829f-e944267280f8
+        why: "Faerie Mastermind — 1U flash flier with draw payoff"
+      - id: 37688720-03de-4eca-a82d-a0afe8d58adc
+        why: "Baleful Strix — flying + deathtouch utility"
+      - id: 716b3ea2-45b7-4a8f-af72-de7f4e510eff
+        why: "Goldspan Dragon — flying haste finisher"
+      - id: 605c1ee0-5e8a-4e0a-a99b-42a38873f822
+        why: "Welcoming Vampire — flying card-draw payoff"
+      - id: f8e17f4f-080d-4bba-bd05-ca27e94ccecc
+        why: "Terror of the Peaks — flying dragon finisher"
+      - id: 24d0f5e7-0d9e-4b76-900e-a7274e80312d
+        why: "Mulldrifter — flying with cantrip and evoke"
+      - id: 71d785a9-ddc8-472e-a778-a551b444a4bd
+        why: "Selfless Spirit — flying sac outlet"
+      - id: 48daee9d-ddaf-410f-8c3a-12fa1064ab56
+        why: "Ancient Copper Dragon — flying treasure dragon"
+      - id: 311a449d-dc74-46e6-9a47-6a597931f736
+        why: "Consecrated Sphinx — flying card draw on a stick"
+      - id: 33666a98-812f-4892-9f8d-33e0cbecc340
+        why: "Niv-Mizzet, Parun — flying spell-draw dragon"
+      - id: a3a98bc9-caa0-49b7-951c-fe4e4f54e4ba
+        why: "Ornithopter — 0-mana flying artifact creature"
+      - id: 216cb26e-8da9-478b-bfbc-8030f7adee72
+        why: "Avacyn, Angel of Hope — flying indestructible finisher"
+      - id: 9deded8b-cec4-4ede-a50b-131404d456d4
+        why: "Thought Monitor — flying artifact card draw"
+      - id: d9b066ff-9519-415c-ae17-bfea703c9889
+        why: "Hellkite Tyrant — flying trample artifact-grabber"
+      - id: f2f09757-1931-47c0-a5f0-39280445489d
+        why: "Gilded Goose — 1-mana flying mana dork"
+      - id: b9df2cdf-397c-458d-89cf-911568737ffa
+        why: "Mockingbird — flying copy-creature with X cost"
+      - id: 469956a2-7cd4-4695-b8f4-c841526f160d
+        why: "Bloodletter of Aclazotz — flying life-loss doubler"
+      - id: 0f5a3a09-2f07-4774-9e0f-e99d9a444166
+        why: "Aurelia, the Warleader — flying vigilance haste, double attack"
+      - id: eac94269-4baa-4b8e-a0fd-d6b227d1cde3
+        why: "Thrummingbird — flying proliferate"
+      - id: 232284f7-c623-4895-9ab9-8b1a39926830
+        why: "Wonder — graveyard-flier (grants flying to your team)"
+      - id: e9117015-1050-44dd-a46b-e7ffe2085fae
+        why: "Ledger Shredder — flash flying draw-trigger"
+      - id: dff3f4c7-f792-4ca3-9b0a-0738e70664d9
+        why: "Old Gnawbone — flying treasure dragon"
+      - id: 0bd67481-6bd9-48d6-92bd-8933b5ea1eae
+        why: "Peregrine Drake — flying mana-rebound"
+      - id: 321b5cc6-8df6-4292-97a0-a6a3a22f3b55
+        why: "Twinflame Tyrant — flying copy dragon"
+      - id: 8c31fec9-e4b3-4761-990e-7be38eb05604
+        why: "Karmic Guide — flying reanimator"
+      - id: 28c1a4a0-f58c-4d07-a918-51ff8a74f050
+        why: "High Fae Trickster — flying tempo flier"
+      - id: fd505c02-c59e-476d-8e88-35da862ddc23
+        why: "Bloodthirsty Conqueror — flying life-loss vampire"
+
+  - id: q_002
+    query: "destroy target artifact"
+    difficulty: easy
+    category: mechanical
+    batch: 2
+    notes: "Direct-phrase query — relevant set is cards with the exact 'destroy target artifact' clause (alone or as a mode)."
+    scryfall_queries:
+      - 'o:"destroy target artifact" order:edhrec'
+    relevant:
+      - id: bf1341dd-41a3-49f6-87ec-63170dde4324
+        why: "Boseiju, Who Endures — Channel ability destroys artifact/enchantment/nonbasic land"
+      - id: 3567c3c8-b3c7-45b7-935b-b1fdbc973720
+        why: "Vandalblast — pure red artifact removal"
+      - id: f9db72dc-9a5b-48a4-a86e-7464d9a2166a
+        why: "Abrade — modal 3-damage-or-destroy-artifact"
+      - id: 032ec6e2-6cc3-4a97-9cc7-3233f5e11904
+        why: "Reclamation Sage — ETB artifact/enchantment removal"
+      - id: 2c49d24a-98a4-43c2-bb59-1ef13d4214c2
+        why: "Untimely Malfunction — modal artifact removal"
+      - id: 5e62b51d-faec-4aa0-9504-cf2c282d08ea
+        why: "Rakdos Charm — modal, one mode destroys artifact"
+      - id: 9b271430-f53d-42d6-a547-2f286dd9bcb6
+        why: "Putrefy — destroy artifact or creature"
+      - id: 0355249a-8e4e-41db-9cea-1b901faffbe6
+        why: "Witch Enchanter — ETB destroys artifact/enchantment"
+      - id: 6d4e558e-9109-4918-a082-fdcbaffd516b
+        why: "Nature's Claim — 1-mana artifact/enchantment kill"
+      - id: bceecc64-96f1-4e7b-8904-0aef90377764
+        why: "Bedevil — kill artifact/creature/planeswalker"
+      - id: 3e39224c-72ce-4ecc-aa17-12c071ea1f3e
+        why: "Krosan Grip — uncounterable artifact/enchantment kill"
+      - id: 777b8ec4-a783-4297-96b7-4f200d0eb734
+        why: "Return to Nature — modal, includes destroy artifact"
+      - id: d5b80895-621a-40df-bf48-6c7295658f21
+        why: "Cankerbloom — sac-trigger modal artifact removal"
+      - id: bffdfe7b-f17a-41b6-a460-80280fe497d4
+        why: "Collective Resistance — Escalate modal artifact removal"
+      - id: a4e5693f-12a0-451e-818d-d6efc7b4ed25
+        why: "Decimate — destroy one of each type, includes artifact"
+      - id: 9842734c-1eac-4509-a731-4c22017ae586
+        why: "Wear // Tear — split card, Wear destroys artifact"
+      - id: 8d03d050-391c-4311-8c42-4ee632d40fdc
+        why: "Aura Shards — creature-ETB artifact/enchantment removal"
+      - id: a7e97fa9-4b72-4548-b854-5be5f18a6f1a
+        why: "Disenchant — classic 2-mana destroy artifact/enchantment"
+      - id: fa3e28b1-131c-4223-81e0-18dfbab22c26
+        why: "Prismari Command — modal, includes destroy artifact"
+      - id: 8b21062e-97b0-4967-96df-30e8309f4fba
+        why: "Kogla, the Titan Ape — attack-trigger destroy artifact"
+      - id: f21d0319-0509-4ac1-b6e3-10955a26fd7a
+        why: "Fracture — destroy artifact/enchantment/planeswalker"
+      - id: 09669283-eb14-46a2-b37a-51d7a52da891
+        why: "Requisition Raid — Spree, includes destroy artifact"
+      - id: 774dce79-67e0-4820-8013-c7a7347993ce
+        why: "Cathar Commando — flash + sac for artifact/enchantment kill"
+      - id: 21f45043-5419-4019-8b6c-e5294bd5f549
+        why: "Acidic Slime — ETB destroys artifact/enchantment/land"
+      - id: 3c22e031-4804-4c31-bd3c-c3f29d456b34
+        why: "Fiery Confluence — three modes, one is destroy artifact"
+      - id: 5c6c8fe7-3520-423b-a224-1c0af516871a
+        why: "Casualties of War — modal mass destruction"
+      - id: ecd49d85-9c8c-4cc9-9a83-072ecd433677
+        why: "Flame of Anor — wizard payoff, mode includes destroy artifact"
+      - id: 23270e4a-a222-4ffb-a946-d0e20d665187
+        why: "Zacama, Primal Calamity — multi-mode ETB, GW mode destroys artifact"
+      - id: 0a8d0217-ff24-4177-b6be-707eb2b6b9e9
+        why: "Insidious Fungus — sac-trigger modal artifact removal"
+      - id: b67db32b-30a9-49d2-b4c2-90a9f80c36eb
+        why: "Manglehorn — ETB destroys artifact + tax artifacts"
+
+  - id: q_003
+    query: "instants that draw cards"
+    difficulty: easy
+    category: fragmented
+    batch: 2
+    notes: "Query intent is instants whose primary effect is card draw. Modal cards with draw as one of several modes go to borderline."
+    scryfall_queries:
+      - 't:instant o:"draw" order:edhrec'
+    relevant:
+      - id: 36cd2364-d113-47d1-b2c4-b088d9eb88dd
+        why: "Brainstorm — canonical 1-mana draw-3"
+      - id: 16e015b2-f8a3-4b1a-80be-58a8f5fb5e8c
+        why: "Frantic Search — draw 2, untap lands"
+      - id: 457af74a-02b3-4659-846d-63e482667f34
+        why: "Deadly Dispute — sac for draw 2 + treasure"
+      - id: a5cbd257-c836-493e-bb1a-76242619dea2
+        why: "Big Score — discard for draw 2 + treasures"
+      - id: 365548fb-5acc-4a8a-b20b-26d28b7d029f
+        why: "Village Rites — sac creature, draw 2"
+      - id: 1cb0610b-a731-42c2-b93f-0a29f63cebf4
+        why: "Thrill of Possibility — looting (discard, draw 2)"
+      - id: 713332c1-5bd8-400f-bfff-c1ca0697a043
+        why: "Opt — 1-mana scry + draw"
+      - id: 34bcc217-dd91-45a0-90d7-a94d02f1f317
+        why: "Growth Spiral — draw 1 + land drop"
+      - id: 9b9a10ff-5a5d-4df8-88aa-18d84ff9117c
+        why: "Inspiring Call — draw per +1/+1 creature + indestructible"
+      - id: 498c10c9-253d-4b15-b48c-1509381b17e8
+        why: "Unexpected Windfall — looting for draw 2 + treasures"
+      - id: 4c9bcba6-87b5-4fb3-97ee-6fe5b739337d
+        why: "Consider — 1-mana surveil + draw"
+      - id: c11e84a1-dbda-429b-8cd6-fd0deaefc689
+        why: "Demand Answers — sac/discard for draw 2"
+      - id: ff0ab867-b710-4b1a-baed-95fc3cf68f79
+        why: "Valakut Awakening — put back + draw n+1"
+      - id: b45e35df-9032-4482-89a6-c7c50c6d0a79
+        why: "Corrupted Conviction — sac creature, draw 2"
+      - id: b1a23235-3076-475c-a68a-db29cf2a9dba
+        why: "Pull from Tomorrow — variable draw X"
+      - id: cf8a0782-f545-445e-abac-d9063dad696b
+        why: "Hunter's Insight — conditional combat-damage draw"
+      - id: 2b76f9e9-cd28-4eaf-8674-215c34263f96
+        why: "Return of the Wildspeaker — modal but draw mode is iconic"
+    borderline:
+      - id: ab1cc360-b9de-48d9-9983-4dfe4a7d2a37
+        why: "Arcane Denial — primarily a counterspell, opponent draws is the cost"
+      - id: 002965be-a36f-4a09-9ce0-c6535bca1703
+        why: "Veil of Summer — primarily counter-protection, draw is conditional rider"
+      - id: f0449cbd-855c-4c20-a1f5-f76a395d8d39
+        why: "Reprieve — primarily spell-bounce, draw is small rider"
+      - id: ce19962d-94f9-4b2b-b668-963c0acce308
+        why: "Borne Upon a Wind — primarily flash-anything, draw is rider"
+      - id: 282dfeaa-6243-4f92-838a-5cb54fa85184
+        why: "Three Steps Ahead — Spree modal, draw is one of three modes"
+      - id: fa3e28b1-131c-4223-81e0-18dfbab22c26
+        why: "Prismari Command — modal, draw is one of four modes"
+      - id: b099fc54-cdbc-46cb-b4e4-7c2ca77b115b
+        why: "Plumb the Forbidden — primarily spell-copying, single draw rider"
+      - id: 3501a839-eef5-44e4-8637-b5754780454e
+        why: "Expedite — primarily haste, cantrip rider"
+
+  - id: q_004
+    query: "burn spell that deals 3 damage to any target"
+    difficulty: easy
+    category: natural
+    batch: 2
+    notes: "Direct natural-language query targeting Lightning Bolt class. The exact-phrase Scryfall query is a tight filter."
+    scryfall_queries:
+      - 'o:"deals 3 damage to any target" order:edhrec'
+    relevant:
+      - id: 4457ed35-7c10-48c8-9776-456485fdf070
+        why: "Lightning Bolt — the canonical 1-mana 3-damage burn"
+      - id: f34b9bc4-7bfe-47fd-ba23-4eeeb46026eb
+        why: "Lightning Strike — 2-mana modern equivalent"
+      - id: 800c258a-cfc4-4a54-a667-065ea8dea69e
+        why: "Lightning Helix — Bolt + 3 life"
+      - id: 8785f42f-87b9-4a0a-89ce-ea423649ba9c
+        why: "Chain Lightning — copyable 1-mana Bolt"
+      - id: c43b616e-ef87-4c12-810b-a1a3260168fa
+        why: "Skewer the Critics — Bolt with Spectacle cost"
+      - id: 2bd81743-84c8-43ec-86f5-68230036827b
+        why: "Wizard's Lightning — Wizard-cost-reduced Bolt"
+      - id: f07bd49d-8e71-4d56-be2a-638514011318
+        why: "Fiery Temper — Madness-cost Bolt"
+      - id: 1816eede-c5bd-49df-958f-a3af64cb2932
+        why: "Omnath, Locus of Rage — landfall payoff deals 3 to any target"
+      - id: eecb3047-a563-441a-9175-200421981ac3
+        why: "Ugin, the Spirit Dragon — −X ability deals X to creature/planeswalker; +2 deals 3 to colored"
+      - id: 89505f24-6c96-4062-8171-1851f7e7395b
+        why: "Flaming Tyrannosaurus — combat-trigger deals 3 to any target"
+      - id: fee680c6-afe2-4321-9d8a-8f81a612a53b
+        why: "Sorin, Imperious Bloodlord — vampire-payoff, mode deals 3 damage"
+      - id: fffcb71f-e802-436e-917d-eaa6607ab74f
+        why: "Toralf, God of Fury // Toralf's Hammer — equip-trigger / Hammer deals 3"
+      - id: 75ed6946-e7b1-4bf8-a05c-62a2ba5a6c79
+        why: "Ral Zarek — planeswalker that deals 3 to any target"
+      - id: 2bd6f13a-ae02-426d-8f99-c20c5c08cf55
+        why: "Keranos, God of Storms — draw-step trigger deals 3"
+      - id: c57907d1-c5a1-45c7-80a8-38fedf86dd19
+        why: "Volt Charge — deals 3 + proliferate"
+      - id: 5abcc262-fbe1-4e81-897c-da5a8fb1f1f4
+        why: "Irencrag Pyromancer — noncreature-cast trigger deals 3"
+      - id: 3407eb6e-b74d-4159-a801-d7163937953c
+        why: "Phlage, Titan of Fire's Fury — Bolt-on-ETB Elemental"
+      - id: ea73153b-1ecb-4593-a9ec-ce4f54e69824
+        why: "Magmatic Force — end-step burn engine"
+      - id: 107becb1-f8a3-4777-b39f-a0456c2d580e
+        why: "Lorehold Command — modal, includes 3-damage mode"
+      - id: 3ca07da2-29a1-40ce-a7f3-4838e95ca1d9
+        why: "Heartflame Duelist // Heartflame Slash — burst burn"
+
+  - id: q_005
+    query: "haste creatures"
+    difficulty: easy
+    category: fragmented
+    batch: 2
+    notes: "Broad-concept query like flying — relevant list is a representative sample sorted by EDHREC popularity."
+    scryfall_queries:
+      - 't:creature kw:haste order:edhrec'
+    relevant:
+      - id: 8c52bd39-0586-48ca-b263-17210cf9feb6
+        why: "Craterhoof Behemoth — haste finisher giving team haste"
+      - id: eaabd151-2160-4bff-82c0-3fa88659be98
+        why: "Anger — graveyard haste-enabler"
+      - id: 716b3ea2-45b7-4a8f-af72-de7f4e510eff
+        why: "Goldspan Dragon — flying haste treasure dragon"
+      - id: 7f268b15-ac92-4e98-821b-78d15d9285d9
+        why: "Loyal Apprentice — haste thopter producer"
+      - id: 0f5a3a09-2f07-4774-9e0f-e99d9a444166
+        why: "Aurelia, the Warleader — haste vigilance flying double-attack"
+      - id: fdba89eb-1cf5-46e6-9d09-1adb9bc40fcd
+        why: "Yahenni, Undying Partisan — haste sacrifice outlet"
+      - id: b2252471-01ca-4d58-aa99-4ab0aa5eae12
+        why: "Stormcatch Mentor — haste prowess wizard"
+      - id: 235bf0ba-658c-463f-b112-7478ba27bd7b
+        why: "Captain Lannery Storm — haste pirate treasure"
+      - id: a34b7416-cfe3-4a1e-a8c1-a3056b747519
+        why: "Kiki-Jiki, Mirror Breaker — haste copy creature"
+      - id: 5a3fdf5a-bff8-4896-b288-3f43f9a72d9b
+        why: "Vorinclex, Monstrous Raider — haste trample counter-doubler"
+      - id: b8619990-9dc2-4fcc-bc7e-457b77cd2a8e
+        why: "Rankle, Master of Pranks — flying haste modal trigger"
+      - id: a0be9bb2-3234-4c6c-b8ce-0879b1f43003
+        why: "Laelia, the Blade Reforged — haste exile-trigger"
+      - id: 04eeb9ad-5c59-411b-8809-db8349838588
+        why: "Westvale Abbey // Ormendahl — Ormendahl side is haste indestructible"
+      - id: 939e8448-013a-4aef-9a92-7c883a77a1a0
+        why: "Cavern-Hoard Dragon — haste treasure dragon"
+      - id: 2b62543f-a475-457a-a96b-b5d070383d3c
+        why: "Goldvein Hydra — haste X-spell"
+      - id: 69b52907-8aff-4f2a-a391-7d1ab2669b5c
+        why: "End-Raze Forerunners — haste mass-buff"
+      - id: 10b8d4c7-7553-4d76-b643-d98b80701e13
+        why: "Gingerbrute — 1-mana haste artifact creature"
+      - id: 2a800427-ff8c-4b3c-baee-85211b70656d
+        why: "Aurelia, the Law Above — haste flying vigilance"
+      - id: 64ad5657-78e9-4f34-8877-18c4f51fff9a
+        why: "Glint-Horn Buccaneer — haste discard payoff"
+      - id: d4f28a4b-d821-4132-bdec-4c528318f8e2
+        why: "Hellkite Charger — flying trample haste extra-combat dragon"
+      - id: 5d1b0eee-3a7a-4f22-a40d-7658a368962a
+        why: "Ruby, Daring Tracker — haste +1/+1 counter ranger"
+      - id: 8cefa5d6-5151-4e75-8b72-f210a4c751ea
+        why: "Klauth, Unrivaled Ancient — flying trample haste big-dragon ramp"
+      - id: 1dae6f39-2cbd-485c-b190-017a26401fd4
+        why: "Zealous Conscripts — haste-granting steal-creature"
+      - id: 71ae0fab-eb3e-4226-9fcc-29186f98a569
+        why: "Knuckles the Echidna — haste UB-Sonic ability"
+      - id: a311daab-40dc-4433-9ed8-feab7c558bbf
+        why: "Gishath, Sun's Avatar — haste flying trample dinosaur"
+      - id: 82ea519f-0e14-43d3-bf46-a1c5352e9600
+        why: "The Jolly Balloon Man — haste flying balloon"
+      - id: 904b2603-00c3-44d2-a43c-c25439dd8038
+        why: "Kellogg, Dangerous Mind — haste defender"
+      - id: d7ac4be1-dcca-49b6-8ddb-d1b0e6cf2dcf
+        why: "Queen Marchesa — haste flying assassin tokens"
+      - id: 6f16c3ac-a9b8-47e6-b18b-ae37c74d44a0
+        why: "Nether Traitor — recursive haste shadow"
+      - id: b685757b-521e-4353-a233-97052359723d
+        why: "Questing Beast — haste vigilance deathtouch first strike Adventures Beast"
+
+  - id: q_006
+    query: "ramp spells"
+    difficulty: medium
+    category: jargon
+    batch: 2
+    notes: |
+      Player jargon for mana acceleration. Original strict reading was "spells
+      only" (instants/sorceries/artifacts that produce mana or fetch lands);
+      EDHREC cross-validation of the Ramp theme page revealed the community
+      uses "ramp" broadly to include ETB-ramp creatures (Sakura-Tribe Elder,
+      Wood Elves family) and land-enchantment ramps (Burgeoning, Exploration,
+      Wild Growth). Mana dorks (BoP-class) stay in borderline since they tap
+      for mana from the battlefield (deferred value) rather than ramping
+      on cast.
+    scryfall_queries:
+      - 'o:"search your library for a basic land card" o:"battlefield" t:sorcery or t:instant'
+      - 'name:"Sol Ring" or name:"Mind Stone" or name:"Arcane Signet" or name:"Mana Crypt" or name:"Mana Vault" or name:"Dark Ritual" or name:"Cabal Ritual" or name:"Seething Song"'
+      - 'EDHREC theme page cross-validation: edhrec.com/themes/ramp (top 25 by inclusion)'
+    relevant:
+      - id: 8539f295-5d58-4436-a73a-b9277c4c7795
+        why: "Rampant Growth — canonical green ramp"
+      - id: 8b755881-a72d-4e21-a369-d2924eb4585a
+        why: "Cultivate — 3-mana +1 land in hand and on battlefield"
+      - id: 1593ea18-2f2f-4ab4-83fb-6ccc0bec8a90
+        why: "Kodama's Reach — Cultivate variant"
+      - id: 495e52e6-4c2b-4574-9474-eadbdcc8b4ac
+        why: "Farseek — 2-mana fetch any non-basic-typed land"
+      - id: 1b882a0e-0ede-4d1a-bd1a-9b7cffbcde8e
+        why: "Three Visits — 1-mana variant of Nature's Lore"
+      - id: 78826359-fe63-44ad-adc4-a17ffcd710e4
+        why: "Nature's Lore — 1-mana untapped land"
+      - id: 376c9d3f-21d3-4251-bb6a-026fa9e1b0e1
+        why: "Skyshroud Claim — 4-mana 2-land untapped"
+      - id: a0abd957-01a0-4aa9-8fc8-0e6840d21606
+        why: "Explosive Vegetation — 4-mana 2-land tapped"
+      - id: 705509e9-a034-4a5a-9c65-66f58748b8a2
+        why: "Harrow — instant sac-and-search 2 lands"
+      - id: 53f7c868-b03e-4fc2-8dcf-a75bbfa3272b
+        why: "Dark Ritual — canonical burst ritual"
+      - id: 64bf8929-f5f2-4d50-8667-13b1d007bcfc
+        why: "Seething Song — red 4-mana burst"
+      - id: 6ad8011d-3471-4369-9d68-b264cc027487
+        why: "Sol Ring — 1-mana artifact tapping for 2"
+      - id: c97361b5-af16-4a7b-af85-a429dbaf4ad2
+        why: "Mind Stone — 2-mana rock that cycles"
+      - id: 0bc7f093-bef0-4f1a-852c-4b75ebf54838
+        why: "Arcane Signet — commander-staple 2-mana rock"
+      - id: 2c63e4e1-89d2-4bc6-a232-94e75c4b1c8a
+        why: "Mana Crypt — 0-mana 2-mana-per-turn rock"
+      - id: 736892cb-a34b-4bb9-b56c-e26e3db207a2
+        why: "Mana Vault — 1-mana 3-per-turn rock"
+      # --- Land-enchantment / artifact ramp (EDHREC audit pass) ---
+      - id: d2d9ecea-7925-420e-98b9-2f87f41f387c
+        why: "Land Tax — situational catch-up ramp (3 Plains when behind on lands)"
+      - id: 88cf4c1a-5863-45fc-b76d-7ad33b175b2b
+        why: "Burgeoning — extra land drop per opponent's turn"
+      - id: 0c2841bb-038c-4fbf-8360-bc0a1522b58d
+        why: "Exploration — extra land drop per turn"
+      - id: 706ae742-1807-44b7-a4fa-f2e26f61519a
+        why: "Wild Growth — land enchant for +1 green mana"
+      - id: 00d8efa6-a2d9-4249-8da7-b45173675329
+        why: "Utopia Sprawl — Forest enchant for any-color mana"
+      - id: d79cbc61-6c15-48ea-bbba-3cffb819ccba
+        why: "Sword of the Animist — equipment combat-trigger basic land fetch"
+      # --- Creature ETB-ramp (EDHREC audit pass) ---
+      - id: e3afc704-220f-498f-9eaa-0821b17dc24c
+        why: "Sakura-Tribe Elder — sac for basic-land fetch (creature ramp)"
+      - id: 8973bd99-20f8-4867-90ef-50392147ee1b
+        why: "Wood Elves — ETB fetch untapped Forest"
+      - id: 4ce2357f-93e6-40ca-beca-8f4e15adc464
+        why: "Farhaven Elf — ETB fetch basic tapped"
+      - id: 7fd4c452-07f2-492c-9c78-d1c6362d9eec
+        why: "Yavimaya Elder — sac to draw + ETB-adjacent ramp pattern"
+      - id: 8f47a230-7500-4afb-97cd-dbd444c307c8
+        why: "Skyshroud Ranger — repeating land-drop activated ability"
+      - id: 00c0543c-2a1f-4425-8283-4062d74a1637
+        why: "Solemn Simulacrum — ETB basic-land fetch + dies-draw"
+    borderline:
+      - id: d3a0b660-358c-41bd-9cd2-41fbf3491b1a
+        why: "Birds of Paradise — mana dork creature; players call it ramp but query said 'spells'"
+      - id: 68954295-54e3-4303-a6bc-fc4547a4e3a3
+        why: "Llanowar Elves — 1-mana mana dork; same borderline as BoP"
+      - id: 3f3b2c10-21f8-4e13-be83-4ef3fa36e123
+        why: "Elvish Mystic — functionally identical to Llanowar Elves"
+      - id: 98aa9424-5912-4bd6-9300-b3972a31d8af
+        why: "Noble Hierarch — exalted + any-color mana dork"
+      - id: ab8d5f5c-1976-4f77-8ed2-8d28ee666741
+        why: "Tireless Provisioner — indirect ramp via Food/Treasure tokens (not direct mana)"
+
+  - id: q_007
+    query: "counterspells"
+    difficulty: medium
+    category: jargon
+    batch: 2
+    notes: "Player jargon — cards with 'counter target spell' clause. Well-bounded category."
+    scryfall_queries:
+      - 'o:"counter target spell" order:edhrec'
+    relevant:
+      - id: cc187110-1148-4090-bbb8-e205694a39f5
+        why: "Counterspell — canonical 2-mana counter"
+      - id: ab1cc360-b9de-48d9-9983-4dfe4a7d2a37
+        why: "Arcane Denial — soft counter with draw"
+      - id: 74d3277a-38e5-4732-afed-084a56148f20
+        why: "Mana Drain — counter + add mana (Legacy/Vintage staple)"
+      - id: 956381ba-6d37-4a8a-846c-bad79222dbee
+        why: "Force of Will — pitch counter, eternal-format defining"
+      - id: f3e213a4-ba5a-468a-93b3-c0a34e1bd725
+        why: "Pact of Negation — free counter with delayed cost"
+      - id: 1a0770e6-b093-4439-baff-6889a50ba12e
+        why: "Mental Misstep — 0-mana counter for 1-mana spells"
+      - id: ecc435e2-deb1-420a-a79f-01dd08747314
+        why: "Pyroblast — red counter against blue spells"
+      - id: 6623cb85-fb1e-4561-8b21-0977c25096c2
+        why: "Tibalt's Trickery — random counter via cascade"
+      - id: bb27bfdf-fe8d-45bd-ad62-8118dce06eda
+        why: "Rewind — counter + untap four lands"
+      - id: 282dfeaa-6243-4f92-838a-5cb54fa85184
+        why: "Three Steps Ahead — Spree counter mode"
+      - id: 59c7496b-19a2-478b-b28f-6f153c2458ae
+        why: "Siren Stormtamer — 1-mana counter-on-creature on a stick"
+      - id: 0f264e5b-264e-4e97-9a8d-8ae1d6a286ce
+        why: "Drown in the Loch — modal counter (or kill)"
+      - id: 437cfd16-94bc-43ba-afd8-e9e9d028a4ca
+        why: "Flare of Denial — sac-for-free counter"
+      - id: cd11c27b-9368-4622-bc5a-2e0b993cc42b
+        why: "Mystic Confluence — modal triple counter or draw"
+      - id: 4c1c1537-e519-4e2f-9bc2-d34b289d4487
+        why: "Kozilek, the Great Distortion — Eldrazi counter on a stick"
+      - id: f1993767-1d07-49c8-b8dc-04ec9840a999
+        why: "Long River's Pull — bounce + counter modal"
+      - id: f5822e53-ddec-4c77-bcf4-091e35c1e731
+        why: "Rebuff the Wicked — white counter for permanents you control"
+      - id: a3e51a35-09df-4189-b131-08a21e6a557d
+        why: "Cryptic Command — four-mode includes counter"
+      - id: c61fe162-2202-4e56-9ba0-393547f9875f
+        why: "Mana Leak — soft counter unless 3"
+      - id: 56148ae7-a9df-4771-8d53-d9ffb815c884
+        why: "Sublime Epiphany — four-mode counter + draw"
+      - id: 85cbb035-25df-43bb-ae06-ab098f448b02
+        why: "Archmage's Charm — three-mode counter, take artifact, or draw 2"
+      - id: 88b51e15-6630-4e14-a6b8-db0aa12e34ef
+        why: "Disallow — counter spell, ability, or triggered ability"
+      - id: 983caa3f-7089-4e66-825d-4086a5adb9bb
+        why: "Delay — 3-turn delay counter"
+      - id: eb1dfa29-7371-4cb6-bfa2-16f7820b69be
+        why: "Refute — counter creature spells with revolt"
+      - id: 7d00fb28-ea6c-49a9-b4af-ffb38860a9a7
+        why: "Cancel — vanilla 3-mana counter"
+      - id: a8f5cfa7-4956-4182-8e44-acf3493239f0
+        why: "Dawn Charm — modal, one mode is counter target spell that targets you"
+      - id: 948217ac-289e-455f-8c7c-519aa75fa345
+        why: "Mana Tithe — white Force Spike (counter unless 1)"
+      - id: 5da5d8a3-009e-4d8a-977e-6ebc73ba2682
+        why: "Not of This World — free counter for spells targeting your creatures"
+      - id: 11e02134-7b1a-46a4-a89e-7539dd1efada
+        why: "Disdainful Stroke — counter spell mana value 4+"
+      - id: 941a4b14-ea2a-4bd0-8cc2-d609f80df32c
+        why: "Jwari Disruption // Jwari Ruins — counter unless 3, or land"
+
+  - id: q_008
+    query: "board wipes"
+    difficulty: medium
+    category: jargon
+    batch: 3
+    notes: |
+      Player jargon for mass non-targeting permanent removal — community consensus
+      (MTG Wiki, Star City Games / Sheldon Menery, Draftsim, EDHREC) defines it as
+      an umbrella spanning: creature wipes (Wraths), Disk effects (all non-land
+      permanents), Worldslayers (includes lands), artifact wipes, enchantment
+      wipes, mass land destruction (MLD — a subset, socially distinct), and
+      mass bounce (Cyclonic Rift, Evacuation et al.).
+    scryfall_queries:
+      - 'o:"destroy all creatures" order:edhrec'
+      - 'o:"destroy all nonland permanents" order:edhrec'
+      - 'o:"destroy all artifacts" order:edhrec'
+      - 'o:"destroy all enchantments" order:edhrec'
+      - 'o:"destroy all lands" order:edhrec'
+      - '(o:"return all creatures" or o:"return all nonland permanents") o:"hand" order:edhrec'
+    relevant:
+      - id: 09cc8709-fe10-472a-b05c-e89f3523018d
+        why: "Austere Command — modal mass destruction"
+      - id: d57a8f0b-7989-4db5-8756-6f2690097252
+        why: "Damnation — black 4-mana board wipe"
+      - id: 0230de18-8d15-4cfa-9d42-7ccddd9f9570
+        why: "Supreme Verdict — uncounterable Wrath"
+      - id: 34515b16-c9a4-4f98-8c77-416a7a523407
+        why: "Wrath of God — canonical board wipe"
+      - id: ccaa44f2-96be-44e2-884f-c31baa3908d5
+        why: "Kindred Dominance — tribal-asymmetric wipe"
+      - id: 05e6b243-48a6-4a42-bc5f-413441de9c33
+        why: "Elspeth, Sun's Champion — -3 destroys creatures with power 4+"
+      - id: a332e80a-dc51-4dc6-bc85-e114a1c6fdb8
+        why: "Vanquish the Horde — scaling mass-destruction"
+      - id: 7bc3f92f-68a2-4934-afc4-89f6d0e8cf98
+        why: "Dusk // Dawn — Dusk destroys creatures with power 3+"
+      - id: b17ea905-0696-4e58-b564-557e87236e27
+        why: "Fumigate — 5-mana Wrath + life"
+      - id: aff34f28-f707-4458-8af3-1bd5b13a6b10
+        why: "Cleansing Nova — 5-mana modal Wrath"
+      - id: 355ed7ef-bfa6-4538-99fb-a2d203eb7005
+        why: "Damning Verdict — destroys creatures without counters"
+      - id: 932668fa-d6e3-41c0-ad0c-8e0a00e68d11
+        why: "Decree of Pain — Wrath + draw a card per creature"
+      - id: 36c78a5f-0148-4596-a346-f8e35037b694
+        why: "Time Wipe — bounce-all variant"
+      - id: a6899b94-427d-4851-a474-4087e0a0918a
+        why: "In Garruk's Wake — asymmetric Wrath"
+      - id: 1fbb2a7c-8093-4729-b8fe-cf032d99470f
+        why: "Fell the Mighty — power-based asymmetric wipe"
+      - id: a6fd90dc-0ec3-4dce-a77a-4d04f5e254bf
+        why: "Winds of Rath — enchantment-asymmetric Wrath"
+      - id: 75f5d372-4ff9-430c-8302-72472439e0d2
+        why: "Blood Money — Wrath + treasure tokens"
+      - id: a94c191d-a938-458e-bc1b-2f44fd8873a3
+        why: "The Battle of Bywater — Lord of the Rings sweeper"
+      - id: d057289d-5e28-43d5-8ff3-4a1bc723477d
+        why: "Day of Judgment — 4-mana Wrath without regen prevention"
+      - id: 7e7ec3d6-a84f-4cc3-93f4-4d181d41e126
+        why: "Final Showdown — modal Wrath"
+      - id: 7024532b-f99b-43a7-b0ed-5b3e7ec7592b
+        why: "Starfall Invocation — Bloomburrow scaling sweeper"
+      - id: 0f2d038e-6dab-4352-9ba7-ed9e063bb304
+        why: "Force of Despair — pitch sweeper (this-turn entered creatures)"
+      - id: 744b7e93-c893-4770-a3bb-6a45b7f8e4f7
+        why: "Expel the Interlopers — selective sweeper"
+      - id: e1976b6c-7e43-4f4a-b082-f95495a1b260
+        why: "Singularity Rupture — newer board wipe"
+      - id: b48a149c-aead-43b2-a99e-c964d6d28aa0
+        why: "Necromantic Selection — Wrath + reanimate one"
+      # --- Disk effects (all non-land permanents) ---
+      - id: a6f38908-aa4f-4f99-a28e-85d11dab52e4
+        why: "Ruinous Ultimatum — destroys all nonland permanents opponents control"
+      - id: 15fc4e74-300e-4c2d-8ed7-004553b2f7c2
+        why: "Ondu Inversion — kicker mass-destruction or land"
+      - id: 920c1dd4-c3f6-4020-a6f0-2e8acad2c212
+        why: "Hour of Revelation — discounted Disk-effect Wrath"
+      - id: 85b8902f-2515-4ded-b28a-a83334f089f1
+        why: "Boompile — coin-flip Disk"
+      - id: 70dbe8a9-505d-41c2-9b5b-a991d13ab459
+        why: "Child of Alara — sacrifice/dies triggers destroy all nonland permanents"
+      - id: a98c2d81-4add-4292-bbdd-e1b69ff936d4
+        why: "Planar Cleansing — 5-mana destroy all nonland permanents"
+      - id: 07bfb7d2-f171-4ce1-876a-f9fb5c7cd11a
+        why: "Devastating Mastery — Disk effect with kicker"
+      - id: 072db429-3838-42ba-89b6-e26cbce22af9
+        why: "Pest Control — scaling Disk effect"
+      - id: fef502af-6e79-4c55-a86a-b45adb3fc64a
+        why: "Plague Boiler — counter-scaling Disk"
+      # --- Artifact wipes ---
+      - id: 51f9a6cc-8eb2-44ed-a2d9-913ac514ad67
+        why: "Bane of Progress — green artifact+enchantment mass-destroy creature"
+      - id: 96230edf-568a-47dd-b877-9d92aa58fac8
+        why: "Nevinyrral's Disk — namesake Disk-effect artifact"
+      - id: 25012c1f-c069-43d7-b930-a3a5a7eb1389
+        why: "Dismantling Wave — modal artifact wipe + cycling"
+      - id: 533767ca-7208-4c88-b160-375479b68285
+        why: "Fade from History — artifact wipe with bonus token"
+      - id: ae19dce5-c9fc-4fbe-99b5-dc6a12124a68
+        why: "Akroma's Vengeance — Disk effect destroying creatures/artifacts/enchantments"
+      - id: fe7bf8ca-88ae-4c6d-8d71-ef170a87c0d0
+        why: "Brotherhood's End — modal red artifact and creature wipe"
+      - id: ce690a21-8117-420e-be00-cd6d9923a812
+        why: "Anzrag's Rampage — red artifact destruction"
+      - id: 5dc34e93-97e3-434b-9f12-f45c6d556f13
+        why: "Rampage of the Clans — destroy all artifacts/enchantments, give Centaurs"
+      - id: 33eefb22-51a6-4630-9bd2-0895997f6f33
+        why: "Creeping Corrosion — green destroy all artifacts"
+      - id: 47496941-8007-45a0-a981-76c683cbddc1
+        why: "Obliterate — uncounterable destroy all artifacts/creatures/lands"
+      # --- Enchantment wipes ---
+      - id: b8d8ece6-397e-4bc9-b86c-7caa1d675d0f
+        why: "Back to Nature — instant 1G mass enchantment removal"
+      - id: 658bccf8-fe73-4d6a-b37b-7a58034e5e5d
+        why: "Cleansing Meditation — modal enchantment wipe"
+      - id: c70ae479-0bd1-481c-885f-16bfa096cf58
+        why: "Calming Verse — 4-mana enchantment wipe"
+      - id: e670d1c9-5e28-4df8-aad9-d08d19dc74e9
+        why: "Reverent Silence — green enchantment wipe"
+      - id: 0dc9acfb-3f8b-4a34-b44c-5cc62689904b
+        why: "Patrician's Scorn — convoke enchantment wipe"
+      - id: 9b3b81cf-f020-4e1e-95c7-db44ca153dc1
+        why: "Spring Cleaning — green enchantment wipe"
+      - id: e14ac0f3-00d5-4a95-990c-b7ea157bb87e
+        why: "Paraselene — destroy all enchantments + life"
+      - id: 9399ed27-31c7-4d6a-99eb-644b74e67344
+        why: "Tempest of Light — destroy all enchantments"
+      # --- Mass land destruction (MLD) ---
+      - id: c9ed8b01-959a-47d6-891e-0abbdccf6e4f
+        why: "Armageddon — canonical MLD (destroy all lands)"
+      - id: 6679b462-3c90-418c-8727-acd1a61d988b
+        why: "Decree of Annihilation — exile-everything Worldslayer"
+      - id: ed68160e-5e3d-44f2-ac7a-3749fda10119
+        why: "Catastrophe — modal land/creature wipe"
+      - id: cf0799f3-ef64-4fcc-924a-5265e52c9727
+        why: "Impending Disaster — sacrifice mass land destruction"
+      - id: 341803d9-fd29-4721-81bf-ae9b7f1c01d2
+        why: "Fall of the Thran — Saga MLD"
+      - id: 514fdac0-95f4-4034-b891-283fe0fb6da6
+        why: "Boom // Bust — fuse for single+mass LD"
+      - id: f953afdf-96f7-4851-994c-1617e8f5e5c9
+        why: "Ajani Vengeant — planeswalker ultimate is MLD"
+      - id: aba1d01e-c340-47a3-8432-9d8c4a5cdfe0
+        why: "Myojin of Infinite Rage — sac for MLD"
+      - id: 4362efe4-339d-40e1-bd72-3cc9e41bf93f
+        why: "Bend or Break — partial MLD via piles"
+      - id: 87f82107-eaba-484a-800d-e61a0cc5e1f2
+        why: "Desolation Angel — kicker MLD"
+      # --- Mass bounce ---
+      - id: d75b9c82-1b49-4c3e-a1b5-aeef57d6644b
+        why: "Cyclonic Rift — canonical mass bounce (overload nonland permanents)"
+      - id: fdd94383-b573-439a-8e1c-925af887c5a6
+        why: "Evacuation — instant mass bounce all creatures"
+      - id: e510eaaf-6497-480f-baa8-f4796b5f1086
+        why: "Whelming Wave — bounce all non-tribal creatures"
+      - id: c52cfb41-18f3-4e73-b5e7-d75baf74e578
+        why: "River's Rebuke — single-player mass bounce"
+      - id: 4245ee98-2d4c-49d1-8d07-80760cae2bf9
+        why: "Devastation Tide — miracle-cost mass bounce"
+      - id: 24cd8f54-c1d4-4040-93bf-a7b9b719ac30
+        why: "Consuming Tide — asymmetric mass bounce"
+      - id: 3d92f2e6-27df-4329-b552-cf905f7616ba
+        why: "Flood of Tears — mass bounce + put one back"
+      - id: 4ede153c-89cb-4121-bf23-a1d213d6f238
+        why: "Crush of Tentacles — Surge mass bounce with token"
+      - id: 2b3fc609-7b19-441a-ab7e-58ccd70d955b
+        why: "Displacement Wave — variable-cost bounce by MV"
+      - id: e42b6bd7-8fdf-4452-85cc-9aed790ff682
+        why: "Coastal Breach — mass land bounce"
+      - id: a2099033-42d9-47ac-90c7-b41b55b7dadd
+        why: "Hurkyl's Final Meditation — mass artifact bounce"
+      - id: f55a3781-fe33-4301-9bb5-6a54b9c13c4f
+        why: "Raise the Palisade — selective mass creature bounce"
+      # --- Catch-all Worldslayer ---
+      - id: 8d90ffb5-63da-48d5-a5a2-7b61062556f6
+        why: "Exterminatus — Warhammer 40k destroy all nonland permanents"
+      - id: 759406d7-44ae-4260-9ef5-3bb2c92f751a
+        why: "Urza, Planeswalker — ultimate destroys all nonland permanents"
+
+  - id: q_009
+    query: "removal"
+    difficulty: medium
+    category: jargon
+    batch: 3
+    notes: |
+      Player jargon for single-target answers to creatures. Spans five
+      sub-categories: destroy (Murder, Terminate), exile (Swords to Plowshares,
+      Path to Exile), bounce (Boomerang, Unsummon), edict / forced sacrifice
+      (Diabolic Edict, Innocent Blood), and -X/-X (Dismember, Tragic Slip).
+      Damage-based removal (Lightning Bolt killing a Llanowar Elves) is
+      borderline — it removes creatures in practice but its primary identity
+      is "burn" not "removal".
+    scryfall_queries:
+      - 'o:"destroy target creature" order:edhrec'
+      - 'o:"exile target creature" o:"its controller" order:edhrec'
+      - 'o:"return target creature" o:"to its owner" order:edhrec'
+      - 'o:"target opponent sacrifices a creature" order:edhrec'
+      - 'o:"target creature gets -" o:"until end of turn" -t:creature order:edhrec'
+    relevant:
+      - id: 5825997b-10d7-4a36-972c-a80ddd90b8ed
+        why: "Feed the Swarm — black/colored-permanent destroy"
+      - id: 05849bd6-8f38-4031-be2b-e2aa03beb8cc
+        why: "Pongify — destroy creature, make 3/3 ape"
+      - id: 06692cd9-ac2f-4a32-8fd1-043ba3c0fe71
+        why: "Rapid Hybridization — blue Pongify variant"
+      - id: 053a69d8-2b5e-4f14-8b02-ca405891dc4a
+        why: "Fell the Profane — modern black kill"
+      - id: 6257c2fd-005f-41e3-8a72-af76df1eb134
+        why: "Terminate — efficient BR kill, no regen"
+      - id: 94f0a572-e91c-4b56-a5d1-6cbbeabd210d
+        why: "Infernal Grasp — modern 2-mana B kill"
+      - id: ffce81c5-1b58-4882-a4e7-6f8d7cb170de
+        why: "Withering Torment — 1-mana B kill at life cost"
+      - id: b01d61cc-9844-4191-86a0-f2db6d42d6e5
+        why: "Damn — single kill or kicker for Wrath"
+      - id: faa01ed1-ccfa-4e58-951f-cd81f9068027
+        why: "Mortify — WB destroy creature/enchantment"
+      - id: eea18c55-8695-4ba1-9b38-3e7638692f5f
+        why: "Saw in Half — kill + 2 copies tokens"
+      - id: 938b4e2c-88d9-4637-bc00-e228920c9a78
+        why: "Murder — vanilla 3-mana B kill"
+      - id: f78af825-023a-42e9-8374-5c52303a1417
+        why: "Elspeth, Storm Slayer — planeswalker with removal in abilities"
+      - id: 776341cb-d2ec-423f-9250-92dc8bd8d503
+        why: "Bitter Triumph — modal black removal"
+      - id: 7b459306-149b-4f43-abc1-2dd70c748c0e
+        why: "Ravenous Chupacabra — ETB removal creature"
+      - id: c4660b3c-a234-4a3e-83e7-e2fa9d556685
+        why: "Lethal Scheme — Conspiracy-set removal"
+      - id: 1080c5b5-6651-4c6a-93e6-099fbe389e26
+        why: "Murderous Rider // Swift End — Adventure removal"
+      - id: 522dd417-364b-44ab-8ca9-fb55db5f26a6
+        why: "Get Lost — exile a nonland for clue compensation"
+      - id: 5c6c8fe7-3520-423b-a224-1c0af516871a
+        why: "Casualties of War — modal multi-removal"
+      - id: 0efb0d7e-dea0-4817-a243-15066e9ef333
+        why: "Grist, the Hunger Tide — planeswalker creature with -2 removal"
+      - id: 03df6a57-37c9-46d3-83b3-4a6240100714
+        why: "Hero's Downfall — kill creature or planeswalker"
+      - id: 37783ce6-af58-4ef6-8ab4-587079970307
+        why: "Hagra Mauling // Hagra Broodpit — modal land/removal"
+      - id: 032f59c3-9f47-4db3-a43c-065a99ed7efe
+        why: "Summon: Primal Odin — XL removal"
+      - id: 1f938353-9081-4dc1-b8e7-d18ece038bd4
+        why: "Valorous Stance — modal protect or kill"
+      - id: 6e760cfe-45b9-4a3f-b2e2-4ca6ec2bd13a
+        why: "Bone Shards — sacrifice for kill"
+      # --- Exile removal ---
+      - id: b1544f21-7e98-461b-aed5-e748b0168c52
+        why: "Swords to Plowshares — canonical white exile (1 mana, gives controller life)"
+      - id: d683d985-9888-4d21-8b5f-69e69ce4a03b
+        why: "Path to Exile — canonical white exile (gives basic land)"
+      - id: 70dc830e-d05b-4fc7-88dd-879e140b3fbf
+        why: "Reality Shift — exile creature, owner manifests top card"
+      - id: 499a4715-6776-461b-bee4-22ed172d455e
+        why: "Winds of Abandon — overload-able mass exile"
+      - id: 2987c385-011a-4032-a516-a46d1e9dc9e8
+        why: "Crib Swap — exile + changeling token"
+      - id: fbafe993-8118-40cc-9cb7-ee3f62a2c888
+        why: "Contraband Livestock — exile + token compensation"
+      - id: aa91d092-7f4a-4e4d-85db-e200692f3d9d
+        why: "Lay Down Arms — 1W exile with Plains rider"
+      - id: 8a70ddc5-bb51-45eb-96f2-8ecaecac0cc2
+        why: "Ajani Unyielding — planeswalker +2 ability includes exile"
+      - id: 402c3afe-7041-41a3-8fcd-64a060c12d4a
+        why: "Anoint with Affliction — modal black exile"
+      - id: 5a898412-5b1e-4217-ac78-5b4099ed8e16
+        why: "Angelic Ascension — exile + 4/4 Angel token compensation"
+      - id: 49554441-bb48-4829-b8d6-55e687a6c2e2
+        why: "Declaration in Stone — exile any number with same name + clue tokens"
+      - id: 15474e82-94b4-47e1-b91c-3deaf4dbffd6
+        why: "Ajani, Inspiring Leader — planeswalker exile mode"
+      - id: 835c195a-8c35-4076-896d-8d2972cac270
+        why: "The End — exile creature with conditional rider"
+      - id: e6fb4f0d-ce49-4913-a2ef-88365e4916cf
+        why: "Last Breath — 1W exile of low-CMC creature"
+      - id: d97fd43b-146f-4d13-9c45-51bceaff742e
+        why: "Hour of Glory — exile creature, big effect on God"
+      # --- Bounce removal ---
+      - id: ac914d98-221e-426c-8a50-342896b15f9e
+        why: "Snap — efficient instant bounce with untap rider"
+      - id: 8cb36a67-9206-4665-a03f-64f52ba559c4
+        why: "Into the Flood Maw — Adventure-style bounce"
+      - id: c767aa2e-0a95-401f-8e36-d90a87648eab
+        why: "Simic Charm — modal includes bounce"
+      - id: 4b033a0a-c1ae-44d7-9662-72cbbfda024b
+        why: "Aether Spellbomb — repeatable artifact bounce"
+      - id: 837182db-1bf3-4a2c-bd01-1af9d9873561
+        why: "Unsummon — vanilla 1U creature bounce"
+      - id: 51b47053-d169-4627-982f-f29b8630d75f
+        why: "Sigil of Sleep — recurring bounce when this deals damage"
+      - id: 9c0f7cdc-9095-40ae-bf83-75a5ffda72b9
+        why: "Quandrix Command — modal command, one mode is bounce"
+      - id: 5398362d-c45e-4d56-a622-8be1124730b9
+        why: "Reflector Mage — ETB bounce + can't be cast next turn"
+      - id: 5bafd0e0-8bf8-4e06-a54a-81cc6cc4bdb7
+        why: "Stolen by the Fae — modal bounce + token"
+      - id: e88de17c-086d-4e2a-b5b2-2f9f57ca7c0f
+        why: "Snapback — pitch-cost free bounce"
+      - id: cd8ccb10-a2c8-4a84-aa41-6ce6018f9bb7
+        why: "Crystal Shard — repeatable bounce artifact"
+      # --- Edict (forced sacrifice) ---
+      - id: 68a58e0b-1506-492e-8ca3-016e520c10ba
+        why: "Cornered by Black Mages — Final Fantasy edict effect"
+      - id: 01294ac9-1a06-4ee8-b3b1-db1f07c9d94e
+        why: "Cruel Ultimatum — massive grixis edict + other effects"
+      - id: b548578c-4910-402c-8e78-498924e0a9be
+        why: "Consumed by Greed — edict + life loss"
+      - id: 54e1b7f3-096a-4eb0-bcce-cce036d6cbe5
+        why: "Riveteers Charm — modal includes edict"
+      - id: f9ee4c80-20fb-4322-be02-1c78d37d7a99
+        why: "Invoke Despair — multi-trigger edict with payoff"
+      - id: b8f3da11-7c8f-4846-98a6-204bfd8d572b
+        why: "Blighted Fen — land that taps to edict"
+      - id: 32c84176-cf11-4010-b1cc-ed570a8c3e54
+        why: "Pharika's Libation — modal edict + discard"
+      - id: dc5a501c-e16c-4d4b-a510-70a14272473e
+        why: "Tribute to Hunger — edict + life gain"
+      - id: 6075b999-75c5-41c8-898d-ee612ba79a92
+        why: "Silverquill Command — modal includes edict"
+      - id: 63957ec0-89e6-4be2-8740-846ca56ee48c
+        why: "Scarring Memories — edict + discard"
+      - id: 6480ab32-3a29-4449-8ff7-c8e43c320ed3
+        why: "Din of the Fireherd — kicker edict + tokens"
+      # --- -X/-X removal ---
+      - id: fa6e2a47-a8cb-4224-ae3e-f61c90477285
+        why: "Tragic Slip — -13/-13 conditional (Morbid)"
+      - id: fd74f8eb-0253-42dd-8277-186d4934da38
+        why: "Dismember — phyrexian-mana -5/-5"
+      - id: 49dddec0-d958-4810-8c6e-225fc8118c8f
+        why: "Defile — scaling -X/-X by Swamps"
+      - id: fae36da0-bf9c-484f-b2fe-dd8ab2effc5c
+        why: "Virtue of Persistence — Spell side gives -X/-X"
+      - id: e4912bc3-bee9-4a2f-a13e-3a99018f8a65
+        why: "Drown in Ichor — -3/-3 conditional"
+      - id: 571cb4b6-b4e5-40a2-a970-42c1ab65c8a9
+        why: "Overkill — -X/-X with kicker"
+      - id: 23c2cdc9-2b16-423a-b932-2daadeb1021b
+        why: "Whisper of the Dross — -1/-1 with rider"
+      - id: af105cda-1f7c-4868-9407-a97c46bd762d
+        why: "Black Sun's Twilight — modal X-scaling -X/-X"
+      - id: 6f9ecfc4-85bd-4171-9031-dbe0e39e0135
+        why: "Profane Command — modal includes -X/-X mass"
+      - id: e078585e-7058-4746-a884-3c9a14630a1b
+        why: "Erebos's Intervention — modal -X/-X or graveyard"
+      - id: afaef788-34d1-460b-b884-9d7ae6ddeb18
+        why: "Toxic Deluge — mass -X/-X for X life (Wrath-tier sweeper)"
+    borderline:
+      - id: 0f264e5b-264e-4e97-9a8d-8ae1d6a286ce
+        why: "Drown in the Loch — modal (counter OR kill); primarily a counter"
+      - id: 4457ed35-7c10-48c8-9776-456485fdf070
+        why: "Lightning Bolt — burn that kills small creatures; primary identity is burn, removal is a side use"
+      - id: f34b9bc4-7bfe-47fd-ba23-4eeeb46026eb
+        why: "Lightning Strike — burn variant, same borderline as Bolt"
+      - id: 800c258a-cfc4-4a54-a667-065ea8dea69e
+        why: "Lightning Helix — burn + life; same borderline"
+
+  - id: q_010
+    query: "card draw engines"
+    difficulty: medium
+    category: jargon
+    batch: 3
+    notes: "Repeatable card-advantage sources. Excludes one-shot draw (those are q_003). Includes permanents that trigger repeated draws or grant ongoing draw."
+    scryfall_queries:
+      - '(t:enchantment or t:artifact) o:"draw a card" -t:creature order:edhrec'
+    relevant:
+      - id: 53236dd7-845a-444c-96d5-f41ed7325d8f
+        why: "Rhystic Study — canonical repeating draw engine"
+      - id: 3aa83ed2-f48b-4ce6-a614-2c54ddf50538
+        why: "The One Ring — burden-counter draw engine"
+      - id: 3127ae9b-a7a7-43ec-89d7-688f8445b33d
+        why: "Garruk's Uprising — creature-ETB draw engine"
+      - id: 8a52f3c0-2552-4425-b2e3-5496eb2232a7
+        why: "Mystic Remora — cumulative-upkeep draw engine"
+      - id: ee579a32-a048-4335-b966-231ba731cdea
+        why: "Phyrexian Arena — canonical upkeep draw engine"
+      - id: d2664f28-49e1-46f8-a863-b217e961a57c
+        why: "Black Market Connections — modal draw engine"
+      - id: c232d974-9c65-4bce-b045-e5a7cc0c62e0
+        why: "Idol of Oblivion — token-trigger draw engine"
+      - id: 78427103-9543-41fb-b6d4-72963fe87275
+        why: "The Great Henge — ramp + creature-ETB draw engine"
+      - id: 4f9e07ae-6341-4b46-9f77-f17ab659d266
+        why: "Guardian Project — unique-creature draw engine"
+      - id: 005ee549-1bf5-478f-bc3f-3e791bd7eecf
+        why: "Kindred Discovery — tribal trigger draw engine"
+      - id: 8cf38025-5821-45a0-9483-266353b7e82d
+        why: "Vanquisher's Banner — tribal cast-draw engine"
+      - id: e1afaef7-9fa3-4662-a95f-adfb0da9fd11
+        why: "Bident of Thassa — combat damage draw engine"
+      - id: d9a7e5a6-3e41-4fc6-987a-18fe1b9d67dd
+        why: "Elemental Bond — power 3+ creature draw"
+      - id: 72deedab-7c17-4505-aeca-4bc8596d80a5
+        why: "Tribute to the World Tree — creature ETB draw or counters"
+      - id: 1c9e1f75-73f0-4846-b53f-458a0984b1bb
+        why: "Teferi's Ageless Insight — passive draw doubler"
+      - id: 223fa044-d387-4884-bf4e-75f1b61c6a46
+        why: "Curiosity — aura combat-damage draw"
+      - id: f349f58b-8cc8-45e4-9565-2b46fdf976c9
+        why: "Trouble in Pairs — punishment draw"
+      - id: 36f68aa3-9955-46f1-bc87-497f16ef5222
+        why: "Wizard Class — level-up draw 2"
+      - id: c97957a2-8310-4cff-8aad-871b7901d124
+        why: "Caretaker's Talent — token-trigger draw engine"
+      - id: 11bf211c-95a3-4e7f-bd08-13f979d54e73
+        why: "Reconnaissance Mission — flying-tribal draw engine"
+    borderline:
+      - id: 13575cf9-65c1-4861-b21e-eb2155e07766
+        why: "Sensei's Divining Top — recurring but net-zero per turn (the draw it grants is what you'd have drawn anyway next turn). Functions as deck-stacking + a combo enabler more than as a draw engine"
+    rejected:
+      - id: c97361b5-af16-4a7b-af85-a429dbaf4ad2
+        why: "Mind Stone — primarily a mana rock; the sac-for-draw is one-shot card replacement, not net-positive repeatable draw"
+      - id: 0b67c4e2-f88b-4e01-85a1-9d5f5b8db13b
+        why: "Commander's Sphere — same shape as Mind Stone, one-shot sac for replacement"
+      - id: a492a323-df8a-40fd-bff0-50091baa7700
+        why: "Kenrith's Transformation — single ETB draw replaces the card, then no further draw; not an engine"
+      - id: 2962fe4c-bf48-454b-8a6b-0f8253352ae8
+        why: "Spelunking — single ETB draw + land flow; no repeatable draw mechanism"
+
+  - id: q_011
+    query: "tutor"
+    difficulty: medium
+    category: jargon
+    batch: 3
+    notes: "Player jargon: 'tutor' = search your library for a specific card and put it in hand. Originated from Demonic Tutor."
+    scryfall_queries:
+      - "name:\"Demonic Tutor\" or name:\"Vampiric Tutor\" or name:\"Mystical Tutor\" or name:\"Worldly Tutor\" or name:\"Diabolic Tutor\" or name:\"Imperial Seal\" or name:\"Gamble\" or name:\"Idyllic Tutor\" or name:\"Eladamri's Call\" or name:\"Enlightened Tutor\" or name:\"Sylvan Tutor\" or name:\"Grim Tutor\" or name:\"Beseech the Queen\" or name:\"Personal Tutor\" or name:\"Drift of Phantasms\" or name:\"Insidious Dreams\" or name:\"Solve the Equation\" or name:\"Eldritch Evolution\""
+    relevant:
+      - id: cf94cafc-527e-4b27-8a28-7807435aaccf
+        why: "Beseech the Queen — scaling-cost tutor for X-or-less"
+      - id: 82004860-e589-4e38-8d61-8c0210e4ea39
+        why: "Demonic Tutor — the canonical tutor (find any card)"
+      - id: 14589b6b-1814-46f9-a364-83cc15dacac2
+        why: "Diabolic Tutor — 4-mana flexible tutor"
+      - id: 6ee51134-c4ad-4101-8ce2-23dde9359cd4
+        why: "Drift of Phantasms — transmute tutor for 3-mana cards"
+      - id: 4acb6612-54e8-428d-acb6-c7259a5ad6a8
+        why: "Eladamri's Call — creature tutor at instant speed"
+      - id: 0f77c0c9-4dc4-489a-b547-e93287c4d1a5
+        why: "Eldritch Evolution — sacrifice-for-creature tutor"
+      - id: 93056597-b964-421f-be2f-e92abef1c2a4
+        why: "Emeritus of Woe // Demonic Tutor — Strixhaven prepare-card with Demonic Tutor as spell side"
+      - id: c5229c17-b7be-4b05-b683-f2277edc4849
+        why: "Enlightened Tutor — instant tutor for artifact/enchantment, top of library"
+      - id: a54f0869-94c8-42af-9080-166efb9486a4
+        why: "Gamble — discard-rider but flexible tutor"
+      - id: e62f8d69-a559-4f13-a5c9-5fb750b4af2c
+        why: "Grim Tutor — 3-life rider Demonic Tutor"
+      - id: 57c9ff89-dd30-467b-bb3e-499eeea8cb94
+        why: "Idyllic Tutor — enchantment tutor"
+      - id: 16cd0b90-f70c-4efa-b252-8de8784ef9a3
+        why: "Imperial Seal — sorcery Vampiric Tutor"
+      - id: 4badd4e0-e5d7-4516-b220-cea2b02c79aa
+        why: "Insidious Dreams — multi-tutor via discard"
+      - id: fb81f95c-70f8-4eb7-8d15-15d0ae23ec03
+        why: "Mystical Tutor — instant/sorcery tutor (top of library)"
+      - id: 90f54959-2c9b-4b8a-84c9-d6893eb43553
+        why: "Personal Tutor — sorcery tutor (top of library)"
+      - id: f02682f0-26c0-4032-9df3-273b6a45d0a8
+        why: "Solve the Equation — instant/sorcery tutor"
+      - id: ededbdae-d9dc-4206-9335-d7158f2d7700
+        why: "Vampiric Tutor — instant tutor at 2-life cost"
+      - id: e8863518-0bfa-49c3-8c6e-6c9116a81051
+        why: "Worldly Tutor — creature tutor (top of library)"
+      # --- ETB / triggered-ability creature tutors ---
+      - id: d521a329-a53a-4962-810a-2abed80df260
+        why: "Recruiter of the Guard — ETB tutor for toughness-2-or-less creature"
+      - id: 4d6a1391-817a-4ddc-840d-886b138eeb3f
+        why: "Imperial Recruiter — ETB tutor for power-2-or-less creature"
+      - id: 2e7a9ea9-f76c-4c12-950f-c613fa16cfa8
+        why: "Captain Sisay — tap-trigger legendary tutor"
+      - id: 0fe01c7d-f435-44c1-82f1-0ec2c47d4704
+        why: "Heliod's Pilgrim — ETB tutor for aura"
+      - id: 358789f9-7d87-411d-919e-d597da665cbd
+        why: "Stoneforge Mystic — ETB tutor for equipment (modern-format staple)"
+      - id: b3d99ea0-d61f-4394-8913-b4057c38ff3e
+        why: "Stonehewer Giant — attack-trigger tutor for equipment + attach"
+      - id: ffc95093-24a2-4616-a44a-24788e8df9c8
+        why: "Trinket Mage — ETB tutor for MV-1 artifact"
+      - id: c2b51295-8820-425f-a517-55231123c7de
+        why: "Tribute Mage — ETB tutor for MV-2 artifact"
+      - id: 08afc0d7-192f-4ab6-b6a0-c4265cf5e225
+        why: "Trophy Mage — ETB tutor for MV-3 artifact"
+      - id: 0848bb49-5758-41d6-a3e8-0c62e1768f52
+        why: "Treasure Mage — ETB tutor for MV-6+ artifact"
+      # --- Artifact-specific tutors ---
+      - id: 422e1869-134f-463d-9fa1-86b66a998b3e
+        why: "Fabricate — 3-mana sorcery artifact tutor"
+      - id: 152b91c9-cc07-4ca8-944f-9bc2242a2283
+        why: "Whir of Invention — improvise artifact tutor (puts onto battlefield)"
+      - id: 42a3855d-25ab-45b3-9e5d-9a0f3da35a05
+        why: "Reshape — sac-an-artifact tutor for a bigger one"
+      - id: 4aeafdf3-7828-4114-8c74-3bd46357caec
+        why: "Tezzeret the Seeker — planeswalker, −X ability is artifact tutor"
+      - id: d9abda7e-6ca2-42ea-ab24-c542e57014f1
+        why: "Steelshaper's Gift — 1-mana equipment tutor (top of library)"
+      # --- Enchantment-specific tutors ---
+      - id: 2c275a85-5a15-46cd-a6e7-add63f9b853d
+        why: "Sterling Grove — enchantment-tutoring enchantment (sac to find another)"
+      - id: b3f9da94-c822-49b8-a1fc-be82189206af
+        why: "Three Dreams — sorcery, tutor up to 3 auras"
+      - id: 358cfcf3-8ad0-4877-a59a-76ee269169fb
+        why: "Plea for Guidance — sorcery, tutor up to 2 enchantments"
+      - id: 2ecf7771-8061-4710-ad2e-80b092ae0b4b
+        why: "Open the Armory — 1-mana aura/equipment tutor"
+    rejected:
+      - id: acdd5082-7b3c-4fd3-941b-d19dd72698ec
+        why: "Setzer, Wandering Gambler — creature, not a tutor; matched the name search on 'Gambler'"
+
+  - id: q_012
+    query: "graveyard recursion"
+    difficulty: medium
+    category: jargon
+    batch: 3
+    notes: |
+      Cards that return creatures from graveyard to battlefield (reanimation)
+      or to hand (value recursion). EDHREC cross-validation of the Reanimator
+      theme page surfaced major staples my initial Scryfall query missed —
+      Reanimate, Animate Dead, Necromancy, Sun Titan, Living Death — because
+      I anchored to a specific phrase ("return target creature card from your
+      graveyard to the battlefield"). Buried Alive / Entomb deliberately
+      excluded — they're graveyard *enablers* (fillers, tutors), not recursion.
+    scryfall_queries:
+      - 'o:"return target creature card from your graveyard to the battlefield" order:edhrec'
+      - 'EDHREC theme page cross-validation: edhrec.com/themes/reanimator (top 25 by inclusion)'
+    relevant:
+      - id: 352b64d2-2ae5-44ee-a64f-94932ef545d3
+        why: "Dread Return — flashback-cost reanimate spell"
+      - id: 9218b56d-aaec-482f-99e9-d95d227bfe25
+        why: "Sheoldred, Whispering One — repeating end-step reanimate"
+      - id: 8c31fec9-e4b3-4761-990e-7be38eb05604
+        why: "Karmic Guide — ETB reanimate creature"
+      - id: cc999cf2-c99b-4911-8c52-6cc4a99fcc7b
+        why: "Emeria, the Sky Ruin — repeating land reanimate"
+      - id: 19409704-09c4-4a4b-a5a7-f95120b425db
+        why: "Artisan of Kozilek — Eldrazi reanimator ETB"
+      - id: 92cfba68-12f6-4f97-9187-0f6a39656a0f
+        why: "The Soul Stone — artifact reanimator"
+      - id: f0ead7f5-5c82-40fd-8e89-3e3c5d31fbad
+        why: "Cleric Class — tribal-cost reanimate engine"
+      - id: 7fca595e-1902-40fd-a359-622caa612b6a
+        why: "Liliana, Death's Majesty — planeswalker reanimator"
+      - id: 10c31317-71e8-42e0-85e0-3e64bd0c3dd3
+        why: "Vat of Rebirth — artifact reanimator"
+      - id: ec6ccd8f-cc75-4a50-8639-f4ec31a280aa
+        why: "Priest of Fell Rites — ETB reanimator with delayed trigger"
+      - id: 1ae29791-aa7c-4050-bf72-dd0f739b11b8
+        why: "Will of the Abzan — modal includes reanimate"
+      - id: 7b03910a-2ca7-40cb-9c71-1c2cc856a287
+        why: "Archpriest of Shadows — amass + reanimate"
+      - id: 6a47865c-8fa2-4cb2-aebf-8009c065395f
+        why: "Rakdos Joins Up — reanimate-multiple spell"
+      - id: 7d6ccd0b-df16-40b2-930b-bcde0b6ef73f
+        why: "Journey to Eternity // Atzal — flip enchantment reanimator"
+      - id: a13cbac0-4c76-4970-b61e-5f4e020ee95c
+        why: "Phyrexian Delver — ETB pay-life reanimate"
+      - id: 08d1a5d1-141d-48e3-ac22-c2529191cb13
+        why: "Reya Dawnbringer — repeating upkeep reanimate"
+      - id: 155422a0-a0cd-4399-8ed9-fa68ac2c80a6
+        why: "Doomed Necromancer — sacrifice-self reanimator"
+      - id: d48e1545-7997-45ed-83a1-aee45b3d3d20
+        why: "Unburial Rites — flashback reanimate spell"
+      - id: 800cfd70-6a97-40eb-8dc0-40b762e4db76
+        why: "Unfinished Business — modern reanimator"
+      - id: c415bfdd-3d42-4f94-9f93-7e310becbc8b
+        why: "Restart Sequence — reanimate variant"
+      - id: 27a91ebd-39f4-432d-b6cc-cd86b4a3979a
+        why: "Coiling Rebirth — Gift mechanic reanimate"
+      - id: bb95db4d-5017-4121-bf79-d68476602d8c
+        why: "Zombify — vanilla 4-mana reanimate sorcery"
+      - id: d1a6aa5f-2ad6-4bc7-82f0-4262f66af730
+        why: "Apprentice Necromancer — activated-cost reanimate"
+      - id: c1111228-ef88-4b64-91e0-66ee32a1f5e4
+        why: "Nullpriest of Oblivion — kicker reanimator"
+      # --- Canonical reanimator staples (EDHREC audit pass) ---
+      - id: a044474a-cd72-4e9d-bd8d-a08f2de9cdc0
+        why: "Reanimate — 1-mana canonical reanimator spell (life cost)"
+      - id: c0d8fef4-65f4-4769-982d-b397d2b7e977
+        why: "Animate Dead — canonical reanimator enchantment"
+      - id: 699b192c-f3f2-4ac5-9ca9-e35bcf08ad8a
+        why: "Necromancy — Animate Dead variant (instant-speed enabler)"
+      - id: 9e6a3df4-67a3-452e-a6ef-f04dbadb21ef
+        why: "Living Death — mass graveyard-exchange sweeper"
+      - id: b2e950fb-cb7e-40a0-a311-5bbdd0477b29
+        why: "Sun Titan — ETB+attack-trigger reanimate-3-or-less"
+      - id: 367d4cf2-270f-4236-af10-7d5e8ea8c9fe
+        why: "Persist — sorcery reanimate, MV 3 or less"
+      - id: 9c247a17-361c-435e-90c8-ce9c6b71f7db
+        why: "Oakhame Ranger // Bring Back — Adventure side reanimates"
+      - id: 30b24e8e-3b0e-4d8e-90f3-f66eb7c1858c
+        why: "Eternal Witness — graveyard-to-hand recursion (value rather than reanimation)"
+      - id: e4625704-1d52-44e4-804f-2f45644d76ac
+        why: "Muldrotha, the Gravetide — repeating cast-from-graveyard each turn"
+    borderline:
+      - id: 53987a39-c18c-4c13-b1ea-fd1b2a369f9e
+        why: "Whip of Erebos — return until end of turn only (temporary, not permanent reanimation)"
+
+  - id: q_013
+    query: "fetch lands"
+    difficulty: medium
+    category: jargon
+    batch: 3
+    notes: "Player jargon — lands that sacrifice to search for another land. The canonical 'fetch land' cycle (Onslaught + Zendikar) plus variants."
+    scryfall_queries:
+      - 't:land o:"sacrifice" o:"search your library for a" order:edhrec'
+    relevant:
+      - id: a75445d3-1303-4bb5-89ad-26ea93fecd48
+        why: "Evolving Wilds — common basic fetch"
+      - id: 1bd3e453-aa21-4ee6-95c2-d6d920ee8e7a
+        why: "Terramorphic Expanse — common basic fetch"
+      - id: ef86989d-ce80-4e55-aece-7d11710eeffa
+        why: "Polluted Delta — UB Onslaught fetch"
+      - id: f3c7af78-a77d-4134-82a2-a5ce84285a84
+        why: "Flooded Strand — WU Onslaught fetch"
+      - id: 09dd85aa-47bc-4713-a9b9-8b52ff2285ed
+        why: "Misty Rainforest — GU Zendikar fetch"
+      - id: fc0707c7-d504-4ccf-a0d2-3eb6e26e7a57
+        why: "Bloodstained Mire — BR Onslaught fetch"
+      - id: 29737a60-3ebd-40d9-b935-c4f54b90d45d
+        why: "Windswept Heath — GW Onslaught fetch"
+      - id: 67d60b24-d429-4ded-90d9-06e49f28c396
+        why: "Verdant Catacombs — BG Zendikar fetch"
+      - id: 6587a463-a108-4854-b6d1-944e89b8c8a4
+        why: "Wooded Foothills — RG Onslaught fetch"
+      - id: cb027150-848c-4a66-88ad-e20222304dd8
+        why: "Scalding Tarn — UR Zendikar fetch"
+      - id: dab520d0-20b4-4273-ba6b-eb07f85ea433
+        why: "Marsh Flats — WB Zendikar fetch"
+      - id: c5acf2a5-40f4-433d-a74d-1cb56c521464
+        why: "Arid Mesa — RW Zendikar fetch"
+      - id: 0c85b8f7-0bd0-4680-9ec5-d4b110460a54
+        why: "Fabled Passage — modern basic fetch with bonus untap"
+      - id: 032b8a0d-491a-4a12-ab9f-689010054d5b
+        why: "Prismatic Vista — basic-land fetch any color"
+      - id: 0056fc91-4398-471c-b561-7ff99750ac8a
+        why: "Escape Tunnel — basic fetch + unblockable utility"
+      - id: d9a10971-f32b-4978-952d-fed0a5bc9e36
+        why: "Krosan Verge — 2-land fetch (Forest + Plains)"
+    borderline:
+      - id: 93953926-a644-49bb-9b5a-4c8f19114c7e
+        why: "Demolition Field — primarily land destruction; rider lets you fetch"
+      - id: 4474ecee-0ec3-409b-90df-738d9313fe3c
+        why: "Urza's Cave — fetches ANY land (more than fetch lands, less canonical)"
+      - id: 5548ff43-e5f6-4a63-8562-a2b1de06d6f5
+        why: "Riveteers Overlook — SNC slowfetch (ETB-sac fetch, tap-then-search)"
+      - id: 65424bea-fd53-4f85-9757-0b91a6d40ba4
+        why: "Cabaretti Courtyard — SNC slowfetch"
+      - id: 9464ddf2-4bcb-44f6-b945-89a132544de6
+        why: "Maestros Theater — SNC slowfetch"
+      - id: bd002797-a545-4bee-88bf-b878436e7cca
+        why: "Brokers Hideout — SNC slowfetch"
+      - id: dc31a6f8-6228-4a25-b937-5d8d78514333
+        why: "Obscura Storefront — SNC slowfetch"
+    rejected:
+      - id: 91d4a5fe-fd6d-4b14-a63f-61b4d0ecd9c4
+        why: "Inventors' Fair — searches for an artifact card, not a land"
+      - id: 3437d504-bf62-4c27-b15f-f6330182ff7e
+        why: "The World Tree — searches for God creatures, not lands"
+
+  - id: q_015
+    query: "ETB triggers"
+    difficulty: hard
+    category: jargon
+    batch: 3
+    notes: "Player jargon — 'ETB' = enters the battlefield. Creatures with on-enter triggered abilities. The hard part: a player using 'ETB' expects this jargon to be expanded by reminder text or HyDE, since cards never literally write 'ETB'."
+    scryfall_queries:
+      - 't:creature o:"when" o:"enters" o:"draw a card" order:edhrec'
+    relevant:
+      - id: 00c0543c-2a1f-4425-8283-4062d74a1637
+        why: "Solemn Simulacrum — ETB land-fetch + dies-trigger draw (Sad Robot)"
+      - id: b3d81980-76f2-44e2-b1c9-01e30c726312
+        why: "Loran of the Third Path — ETB destroy artifact/enchantment + draw"
+      - id: 37688720-03de-4eca-a82d-a0afe8d58adc
+        why: "Baleful Strix — ETB draw a card flying deathtouch"
+      - id: 1d725121-e50c-42f0-9128-56802f07c89e
+        why: "Selvala, Heart of the Wilds — ETB mana with creature reveal"
+      - id: 0715e860-3b3b-4331-9718-207973e94fee
+        why: "Tatyova, Benthic Druid — landfall draw + life"
+      - id: b9f4f96b-6e54-4fe6-8df7-623e0fc72409
+        why: "Mentor of the Meek — creature-ETB draw payoff"
+      - id: 74a62c7b-4753-4af2-b7a1-9a4ae8988801
+        why: "Puresteel Paladin — equipment-tribal ETB draw"
+      - id: 388168b3-ec68-4af2-b88c-6a5ec88c15f6
+        why: "Ayara, First of Locthwain — black-creature-ETB life-loss-and-draw"
+      - id: 77ccbea1-70af-4194-adad-39a904221c75
+        why: "Eidolon of Blossoms — constellation enchantment-ETB draw"
+      - id: 6511f317-bd38-46d0-b800-7125a3f420da
+        why: "Aesi, Tyrant of Gyre Strait — landfall ETB draw"
+      - id: 9c5f0d91-9d86-4e66-94fd-4af93ad01838
+        why: "Spirited Companion — ETB draw a card (modern Elvish Visionary)"
+      - id: 38513660-260f-4663-b199-6473fa004a3b
+        why: "Setessan Champion — enchantment-tribal cast-trigger"
+      - id: 5f601f48-d24b-4883-9fde-b3f620e7c9ea
+        why: "Wall of Omens — classic ETB-draw 2/2 wall"
+      - id: aa1a6646-c1e6-4bff-9092-43ee3e137914
+        why: "Archon of Cruelty — massive ETB and attack trigger"
+      - id: 3ceca713-38de-4428-a4f1-2146f6e98393
+        why: "Rumor Gatherer — multiple-creature ETB clue draw"
+      - id: ee302659-59ed-4eef-babe-451b9ccf7f14
+        why: "Uro, Titan of Nature's Wrath — ETB land + life + draw"
+      - id: 70113003-be5e-406a-9aec-cb480468c36d
+        why: "Sephiroth, Fabled SOLDIER — UB Final Fantasy ETB draw card"
+      - id: a019e34d-00c4-4687-9d41-fe550bf1dbdc
+        why: "Talion, the Kindly Lord — ETB name-choice draw payoff"
+      - id: 70dd5013-f18f-4501-882f-70590c424e20
+        why: "Tataru Taru — FF UB ETB draw a card"
+      - id: fb220f46-f8b8-4804-baa4-e7d50b4871f7
+        why: "Aether Channeler — modal ETB, one mode is draw"
+      - id: 4d8505d3-c8a1-4850-95d4-5ddb8ad49770
+        why: "Cultivator Colossus — ETB chain-of-lands draw"
+      - id: 6b9194dd-2296-4879-ac5e-f89b18431df6
+        why: "Soul of the Harvest — green creature-ETB draw"
+      - id: d646e42b-5635-4798-b633-29c093b66a55
+        why: "Inspiring Overseer — ETB lifegain + draw"
+      - id: 2bace3ea-7d28-4a1c-857a-d3c3a1c11b59
+        why: "Wan Shi Tong, Librarian — UB Avatar ETB draw"
+      - id: e8d0accc-b320-4c07-8a71-a09db860351e
+        why: "Vaultborn Tyrant — Dinosaur ETB draw + life"
+      # --- Non-draw ETB diversity (audit pass) ---
+      - id: 8973bd99-20f8-4867-90ef-50392147ee1b
+        why: "Wood Elves — ETB ramp (fetch untapped Forest)"
+      - id: 4ce2357f-93e6-40ca-beca-8f4e15adc464
+        why: "Farhaven Elf — ETB ramp (fetch basic tapped)"
+      - id: b215196a-3716-451f-bdbd-d16c05ace5b4
+        why: "Flametongue Kavu — ETB 4 damage to creature (canonical kill-ETB)"
+      - id: 0ce47c8b-1e1f-463f-94f0-35ca00be89e6
+        why: "Inferno Titan — ETB 3 damage divided among targets"
+      - id: 699bc130-2f1f-4bc8-a25f-9329e40efbb1
+        why: "Bogardan Hellkite — ETB 5 damage divided"
+      - id: 4ba5b3f6-503b-43e6-b66e-4f8c55cffed7
+        why: "Avenger of Zendikar — ETB makes Plant tokens per land"
+      - id: 3b1f8108-6911-49e9-8f78-f950bb58cb6c
+        why: "Hornet Queen — ETB makes 4 deathtouch Insects"
+      - id: 7b459306-149b-4f43-abc1-2dd70c748c0e
+        why: "Ravenous Chupacabra — ETB destroy target creature"
+
+  - id: q_016
+    query: "mana dorks"
+    difficulty: hard
+    category: jargon
+    batch: 3
+    notes: "Player jargon — small creatures that tap for mana (Birds-of-Paradise family). The 'dorks' term is pure player vernacular; cards never use it."
+    scryfall_queries:
+      - 't:creature cmc<=2 o:"{T}: Add" order:edhrec'
+    relevant:
+      - id: d3a0b660-358c-41bd-9cd2-41fbf3491b1a
+        why: "Birds of Paradise — canonical 1-mana mana dork (any color)"
+      - id: 68954295-54e3-4303-a6bc-fc4547a4e3a3
+        why: "Llanowar Elves — canonical 1-mana green dork"
+      - id: 3f3b2c10-21f8-4e13-be83-4ef3fa36e123
+        why: "Elvish Mystic — Llanowar Elves variant"
+      - id: f9d3b046-0b95-4103-a630-4b3fb88bb60b
+        why: "Delighted Halfling — 1-mana any-color uncounterable-legendary dork"
+      - id: df317532-7d36-40fd-938f-e972749c8792
+        why: "Fyndhorn Elves — Llanowar Elves variant"
+      - id: 3a940dfa-a026-4969-8981-ef90cdfbe9ef
+        why: "Ornithopter of Paradise — artifact mana dork with flying"
+      - id: 7973820b-fdaf-46ec-9e3e-d4c0e77b5067
+        why: "Fanatic of Rhonas — 2-mana green dork with ferocious 4 mana"
+      - id: 069f6530-e65c-4d52-85f3-e0a2acd148c5
+        why: "Avacyn's Pilgrim — 1-mana white dork"
+      - id: c8de43a3-ebd3-4000-b343-a6ffed11d34d
+        why: "Ignoble Hierarch — 1-mana Jund dork with exalted"
+      - id: acfe7ec0-0606-4d5e-b1fa-25f0c7aeec47
+        why: "Sanctum Weaver — 2-mana enchantment-tribal scaling dork"
+      - id: 34428f42-03ac-4795-8286-6cbea796df2b
+        why: "Incubation Druid — 2-mana flexible-color scaling dork"
+      - id: 20347559-95a9-4689-bb79-c5bb3809b719
+        why: "Elves of Deep Shadow — 1-mana black-mana dork at life cost"
+      - id: 98aa9424-5912-4bd6-9300-b3972a31d8af
+        why: "Noble Hierarch — 1-mana Bant dork with exalted"
+      - id: 3a198a16-17b9-481e-b516-5bc945c7e247
+        why: "Priest of Titania — 1-mana Elf-tribal dork (scales per Elf)"
+      - id: e3aa16cf-079b-4737-9ffd-7bfdffef0cb2
+        why: "Gyre Sage — 2-mana scaling dork (per counter)"
+      - id: cb814e16-acf7-41d5-a357-1323dcc369f3
+        why: "Devoted Druid — 1-mana untap-combo dork"
+      - id: 6c5cbab6-ee27-46f5-97a7-df85698d1e9f
+        why: "Iron Myr — 2-mana red myr"
+      - id: 66e8f7f8-3a6d-46ba-837c-b9713ddf7f40
+        why: "Silver Myr — 2-mana blue myr"
+      - id: 39b51f62-8421-42d1-86d3-74fd6e6f31a2
+        why: "Skull Prophet — 2-mana BG dork with mill"
+      - id: bd6af7b3-b30f-4a65-a18f-8655f778e76a
+        why: "Gold Myr — 2-mana white myr"
+      - id: f62cabf0-df0d-4c4f-a93a-9340967d1775
+        why: "Leaden Myr — 2-mana black myr"
+      - id: 5f2be3c2-060a-43e1-b63b-9cd3c78ffcb0
+        why: "Ilysian Caryatid — 2-mana any-color scaling dork"
+      - id: fd6e1967-237a-41f6-bbf4-2c869f9447c8
+        why: "Twitching Doll — 2-mana artifact creature dork"
+    borderline:
+      - id: 48e6d3d8-2f27-4017-acdd-40bce8cdbc02
+        why: "Giada, Font of Hope — taps for {W} but mana is restricted to Angel spells; less general-purpose dork"
+    rejected:
+      - id: 04eeb9ad-5c59-411b-8809-db8349838588
+        why: "Westvale Abbey // Ormendahl — Scryfall matched on Ormendahl being a creature; the mana ability is on the LAND side (not a mana dork)"
+
+  - id: q_017
+    query: "wheels"
+    difficulty: hard
+    category: jargon
+    batch: 4
+    notes: "Player jargon for spells/effects where each player discards their hand and draws a new one (or similar mass hand-replacement). Named after Wheel of Fortune."
+    scryfall_queries:
+      - 'o:"each player" o:"discards their hand" order:edhrec'
+    relevant:
+      - id: 08becc07-28bc-4a2f-a6b0-28a2998d2f50
+        why: "Windfall — each opponent discards, you draw cards equal to most"
+      - id: df13dafb-f82e-42ac-b6dc-efe82af5db58
+        why: "Magus of the Wheel — creature variant of Wheel of Fortune"
+      - id: 10aff3f6-8347-4e1b-b8e7-c204c9e46657
+        why: "Wheel of Misfortune — each player wagers life, winner discards/draws 7"
+      - id: ece854f8-8c60-4f30-894f-2286d3dd61b9
+        why: "Reforge the Soul — canonical 5-mana wheel"
+      - id: b6c8ac69-daa7-4e2e-a1d9-439731a81870
+        why: "Jace's Archivist — activated repeating wheel"
+      - id: eab71e4e-27c3-4c41-b95f-259c1d14b97a
+        why: "Dragon Mage — combat-trigger wheel"
+      - id: 7bbc5f3a-f8fb-47e8-837e-ce319bc489de
+        why: "Whispering Madness — Cipher repeating wheel"
+      - id: 15e4938d-1cd3-4670-9de5-2dc10abe4c19
+        why: "Wheel of Fate — suspend wheel"
+      - id: c78783e5-868d-4a8b-a4f8-95a92853cf0a
+        why: "Naktamun Lorespinner // Wheel of Fortune — prepare-layout Wheel of Fortune"
+    borderline:
+      - id: 76c229d2-4bdd-4520-97dd-afb40f8c65ec
+        why: "Mindslicer — sac-triggered mass discard; no draw replacement, partial wheel"
+      - id: b55d8cd6-037d-4d7c-90ec-51249d34b02e
+        why: "Sire of Insanity — end-step mass discard; no draw, partial wheel"
+      - id: a3f2c946-409f-4093-b4db-c954d3480a72
+        why: "Runehorn Hellkite — ETB you discard and draw 7 (single-player wheel)"
+      - id: c88eff74-def5-42ea-873c-b3b479f6fe18
+        why: "Ill-Gotten Gains — return-3-from-graveyards-then-discard; wheel-adjacent"
+
+  - id: q_018
+    query: "extra turns"
+    difficulty: hard
+    category: jargon
+    batch: 4
+    notes: "Spells that grant a player an additional turn. Time Walk family."
+    scryfall_queries:
+      - 'o:"take an extra turn after this one" order:edhrec'
+    relevant:
+      - id: 8d0adc5c-3fdd-4e22-b783-5651f8e57b65
+        why: "Final Fortune — extra turn, lose at end"
+      - id: 6c1d22d4-f28e-4041-a9b6-1575e8929b61
+        why: "Nexus of Fate — extra turn, shuffles back"
+      - id: a69265b2-0e37-4d86-866e-e4a923233b4d
+        why: "Expropriate — modal, extra-turn mode is dominant"
+      - id: 5c58b8e6-c572-461e-893e-a8c05f20ba17
+        why: "Temporal Mastery — Miracle extra turn"
+      - id: 3da5977a-36d4-4f32-ab9b-8b93809d818d
+        why: "Time Sieve — artifact sac-5-artifacts for extra turn"
+      - id: c216b924-88ac-4853-9e95-0c345c09eeb6
+        why: "Temporal Trespass — Delve extra turn"
+      - id: 6b6ac99a-7548-4cad-9fe5-ea611618ab9e
+        why: "Temporal Manipulation — vanilla 3UU extra turn"
+      - id: 69428825-3c40-486d-b051-14e97a598ce6
+        why: "Gonti's Aether Heart — energy-cost extra turn artifact"
+      - id: b1461f2a-2f12-49ae-8821-d934dddcb567
+        why: "Notorious Throng — Prowl Faerie-tribal extra turn"
+      - id: bc842838-1993-4480-b8fe-f9d9f2dee7a4
+        why: "Alrund's Epiphany — extra turn + birds"
+      - id: 360039a5-1cbd-4ee3-8f94-21b5348e106a
+        why: "Last Chance — Final Fortune variant"
+      - id: d0896996-ee31-402e-b642-4e7cca4929fe
+        why: "Timestream Navigator — ascend-condition extra turn"
+      - id: 89aa65d9-2502-40b0-90b6-b25a8e9f6155
+        why: "Capture of Jingzhou — Time Walk variant"
+      - id: 59b2a90e-542f-4fb0-b290-ac79dc2892a4
+        why: "Stitch in Time — coin-flip extra turn"
+      - id: 487485a6-cf79-48c0-bea9-0ec6b3ee253c
+        why: "Magistrate's Scepter — counter-based extra turn"
+      - id: 75ed6946-e7b1-4bf8-a05c-62a2ba5a6c79
+        why: "Ral Zarek — ultimate is two extra turns"
+      - id: 13da5255-2fc5-43a4-a44c-13a5d9ff77c3
+        why: "Temporal Extortion — pay-half-life-or-take-extra-turn"
+    borderline:
+      - id: 982f70af-077f-40df-b2fe-7c80ebcc7712
+        why: "Rise of the Eldrazi — large card with extra-turn rider but primary intent is something else"
+      - id: 9fc7aba7-eda2-4134-9c10-31ee35201b72
+        why: "Ichormoon Gauntlet — proliferate engine, eventually grants extra turns via loyalty"
+
+  - id: q_019
+    query: "free counterspell"
+    difficulty: hard
+    category: constrained
+    batch: 4
+    notes: "Counterspells that cost 0 mana via pitch, alternative cost, or Phyrexian mana. Tests combined intent (counterspell + zero-mana constraint)."
+    scryfall_queries:
+      - 'pitch / alternative-cost counterspells by name'
+    relevant:
+      - id: 956381ba-6d37-4a8a-846c-bad79222dbee
+        why: "Force of Will — canonical pitch counter (exile a card + 1 life)"
+      - id: ac2173f9-f223-440a-9231-fd98762bdc6f
+        why: "Force of Negation — Modern pitch counter (noncreature only)"
+      - id: f3e213a4-ba5a-468a-93b3-c0a34e1bd725
+        why: "Pact of Negation — 0-mana now, big mana next upkeep or you lose"
+      - id: 1a0770e6-b093-4439-baff-6889a50ba12e
+        why: "Mental Misstep — Phyrexian 1 (effectively free), counters MV-1 spells"
+      - id: 70486bee-6ee7-41ea-b834-8caf4699302b
+        why: "Daze — return Island to hand alternative cost (effectively free with land)"
+      - id: 2912d93d-ed51-41ef-b64f-3cb6581c09e5
+        why: "Disrupting Shoal — pitch counter against MV-matching spell"
+      - id: c39e5fb0-6de3-4105-ad3c-0ecb8951a1d5
+        why: "Misdirection — pitch redirect (functionally counter)"
+      - id: e88de17c-086d-4e2a-b5b2-2f9f57ca7c0f
+        why: "Snapback — pitch bounce of your own creature (counter-adjacent)"
+      - id: ad7d854b-d303-40eb-acd6-03a8023e05e7
+        why: "Commandeer — pitch counter that steals the spell"
+      - id: 7dde4eb6-e9d7-4259-abc2-3af738e0f00f
+        why: "Foil — pitch a card + sac Island counter"
+      - id: 615a149a-2869-4b18-bbbe-9ec1825049d7
+        why: "Thwart — return 3 Islands counter"
+
+  - id: q_020
+    query: "red creatures under 3 mana"
+    difficulty: medium
+    category: constrained
+    batch: 4
+    notes: |
+      Pure-structural query — color + type + cost constraint, zero semantic
+      content. Eval-set purpose: SQL-filter verification, not embedding test.
+      Phase 3 baseline expectation: ~0% recall (embedding cannot enforce
+      numeric/color constraints from natural language alone). Phase 4+ with
+      HyDE+SQL: trivial high recall. The delta between phases is the SQL
+      tower's measured contribution. Architectural follow-up: queries this
+      pure could be routed directly to Scryfall's search API rather than
+      our system — a Phase 4+ design decision.
+    scryfall_queries:
+      - 'c=r t:creature cmc<3 order:edhrec'
+    relevant:
+      - id: 37108cd4-bbab-4ce3-9ed6-f60e8422e703
+        why: "Ragavan, Nimble Pilferer — 1R Monkey, Modern-format staple"
+      - id: 2e2ace5b-4018-43af-8e72-ebafec1a7739
+        why: "Harmonic Prodigy — 1R Human Wizard"
+      - id: 180e1a7e-890d-477c-80a5-da8a5f2857b3
+        why: "Reckless Fireweaver — 1R Human"
+      - id: 5fac139a-07d3-4e6c-98e3-d98b199f7a6f
+        why: "Young Pyromancer — 1R Human Shaman"
+      - id: a78f981a-bf8a-42a4-b171-d655cc2cc1a2
+        why: "Razorkin Needlehead — 1R Phyrexian"
+      - id: 2e9289d6-dbc6-456d-88cf-d1f534e731d6
+        why: "Firebrand Archer — 1R Human Archer"
+      - id: c1d6cce8-085f-42cb-8b0c-b6fbbf88b16a
+        why: "Goblin Engineer — 1R Goblin"
+      - id: d9c87cc2-943e-49b6-becc-748857549617
+        why: "Kediss, Emberclaw Familiar — 1R Lizard"
+      - id: e1a2bd31-b800-47cd-8866-1b849a601b09
+        why: "Agate Instigator — 1R Phoenix"
+      - id: faf81ae0-0b35-45ef-a50d-6cecf0c0eeeb
+        why: "Dragonlord's Servant — 1R Goblin Shaman"
+      - id: 3d268e48-3004-4384-bf52-e63243fb5e02
+        why: "Magda, Brazen Outlaw — 1R Dwarf"
+      - id: f6314e50-a610-4fff-8f60-803d23460ff0
+        why: "Lizard Blades — 1R Equipment Creature"
+      - id: eadd9559-6dcb-4b96-8c95-58abddd0e120
+        why: "Kessig Flamebreather — 1R Human Wizard"
+      - id: c18013e4-0b99-44e3-a2b2-027ace68723a
+        why: "Skirk Prospector — R Goblin"
+      - id: b6fb79c3-cd32-4045-8177-e52841eea65b
+        why: "Dragonmaster Outcast — R Human Shaman"
+      - id: 2fa94a07-c932-4f85-b6e0-a97d2b29eb52
+        why: "Electrostatic Field — 1R Wall"
+      - id: 9fc28e1f-f4ea-4bf8-9442-a36dba3b3b29
+        why: "Goblin Welder — R Goblin Artificer"
+
+  - id: q_021
+    query: "instants that cost 1 mana"
+    difficulty: medium
+    category: constrained
+    batch: 4
+    notes: |
+      Pure-structural query — type + cost constraint, zero semantic content.
+      Same testing purpose as q_020: SQL-filter verification rather than
+      embedding test. Phase 3 baseline expects ~0% recall; SQL filter in
+      Phase 4+ should trivialise it.
+    scryfall_queries:
+      - 't:instant cmc=1 order:edhrec'
+    relevant:
+      - id: b1544f21-7e98-461b-aed5-e748b0168c52
+        why: "Swords to Plowshares — 1W exile"
+      - id: d683d985-9888-4d21-8b5f-69e69ce4a03b
+        why: "Path to Exile — 1W exile-for-land"
+      - id: 53f7c868-b03e-4fc2-8dcf-a75bbfa3272b
+        why: "Dark Ritual — B ritual"
+      - id: 234a734b-ba28-4f1b-9d01-3c3e7d516590
+        why: "An Offer You Can't Refuse — U soft counter with treasure"
+      - id: 36cd2364-d113-47d1-b2c4-b088d9eb88dd
+        why: "Brainstorm — U draw 3"
+      - id: 8ddfc283-c9b4-41a5-af88-cf0068e986cc
+        why: "Swan Song — U counter against non-creature noncreature spell"
+      - id: ededbdae-d9dc-4206-9335-d7158f2d7700
+        why: "Vampiric Tutor — B instant tutor"
+      - id: c5229c17-b7be-4b05-b683-f2277edc4849
+        why: "Enlightened Tutor — W instant artifact/enchant tutor"
+      - id: fb81f95c-70f8-4eb7-8d15-15d0ae23ec03
+        why: "Mystical Tutor — U instant spell tutor"
+      - id: 4457ed35-7c10-48c8-9776-456485fdf070
+        why: "Lightning Bolt — R 3-damage burn"
+      - id: 05849bd6-8f38-4031-be2b-e2aa03beb8cc
+        why: "Pongify — U destroy creature, make 3/3"
+      - id: e8863518-0bfa-49c3-8c6e-6c9116a81051
+        why: "Worldly Tutor — G instant creature tutor"
+      - id: 365548fb-5acc-4a8a-b20b-26d28b7d029f
+        why: "Village Rites — B sac-and-draw"
+      - id: 06692cd9-ac2f-4a32-8fd1-043ba3c0fe71
+        why: "Rapid Hybridization — U Pongify variant"
+      - id: 713332c1-5bd8-400f-bfff-c1ca0697a043
+        why: "Opt — U scry + draw"
+      - id: 28b46183-c62f-47b1-9fee-3ba148202cab
+        why: "Crop Rotation — G land tutor"
+      - id: a731e87b-8d99-4b64-8ee3-8e540d652366
+        why: "Malakir Rebirth — B return creature, dual-faced land"
+      - id: 86bf58f2-7f25-4e10-b797-25e0e8e67769
+        why: "Flusterstorm — UR storm counter"
+      - id: 299fc083-0834-4064-8344-f895aff68867
+        why: "Entomb — B graveyard tutor"
+      - id: 6d4e558e-9109-4918-a082-fdcbaffd516b
+        why: "Nature's Claim — G artifact/enchant kill"
+      - id: 4c9bcba6-87b5-4fb3-97ee-6fe5b739337d
+        why: "Consider — U surveil + draw"
+      - id: 8aed54cb-d1bb-45ad-adbe-38e55d84ff31
+        why: "Silence — W shut down spells this turn"
+      - id: bb329a5c-b9f9-4973-a53f-090024146325
+        why: "Red Elemental Blast — R counter against blue"
+      - id: 0fd57894-b917-41c8-a394-360d1d31b236
+        why: "Ephemerate — W flicker"
+      - id: 1a0770e6-b093-4439-baff-6889a50ba12e
+        why: "Mental Misstep — Phyrexian-cost counter (effectively 1 mana)"
+
+  - id: q_022
+    query: "a card that lets me look at my deck and put a creature into the battlefield"
+    difficulty: hard
+    category: natural
+    batch: 4
+    notes: |
+      Natural-language variant of tutor (q_011) but constrained to 'put creature
+      into play directly' (vs put-in-hand). Tests style invariance — the system
+      should find Birthing Pod / Natural Order / Tooth and Nail for this query
+      AND for the jargon variant 'tutor'.
+    scryfall_queries:
+      - 'by-name canonical creature-to-play tutors'
+    relevant:
+      - id: f8b9dd54-0837-47f4-ad14-7a0322d46d5f
+        why: "Birthing Pod — sac creature, tutor +1-MV creature into play"
+      - id: 6789a170-f2c5-4fc0-8a45-2b2361e67410
+        why: "Chord of Calling — convoke creature tutor into play"
+      - id: e7e1b166-9267-426d-897d-24903327b48d
+        why: "Defense of the Heart — upkeep-triggered creature tutor (×3)"
+      - id: 0d96b60b-a060-48ee-bb83-93f1c4a10669
+        why: "Green Sun's Zenith — X creature tutor into play"
+      - id: 3c83ea11-7141-41a2-ba77-1ed2722dfe74
+        why: "Lure of Prey — cast trigger, put green creature from library"
+      - id: 15fbb7b1-c62d-4f82-9f35-2c10299779f4
+        why: "Lurking Predators — cast trigger reveals creature, puts into play"
+      - id: 8c1fe337-375a-4add-93b6-0ac39ed72b4f
+        why: "Natural Order — sac green, put any green creature into play"
+      - id: 4b8856f8-3cd1-450c-a71b-eb0026e8e179
+        why: "Pattern of Rebirth — death-trigger creature tutor into play"
+      - id: 382b7873-e78d-473b-8346-d92d16e8f634
+        why: "Tooth and Nail — entwine: two creatures into play"
+      - id: 26f39abe-ea0b-400d-b11c-03ee4cf50915
+        why: "Wargate — X to find any permanent, put into play"
+
+  - id: q_023
+    query: "creatures that get bigger every time I cast a spell"
+    difficulty: medium
+    category: natural
+    batch: 4
+    notes: "Natural-language phrasing of the prowess keyword. Tests that the system maps the description to the keyword via reminder-text augmentation."
+    scryfall_queries:
+      - 't:creature kw:prowess order:edhrec'
+    relevant:
+      - id: f3d48efa-910a-4872-a5b1-a353c5dbce99
+        why: "Pinnacle Monk // Mystic Peak — prowess"
+      - id: 3979067a-9c68-443d-a85f-d9f07be880b9
+        why: "Monastery Mentor — canonical prowess token-maker"
+      - id: 16414460-11ce-481d-ab54-6f0e0ea7d83d
+        why: "Kitsa, Otterball Elite — prowess"
+      - id: d627996b-cbcd-4162-bd13-9ab286de64d1
+        why: "Bria, Riptide Rogue — prowess"
+      - id: 1ad3be51-f68b-46d6-b58e-400b50e384f1
+        why: "Firebending Student — prowess"
+      - id: f3838ff1-5403-4f3f-8531-36029c13fcfc
+        why: "Riptide Gearhulk — prowess artifact creature"
+      - id: 47bce63e-8edb-43c1-b273-4b86da5c616b
+        why: "Lyse Hext — prowess"
+      - id: 0527b7b5-a55d-4720-af1f-17fc1178f4a6
+        why: "Queen Brahne — prowess"
+      - id: 918991a6-7321-419d-8f3d-150fe32d02d2
+        why: "Eris, Roar of the Storm — prowess Phoenix"
+      - id: 6b68acc2-b9d5-495b-8054-c04bae1349f1
+        why: "Sokka, Tenacious Tactician — prowess"
+      - id: da339200-ed26-42e4-b24f-b96bc4daef7c
+        why: "Elsha of the Infinite — prowess"
+      - id: d8ccbd72-6429-43cb-a0a9-ab56e97a2d53
+        why: "Elsha, Threefold Master — prowess"
+      - id: 54175132-2c44-4749-8dfd-d08dcc63e4b3
+        why: "Elusive Otter // Grove's Bounty — prowess"
+      - id: dafd2713-d1bc-474b-b390-d2ff20b5375e
+        why: "Monastery Swiftspear — canonical 1-mana prowess"
+      - id: 081ad4e3-cda3-41cc-890f-412611dc9ea0
+        why: "Ty Lee, Chi Blocker — prowess"
+      - id: ed2f3339-5c3e-473f-b08e-58288c4ad9c2
+        why: "Niblis of Frost — prowess wizard"
+      - id: dc3073fc-dc23-426e-b867-fee5dd99fe25
+        why: "Shipwreck Dowser — prowess"
+      - id: 5b4b21ed-c24e-4038-83fb-bd7f3c3426cd
+        why: "Emberheart Challenger — prowess"
+
+  - id: q_024
+    query: "a card that destroys all creatures"
+    difficulty: easy
+    category: natural
+    batch: 4
+    notes: |
+      Natural-language variant of board-wipe-jargon (q_008). Tests style
+      invariance — system should find Wrath of God / Damnation / Supreme
+      Verdict for this query AND for 'board wipes'. Relevant list is the
+      Wraths subset of q_008 (creature-only mass destruction).
+    scryfall_queries:
+      - 'Wraths subset of q_008 reused — see q_008 relevant'
+    relevant:
+      - id: d57a8f0b-7989-4db5-8756-6f2690097252
+        why: "Damnation — 4-mana black destroy all creatures"
+      - id: 0230de18-8d15-4cfa-9d42-7ccddd9f9570
+        why: "Supreme Verdict — uncounterable Wrath"
+      - id: 34515b16-c9a4-4f98-8c77-416a7a523407
+        why: "Wrath of God — the canonical board wipe"
+      - id: ccaa44f2-96be-44e2-884f-c31baa3908d5
+        why: "Kindred Dominance — tribal-asymmetric Wrath"
+      - id: a332e80a-dc51-4dc6-bc85-e114a1c6fdb8
+        why: "Vanquish the Horde — scaling mass-destroy"
+      - id: b17ea905-0696-4e58-b564-557e87236e27
+        why: "Fumigate — 5-mana Wrath + life"
+      - id: aff34f28-f707-4458-8af3-1bd5b13a6b10
+        why: "Cleansing Nova — 5-mana modal Wrath"
+      - id: 355ed7ef-bfa6-4538-99fb-a2d203eb7005
+        why: "Damning Verdict — counters-asymmetric Wrath"
+      - id: 932668fa-d6e3-41c0-ad0c-8e0a00e68d11
+        why: "Decree of Pain — Wrath + draw per creature"
+      - id: d057289d-5e28-43d5-8ff3-4a1bc723477d
+        why: "Day of Judgment — 4-mana Wrath without regen prevention"
+      - id: 7a2484a9-04fd-41a0-8224-610c1c07ed10
+        why: "Blasphemous Act — 8-mana minus 1 per creature 'destroy all'"
+      - id: afaef788-34d1-460b-b884-9d7ae6ddeb18
+        why: "Toxic Deluge — X-mana -X/-X-to-all functions as creature wipe"
+
+  - id: q_025
+    query: "red pingers under 3 mana"
+    difficulty: hard
+    category: hybrid
+    batch: 4
+    notes: |
+      Hybrid query — combines structural (c=R, t:creature, cmc<3) with
+      semantic ("pinger" = {T}: deal 1 damage to any target). Phase 3
+      baseline expects low recall (embedding can't enforce the
+      constraints). Phase 4+ with HyDE+SQL: HyDE rewrites "pinger" to
+      "{T}: This creature deals 1 damage to any target" for embedding,
+      SQL pre-filter narrows the corpus to red CMC<3 creatures, then
+      the embedding finds the pingers within. The Phase-3-to-Phase-4
+      delta on this query measures whole-pipeline cooperation.
+    scryfall_queries:
+      - 'c=r t:creature cmc<3 o:"{T}" o:"1 damage" order:edhrec'
+    relevant:
+      - id: 396564be-3747-49dd-98dc-afb81a375f18
+        why: "Goblin Fireslinger — canonical 1-mana pinger (R)"
+      - id: a2c4537e-70a6-416d-9e8b-f549ad535147
+        why: "Chandra's Magmutt — 1-mana single-target pinger"
+      - id: 0e5a5cee-d068-42cf-bf58-8e1360720be0
+        why: "Fireslinger — tap-for-1 with 1-to-self drawback"
+      - id: 29ef90ac-2396-4488-970d-d440297ba5ee
+        why: "Deadeye Duelist — 1, tap, deal 1 to opponent"
+      - id: d36e11f1-6ab3-4273-8114-a8fbbe21c1c3
+        why: "Fanatical Firebrand — tap-sac for 1 damage to any target"
+      - id: 228fbae1-423e-461d-b8c3-55786938a3cb
+        why: "Thermo-Alchemist — defender pinger, untaps on spells"
+      - id: 1a668cef-bdc5-410b-b9e3-044e4203a0aa
+        why: "Spear Spewer — defender, tap deals 1 to each player"
+      - id: cd8a90a7-5502-405f-a49e-ad4252872595
+        why: "Blisterspit Gremlin — repeating tap-pinger with spell-untap"
+      - id: 8cac286c-1a17-4ee1-9858-d7a2f8c09037
+        why: "Sawblade Scamp — oil-counter pinger"
+      - id: d53623b0-f7d8-401f-a8f1-80034f6f20df
+        why: "Kris Mage — R, tap, discard for tap pinger"
+      - id: d57d1988-5962-4df9-8342-cf04233fd6c7
+        why: "Zada's Commando — cohort-based pinger"
+    borderline:
+      - id: 6db51087-6995-4ed4-978a-3d17d60019af
+        why: "Blood Aspirant — pinger conditional on sacrifice cost; not a pure pinger"
+      - id: ba771caa-2cfb-4373-bbd9-6160b0543010
+        why: "Vengeful Devil — pinger only with Morbid (a creature died this turn)"
+      - id: a64656b2-0f0c-4239-9dfe-a9ddc7ada733
+        why: "Bladeback Sliver — grants pinging to Slivers only while Hellbent; conditional"
+
+  - id: q_026
+    query: "cheap blue counterspells"
+    difficulty: hard
+    category: hybrid
+    batch: 4
+    notes: |
+      Hybrid query — combines structural (c=U, t:instant, cmc<=2)
+      with semantic ("counterspell" jargon + "cheap" qualifier).
+      Same testing purpose as q_025: measures Phase 3-to-Phase 4
+      delta on whole-pipeline cooperation.
+    scryfall_queries:
+      - 'c=u t:instant cmc<=2 o:"counter target spell" order:edhrec'
+    relevant:
+      - id: cc187110-1148-4090-bbb8-e205694a39f5
+        why: "Counterspell — UU canonical 2-mana counter"
+      - id: ab1cc360-b9de-48d9-9983-4dfe4a7d2a37
+        why: "Arcane Denial — 1U soft counter with draw"
+      - id: 74d3277a-38e5-4732-afed-084a56148f20
+        why: "Mana Drain — UU counter + add mana"
+      - id: 1a0770e6-b093-4439-baff-6889a50ba12e
+        why: "Mental Misstep — Phyrexian U, counters MV-1 spells"
+      - id: c61fe162-2202-4e56-9ba0-393547f9875f
+        why: "Mana Leak — canonical 1U soft counter"
+      - id: 983caa3f-7089-4e66-825d-4086a5adb9bb
+        why: "Delay — 1U 3-turn delay counter"
+      - id: 11e02134-7b1a-46a4-a89e-7539dd1efada
+        why: "Disdainful Stroke — 1U counter MV-4+"
+      - id: 70486bee-6ee7-41ea-b834-8caf4699302b
+        why: "Daze — 1U with island-bounce-for-free alternative"
+      - id: 318f7f70-e374-40ef-8afb-3389c10461d8
+        why: "Syncopate — X+U scaling counter"
+      - id: d71cd08e-3e84-41ff-b9db-9e343c0af6b4
+        why: "Remand — 1U counter + return to hand + draw"
+      - id: bbfb3e4a-b389-4391-8141-13b68c0ef2e0
+        why: "Memory Lapse — 1U counter + put on top of library"
+      - id: f1993767-1d07-49c8-b8dc-04ec9840a999
+        why: "Long River's Pull — U bounce/counter modal"
+      - id: a4630da0-fe9b-4ead-9621-eac4b7825c35
+        why: "Wash Away — 1U conditional counter"
+      - id: f9bf996e-ae14-40a3-a8d8-f5725ddaa270
+        why: "Spell Stutter — Faerie-tribal counter"
+      - id: d799a2c4-628a-45da-b9ca-0337c46e3e14
+        why: "Lofty Denial — 1U conditional counter"
+      - id: 941a4b14-ea2a-4bd0-8cc2-d609f80df32c
+        why: "Jwari Disruption // Jwari Ruins — 1U dual-faced counter"
+    borderline:
+      - id: f3e213a4-ba5a-468a-93b3-c0a34e1bd725
+        why: "Pact of Negation — 0 mana now but huge delayed cost; 'cheap' is debatable"
