@@ -105,4 +105,5 @@ The single most valuable deliverable in this phase is the **evaluation set**. Ev
 
 ## Journal entries
 
-- (none yet)
+- [Evaluation set v1 construction methodology](../journal/2026-05-18-eval-set-construction.md)
+- [Baseline results and failure-mode analysis](../journal/2026-05-18-baseline-results.md)
