@@ -26,29 +26,79 @@ Every Mn → Mn+1 transition has four sections:
 | M6 | Evidence-driven optimisations | Pending |
 | M7 | Final paper + presentation | Pending |
 
-## Checkpoint: M3 → M4
+## Checkpoint: M3 → M4 (backfills M0 / M1 / M2)
 
 **Status:** Active.
 
+**Special note:** The checkpoint framework was introduced *at* M3 — milestones M0, M1, and M2 produced artifacts that were never formally reviewed under this rubric. This checkpoint therefore serves as a **one-time backfill**: a comprehensive review of everything from project kickoff through the first measured baseline. Subsequent checkpoints (M4 → M5 onward) cover only the milestone just completed.
+
 ### 1. Artifact review
 
-Read or re-read, in this order:
+Group by milestone. Read in roughly this order within each group; the order across milestones can be top-down architecture-first or chronological — curator's choice.
 
-- `docs/journal/2026-05-18-eval-set-construction.md` (methodology)
-- `docs/journal/2026-05-18-baseline-results.md` (results + failure analysis)
+**M0 — Project kickoff and architecture:**
+
+- `CLAUDE.md` — the architecture spec and working conventions. **The single most important document in the repo.** Re-read it; every architectural decision downstream is grounded here.
+- `docs/journal/2026-05-17-redesign-kickoff.md` — what was done in the repo cleanup and why the POC was archived
+- `docs/journal/2026-05-17-poc-retrospective.md` — the failure modes of the prior approach (DistilBERT-without-rewriting, FAISS-standalone) and why each was discarded. M3's baseline empirically reproduces these failures — confirm the alignment.
+- `docs/archive/2025-11-03-original-proposal.md` — the original proposal as a reference point. Note the gap between proposed (FAISS, fine-tuning-first, single-tower) and final design (pgvector, evaluation-first, three-tower).
+- `docs/roadmap/phase-0-overview.md` and the per-phase roadmap files — confirm understanding of the phase-by-phase deliverable structure (which has now been replaced by this milestone framework, but the phase docs remain the source of truth for sub-task lists).
+
+**M1 — Foundation, logging, corpus characterised:**
+
+- `docs/roadmap/phase-1-foundation-and-logging.md` — read the deliverable list and confirm each was met
+- `docs/journal/2026-05-17-corpus-survey.md` — the 37,442-record corpus characterisation and the four filter rules it produced. Quote-ready material for the paper's Data subsection.
+- `docker-compose.yml` — local Postgres + pgvector setup. Understand the env-var injection pattern (post-security fix).
+- `src/db/migrations/0001_initial.sql` — vector extension + experiment_runs schema. Note the JSONB design choice for config/metrics/per_query.
+- `src/db/experiment_log.py` — the writer that lands one row per evaluation in experiment_runs
+- `src/logging_utils.py` — `PipelineRun` context manager (JSONL audit trail in `logs/<script>/<date>.jsonl`)
+- `scripts/migrate.py`, `scripts/download_scryfall.py`, `scripts/survey_corpus.py` — the M1 operational tooling
+- `src/data_processing/scryfall_classify.py` — the pure-predicate classifier used to apply the filter rules. Note the design choice to keep classification logic separate from the filter-rule call site.
+
+**M2 — Schema, ingest, preprocessing pipeline:**
+
+- `docs/roadmap/phase-2-ingestion-and-schema.md` — deliverable list
+- `docs/journal/2026-05-17-cards-schema.md` — the per-face row decision (one row per face, PK `(oracle_id, face_index)`) and the alternatives rejected (concatenate-with-separator, front-face-only, separate `card_faces` JSONB column). The schema embeds the load-bearing `embedding_triple_paired` CHECK constraint.
+- `docs/journal/2026-05-17-keyword-augmentation.md` — the three failure classes (cross-talk false positives, variable-instance wording, em-dash ability words) and the 100-entry manual overrides curation. The "net-positive repeatable" framing for card-draw engines came from the curator and is documented here.
+- `src/db/migrations/0002_cards.sql` — the cards table schema. Confirm the per-face vs card-level column split and the embedding-triple invariant.
+- `scripts/ingest.py` and `src/data_processing/ingest_transform.py` — the streaming UPSERT with `IS DISTINCT FROM` idempotency check.
+- `scripts/build_keyword_dict.py` and `src/data_processing/keyword_extract.py` — corpus scan for reminder text. The Skyhunter Patrol joint-keyword case is the load-bearing test.
+- `data/keywords/reminder_text.json` (auto-extracted, 205 entries) and `data/keywords/manual_overrides.json` (hand-curated, 100 entries). Skim both; note Mind Stone, Commander's Sphere, Kenrith's Transformation, Spelunking are in `rejected` per the engine criterion.
+- `src/preprocess_text.py` — `build_embedding_text` is the function that decides what gets fed to the encoder. The inline-check (don't duplicate existing parenthetical reminders) is the load-bearing design choice.
+
+**M3 — First baseline measured:**
+
+- `docs/journal/2026-05-18-eval-set-construction.md` — methodology (tri-state, three testing purposes)
+- `docs/journal/2026-05-18-baseline-results.md` — measured numbers + three-class failure analysis
 - `data/eval/queries_v1_draft.yaml` — at minimum the schema and a few representative queries (q_014 flicker for the methodology-defining tri-state case; q_001 fliers for the sampling-bias example; q_020 red-creatures for the pure-structural case)
 - `data/eval/review_batch_*.html` — skim all four; the visual review of the eval set
+- `scripts/embed.py` — corpus embedding pipeline. The embedding-triple invariant is enforced on every UPDATE.
+- `scripts/eval_lookup.py` and `scripts/render_review.py` — the curation tooling
 - `scripts/evaluate.py` and `src/eval/metrics.py` — the harness and the metric math
-- `experiment_runs.id = 13` — the row this checkpoint's measurement came from. In particular: `SELECT per_query FROM experiment_runs WHERE id=13` and read the top-10 trace for q_014 (flicker), q_011 (tutor), q_001 (flying). The Class B asymmetry pattern is visible in this raw data.
+- `configs/baseline.yaml` — the Phase 3 baseline configuration
+- `experiment_runs.id = 13` — the row this milestone's measurement came from. `SELECT per_query FROM experiment_runs WHERE id=13` and read the top-10 trace for q_014 (flicker), q_011 (tutor), q_001 (flying). The Class B asymmetry pattern is visible in this raw data.
 
 ### 2. Source vetting
 
-- `data/eval/methodology_references.md` — the three papers backing the tri-state methodology:
-  - **Järvelin & Kekäläinen 2002** — abstract (minimum) + Section 4 if time. Confirms graded relevance is established IR practice.
-  - **Voorhees 2000** — abstract. Confirms single-curator judgements yield stable comparative rankings.
-  - **Sormunen 2002** — abstract + Section 4 if time. Empirical evidence that ~50% of TREC's "relevant" pool is marginal.
-- `docs/journal/2026-05-17-poc-retrospective.md` — re-read. The baseline reproduces the failure modes this entry predicted; confirm the alignment.
-- For each source: does our application stand up? Is the citation defensible to a hostile committee? Should we keep, drop, or supplement?
+**Academic citations (paper-grade):**
+
+- `data/eval/methodology_references.md` — three IR-evaluation papers backing the tri-state methodology:
+  - **Järvelin & Kekäläinen 2002** — abstract (minimum) + Section 4 if time. Confirms graded relevance is established IR practice. Where do we cite it? Methodology — Evaluation Design.
+  - **Voorhees 2000** — abstract. Confirms single-curator judgements yield stable comparative rankings. Where do we cite it? Defends our one-curator eval set.
+  - **Sormunen 2002** — abstract + Section 4 if time. Empirical evidence that ~50% of TREC's "relevant" pool is marginal. Where do we cite it? Motivates the `borderline` bucket directly.
+- **Gao et al. 2022, "Precise Zero-Shot Dense Retrieval without Relevance Labels"** — the HyDE paper (referenced in `CLAUDE.md` §2 but not yet vetted). Read abstract minimum; this is M4's primary citation.
+
+**Internal sources (vet for accuracy, alignment, defensibility):**
+
+- `docs/journal/2026-05-17-poc-retrospective.md` — re-read. The baseline reproduces the failures predicted here; confirm the alignment is real, not hand-waved.
+- `CLAUDE.md` §3 (storage philosophy), §5 (keywords/reminder text), §6 (evaluation before optimization), §11 (anti-suggestions) — each shaped a downstream decision. Confirm each section's claims hold up against the artifacts we built.
+
+**Community / non-academic sources (used during curation, vet for limitations):**
+
+- EDHREC theme pages (Ramp, Reanimator) — cited as cross-validation source in the keyword-augmentation entry. Caveat: EDHREC conflates cards that *are* an archetype with cards commonly *played in* it. Confirm we understand the limitation.
+- Star City Games / Sheldon Menery board wipe taxonomy, Draftsim card-list articles, MTG Wiki — referenced by the research agent that justified the q_008 board wipe scope expansion. Worth knowing exist; not paper citations.
+
+For each source: does our application stand up? Is the citation defensible to a hostile committee? Should we keep, drop, or supplement?
 
 ### 3. Required subtasks (blocking M4 start)
 
@@ -62,15 +112,37 @@ Read or re-read, in this order:
 
 ### 4. Interactive review
 
-The curator drives a walk-through with the LLM. Specific defenses the LLM will push on:
+The curator drives a walk-through with the LLM. Topics span M0–M3 because this is the backfill checkpoint. Specific defenses the LLM will push on, grouped by milestone:
 
-- Why per-face row schema instead of concatenation? (Schema entry's reasoning.)
-- Why tri-state relevance instead of binary? Cite the supporting paper from memory.
-- What's the reminder-text augmentation strategy? What can it not reach? (Card-side vs query-side asymmetry.)
-- What's "query-document asymmetry" and how does the baseline confirm it? Name two concrete failure examples from the per_query trace.
-- Why pgvector instead of FAISS-standalone? (CLAUDE.md §3 + the anti-suggestions list.)
+**M0 architecture:**
+
+- Why pgvector instead of FAISS-standalone? (`CLAUDE.md` §3, anti-suggestions §11.)
+- Why three-tower instead of single-tower retrieval? What does each tower contribute that the others cannot?
+- Why evaluate-first rather than fine-tune-first? (`CLAUDE.md` §6.)
+- Why a PHP frontend assumption shaped the storage decision toward a single Postgres instance.
+
+**M1 foundation:**
+
+- Why are pipeline-run logs (JSONL) separate from evaluation logs (experiment_runs)? When does each get written?
+- The corpus survey discovered that token-length p99 is 101 (max 359, threshold 512). What did this confirm? What would have changed if max had been 800?
+- Why did the four filter rules end up where they did? What's the reasoning for *not* filtering empty `oracle_text`?
+
+**M2 schema and preprocessing:**
+
+- Why per-face row schema instead of concatenation? Name a specific card and the failure mode concatenation would produce.
+- The `(embedding, embedding_version, embedding_text_hash)` paired-NULL CHECK constraint — what failure mode does it prevent? What would a bug look like without it?
+- The corpus-driven keyword extraction had three empirically-observed failure classes (cross-talk, variable-instance, em-dash). Name an example of each. Why is the manual overrides file the right response (rather than a stricter regex)?
+- What's the reminder-text augmentation strategy? What can it not reach? (Card-side vs query-side asymmetry — this is the direct precursor to M4's HyDE work.)
+- Why was Sensei's Divining Top reclassified to borderline (not relevant) for "card draw engines"? Apply the framing to a different card you've never considered.
+
+**M3 evaluation:**
+
+- Why tri-state relevance instead of binary? Cite Sormunen 2002's empirical finding from memory.
+- What's "query-document asymmetry" and how does the baseline confirm it? Name two concrete failure examples from the per_query trace (e.g., q_011 "tutor" returns Strixhaven Lessons-mechanic cards).
+- The four queries that scored (q_007, q_017, q_018, q_024) — what do they have in common structurally? What does this predict about jargon vs natural-language queries in general?
 - Why no ANN index on the embedding column? When would we add one?
-- What does the SQL tower add that the embedding tower can't? Cite a specific Class C query and explain why it scored zero.
+- What does the SQL tower add that the embedding tower can't? Cite a specific Class C query and explain why it scored zero by design.
+- The Sampling Bias caveat on broad queries — explain it. What's the v2 mitigation strategy and why is it deferred?
 
 The review ends when both parties agree the curator can defend the work. If gaps surface, return to source material rather than papering over.
 
