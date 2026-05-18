@@ -30,8 +30,11 @@ class Settings(BaseSettings):
     # ---- Database ---------------------------------------------------------
 
     database_url: str = Field(
-        default="postgresql://postgres:postgres@localhost:5432/mtg_search",
-        description="Postgres URL. Must point at a DB with the pgvector extension enabled.",
+        default="postgresql://invalid:invalid@invalid/invalid_set_DATABASE_URL_in_dot_env",
+        description=(
+            "Postgres URL. Must point at a DB with the pgvector extension enabled. "
+            "Set DATABASE_URL in .env (copy .env.example as a starting point)."
+        ),
     )
 
     # ---- LLM (HyDE query rewriter) ---------------------------------------
