@@ -46,6 +46,4 @@ def _is_available(device: torch.device) -> bool:
         return torch.cuda.is_available()
     if device.type == "mps":
         return torch.backends.mps.is_available()
-    if device.type == "cpu":
-        return True
-    return False
+    return device.type == "cpu"
