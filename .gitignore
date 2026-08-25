@@ -39,3 +39,6 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# Claude Code per-user settings
+.claude/settings.local.json
