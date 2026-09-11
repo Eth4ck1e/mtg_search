@@ -2,10 +2,11 @@
 
 Selects face rows whose ``embedding`` is NULL or whose
 ``embedding_version`` is stale, runs each through
-``build_embedding_text`` to produce the canonical text, encodes the
-text with ``sentence-transformers/multi-qa-distilbert-cos-v1``, and
+``build_embedding_text`` to produce the canonical text, prepends the
+Nomic Embed document prefix (``search_document: ``), encodes with the
+configured model (default: ``nomic-ai/nomic-embed-text-v1.5``), and
 writes back the vector along with the version string and a SHA-256
-hash of the exact text that was encoded.
+hash of the exact prefixed text that was encoded.
 
 The cards schema enforces a paired invariant on
 ``(embedding, embedding_version, embedding_text_hash)`` — all three
@@ -36,9 +37,10 @@ from pgvector.psycopg import register_vector
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 
+import src.utils.quiet  # noqa: F401  — side-effect: silence known-benign upstream warnings
 from src.config import settings
 from src.logging_utils import PipelineRun
-from src.preprocess_text import build_embedding_text, load_keyword_dict
+from src.preprocess_text import build_embedding_text, format_for_nomic_document, load_keyword_dict
 from src.utils.device import select_device
 
 _SELECT_SQL = """
@@ -118,17 +120,26 @@ def main() -> int:
             return 0
 
         # 2. Build embedding texts (preprocessing happens once, here).
+        # The Nomic document prefix is applied AFTER build_embedding_text so the
+        # pure text-building logic stays independent of the encoder. The hash is
+        # computed over the prefixed text — the exact bytes fed to the encoder.
         texts: list[str] = []
         hashes: list[str] = []
         for _oracle_id, _face_index, oracle_text, keywords in rows:
             text = build_embedding_text(oracle_text or "", keywords or [], keyword_dict)
-            texts.append(text)
-            hashes.append(_hash_text(text))
+            prefixed = format_for_nomic_document(text)
+            texts.append(prefixed)
+            hashes.append(_hash_text(prefixed))
         run.event("texts_built", count=len(texts))
 
-        # 3. Load the model once.
+        # 3. Load the model once. Nomic Embed requires trust_remote_code=True
+        # because it uses custom pooling code shipped with the model.
         load_start = time.perf_counter()
-        model = SentenceTransformer(settings.embedding_model, device=str(device))
+        model = SentenceTransformer(
+            settings.embedding_model,
+            device=str(device),
+            trust_remote_code=True,
+        )
         run.event(
             "model_loaded",
             elapsed_s=round(time.perf_counter() - load_start, 3),

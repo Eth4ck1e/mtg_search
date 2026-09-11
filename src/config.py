@@ -41,18 +41,47 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str | None = Field(
         default=None,
-        description="API key for the HyDE query rewriter. Optional until Phase 4.",
+        description=(
+            "API key for optional Claude usage (e.g., LLM-crafted Scryfall queries for the "
+            "comparator, or auxiliary evaluation tooling). Not used for HyDE — HyDE runs a "
+            "local instruction-tuned model."
+        ),
     )
     hyde_model: str = Field(
-        default="claude-haiku-4-5-20251001",
-        description="Claude model identifier used for HyDE query rewriting.",
+        default="meta-llama/Llama-3.1-8B-Instruct",
+        description=(
+            "Local instruction-tuned LLM used for HyDE query rewriting. Selected during M4 "
+            "candidate evaluation (task #27); override via HYDE_MODEL in .env if a different "
+            "checkpoint wins the evaluation."
+        ),
+    )
+
+    # ---- Data sources -----------------------------------------------------
+
+    scryfall_bulk_endpoint: str = Field(
+        default="https://api.scryfall.com/bulk-data/oracle-cards",
+        description=(
+            "Scryfall bulk-data API endpoint for the oracle-cards dataset. Returns metadata "
+            "including 'jsonl_download_uri' and 'compressed_size'; the actual bulk file is "
+            "'.jsonl.gz'."
+        ),
+    )
+    scryfall_user_agent: str = Field(
+        default="mtg_search/0.2.0 (+https://github.com/Eth4ck1e/mtg_search)",
+        description="User-Agent header sent to Scryfall API per their courtesy guidelines.",
     )
 
     # ---- Embeddings -------------------------------------------------------
 
     embedding_model: str = Field(
-        default="sentence-transformers/multi-qa-distilbert-cos-v1",
-        description="HuggingFace sentence-transformer model for card text and HyDE outputs.",
+        default="nomic-ai/nomic-embed-text-v1.5",
+        description=(
+            "HuggingFace-hosted embedding model for card Oracle text and HyDE outputs. "
+            "Nomic Embed v1.5 is a 137M-param bi-encoder in the sentence-transformer lineage "
+            "with 768-dim output and Matryoshka representation support. Selected 2026-09-11 "
+            "during the baseline-abandonment pivot. Requires task-specific prefixes on inputs "
+            "(see src/preprocess_text.py: NOMIC_DOCUMENT_PREFIX, NOMIC_QUERY_PREFIX)."
+        ),
     )
     embedding_dim: int = Field(
         default=768,

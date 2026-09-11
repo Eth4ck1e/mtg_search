@@ -30,6 +30,9 @@ data/eval/review_batch_*.html
 models/
 logs/
 
+# Academic source PDFs (large, re-downloadable via URLs in docs/sources/README.md)
+docs/sources/*.pdf
+
 # OS noise
 .DS_Store
 Thumbs.db

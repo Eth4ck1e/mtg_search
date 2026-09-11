@@ -1,10 +1,25 @@
-"""Download the Scryfall ``oracle_cards`` bulk JSON.
+"""Download the Scryfall ``oracle_cards`` bulk file.
 
-Hits Scryfall's bulk-data index, locates the ``oracle_cards`` entry, and
-stream-downloads it to ``data/raw/oracle-cards-<UTC-date>.json``. The
-file is staged through a ``.partial`` tempfile and atomically renamed on
-success, so a half-finished download cannot masquerade as a complete
-file. SHA-256 is computed while streaming and recorded in the run log.
+Hits Scryfall's typed bulk-data endpoint for ``oracle_cards`` (returns
+metadata for that dataset directly, no filtering required), then
+stream-downloads the referenced ``.jsonl.gz`` bulk file to
+``data/raw/oracle-cards-<UTC-date>.jsonl.gz``. The file is staged
+through a ``.partial`` tempfile and atomically renamed on success, so a
+half-finished download cannot masquerade as a complete file. SHA-256 is
+computed while streaming and recorded in the run log.
+
+Scryfall API contract (verified 2026-09-11):
+    Endpoint returns a single bulk_data object (not wrapped in ``data``):
+        {
+          "object": "bulk_data",
+          "type": "oracle_cards",
+          "updated_at": "...",
+          "jsonl_download_uri": "https://data.scryfall.io/...jsonl.gz",
+          "compressed_size": <bytes>,
+          ...
+        }
+    The download is gzipped JSON-Lines; downstream ingestion must decompress
+    and iterate line by line.
 
 Idempotent within a day — if today's file already exists, the script
 no-ops unless ``--force`` is passed. Re-running on a later date always
@@ -24,7 +39,6 @@ import hashlib
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 import requests
 from tqdm import tqdm
@@ -32,32 +46,24 @@ from tqdm import tqdm
 from src.config import settings
 from src.logging_utils import PipelineRun
 
-BULK_INDEX_URL = "https://api.scryfall.com/bulk-data"
-USER_AGENT = "mtg_search/0.2.0 (+https://github.com/Eth4ck1e/mtg_search)"
-ACCEPT = "application/json"
 CHUNK_SIZE = 1024 * 1024  # 1 MiB
 HTTP_TIMEOUT_S = 30
 
 
 def _http_headers() -> dict[str, str]:
-    return {"User-Agent": USER_AGENT, "Accept": ACCEPT}
-
-
-def _find_oracle_cards(entries: list[dict[str, Any]]) -> dict[str, Any]:
-    for entry in entries:
-        if entry.get("type") == "oracle_cards":
-            return entry
-    available = sorted({str(e.get("type")) for e in entries})
-    raise RuntimeError(
-        f"No 'oracle_cards' entry in Scryfall bulk-data index. Available: {available}"
-    )
+    return {
+        "User-Agent": settings.scryfall_user_agent,
+        "Accept": "application/json",
+    }
 
 
 def _stream_download(url: str, dest: Path, expected_size: int) -> tuple[int, str]:
     """Stream ``url`` to ``dest`` via a ``.partial`` tempfile.
 
     Returns ``(bytes_written, sha256_hex)``. The tempfile is atomically
-    renamed to ``dest`` only after the full transfer succeeds.
+    renamed to ``dest`` only after the full transfer succeeds. Progress is
+    reported via a tqdm bar sized to ``expected_size`` (Scryfall's
+    ``compressed_size`` field).
     """
     tmp = dest.with_suffix(dest.suffix + ".partial")
     sha = hashlib.sha256()
@@ -98,22 +104,39 @@ def main() -> int:
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     today = datetime.now(UTC).strftime("%Y-%m-%d")
-    out_path = args.out_dir / f"oracle-cards-{today}.json"
+    out_path = args.out_dir / f"oracle-cards-{today}.jsonl.gz"
+    endpoint = settings.scryfall_bulk_endpoint
 
     with PipelineRun(
         "download_scryfall",
-        inputs={"index_url": BULK_INDEX_URL, "out_path": str(out_path)},
+        inputs={"endpoint": endpoint, "out_path": str(out_path)},
     ) as run:
-        resp = requests.get(BULK_INDEX_URL, headers=_http_headers(), timeout=HTTP_TIMEOUT_S)
+        resp = requests.get(endpoint, headers=_http_headers(), timeout=HTTP_TIMEOUT_S)
         resp.raise_for_status()
-        entries = resp.json()["data"]
-        run.event("bulk_index_fetched", entries=len(entries))
+        meta = resp.json()
 
-        entry = _find_oracle_cards(entries)
+        # Field names verified 2026-09-11 against the live API.
+        try:
+            download_uri = meta["jsonl_download_uri"]
+            expected_size = int(meta["compressed_size"])
+            updated_at = meta["updated_at"]
+            bulk_type = meta.get("type", "unknown")
+        except KeyError as exc:
+            raise RuntimeError(
+                f"Unexpected Scryfall bulk-data response shape (missing {exc}). "
+                f"Response keys: {sorted(meta.keys())}"
+            ) from exc
+
+        if bulk_type != "oracle_cards":
+            raise RuntimeError(
+                f"Endpoint returned type={bulk_type!r}, expected 'oracle_cards'. "
+                f"Wrong endpoint configured?"
+            )
+
         run.note(
-            scryfall_updated_at=entry["updated_at"],
-            size_bytes_expected=entry["size"],
-            download_uri=entry["download_uri"],
+            scryfall_updated_at=updated_at,
+            compressed_size_expected=expected_size,
+            download_uri=download_uri,
         )
 
         if out_path.exists() and not args.force:
@@ -125,9 +148,9 @@ def main() -> int:
             )
             return 0
 
-        bytes_written, sha256 = _stream_download(entry["download_uri"], out_path, entry["size"])
+        bytes_written, sha256 = _stream_download(download_uri, out_path, expected_size)
         run.note(
-            size_bytes_actual=bytes_written,
+            compressed_size_actual=bytes_written,
             sha256=sha256,
             output_path=str(out_path),
         )
@@ -136,7 +159,7 @@ def main() -> int:
             f"Wrote {out_path}\n"
             f"  size:   {bytes_written:,} bytes\n"
             f"  sha256: {sha256}\n"
-            f"  scryfall updated_at: {entry['updated_at']}"
+            f"  scryfall updated_at: {updated_at}"
         )
         return 0
 

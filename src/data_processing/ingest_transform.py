@@ -25,6 +25,7 @@ from src.data_processing.scryfall_classify import (
     is_digital_only,
     is_non_card_layout,
     is_silver_bordered,
+    set_type,
 )
 
 
@@ -33,7 +34,7 @@ def should_include(card: dict[str, Any]) -> str | None:
 
     Reasons (stable strings used as PipelineRun.skip() labels):
         ``"non_card_layout"``, ``"digital_only"``, ``"silver_bordered"``,
-        ``"memorabilia"``.
+        ``"memorabilia"``, ``"funny_set"``, ``"token_set"``.
     """
     if is_non_card_layout(card):
         return "non_card_layout"
@@ -41,8 +42,13 @@ def should_include(card: dict[str, Any]) -> str | None:
         return "digital_only"
     if is_silver_bordered(card):
         return "silver_bordered"
-    if card.get("set_type") == "memorabilia":
+    st = set_type(card)
+    if st == "memorabilia":
         return "memorabilia"
+    if st == "funny":
+        return "funny_set"
+    if st == "token":
+        return "token_set"
     return None
 
 

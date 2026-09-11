@@ -23,6 +23,28 @@ from pathlib import Path
 from src.config import settings
 from src.data_processing.keyword_extract import extract_reminder_texts
 
+# Nomic Embed requires task-specific prefixes on inputs. Applied at encode time
+# (in scripts/embed.py for the document side, and at search time for queries)
+# rather than inside build_embedding_text() so the pure text-building logic
+# stays independent of the specific encoder. If the encoder is later swapped,
+# only these constants and their callers change.
+NOMIC_DOCUMENT_PREFIX = "search_document: "
+NOMIC_QUERY_PREFIX = "search_query: "
+
+
+def format_for_nomic_document(text: str) -> str:
+    """Prepend the Nomic Embed document prefix. Applied before encoding cards."""
+    return NOMIC_DOCUMENT_PREFIX + text
+
+
+def format_for_nomic_query(text: str) -> str:
+    """Prepend the Nomic Embed query prefix. Applied before encoding a user query.
+
+    Used at search time on the HyDE-rewritten query before cosine similarity
+    against document embeddings.
+    """
+    return NOMIC_QUERY_PREFIX + text
+
 
 def build_embedding_text(
     oracle_text: str,

@@ -62,6 +62,20 @@ def set_type(card: dict[str, Any]) -> str:
     return str(card.get("set_type") or "unknown")
 
 
+# Scryfall ``set_type`` values whose cards are not part of the gameplay corpus.
+# ``funny`` covers Un-sets (Unglued, Unhinged, Unfinity) — including their black-
+# bordered cards that the silver_bordered filter misses. ``token`` catches cards
+# from token-only booster products that use normal card layouts (so escape the
+# NON_CARD_LAYOUTS check). ``memorabilia`` covers art cards, coins, and other
+# non-playable inserts.
+NON_CORPUS_SET_TYPES: frozenset[str] = frozenset({"funny", "token", "memorabilia"})
+
+
+def has_non_corpus_set_type(card: dict[str, Any]) -> bool:
+    """True if ``set_type`` names a product that isn't part of the gameplay corpus."""
+    return set_type(card) in NON_CORPUS_SET_TYPES
+
+
 def border_color(card: dict[str, Any]) -> str:
     """Return ``border_color`` or ``"unknown"`` if missing."""
     return str(card.get("border_color") or "unknown")

@@ -17,13 +17,14 @@ and a rerun catches up cheaply.
 Usage::
 
     python scripts/ingest.py
-    python scripts/ingest.py --bulk data/raw/oracle-cards-2026-05-17.json
+    python scripts/ingest.py --bulk data/raw/oracle-cards-2026-09-11.jsonl.gz
     python scripts/ingest.py --dry-run     # parse + filter, no DB writes
 """
 
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 import sys
 from decimal import Decimal
@@ -31,7 +32,6 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
-import ijson
 import psycopg
 from psycopg.types.json import Jsonb
 from tqdm import tqdm
@@ -105,10 +105,10 @@ def _row_to_params(row: dict[str, Any]) -> tuple[Any, ...]:
 
 
 def _find_latest_bulk(raw_dir: Path) -> Path:
-    candidates = sorted(raw_dir.glob("oracle-cards-*.json"))
+    candidates = sorted(raw_dir.glob("oracle-cards-*.jsonl.gz"))
     if not candidates:
         raise FileNotFoundError(
-            f"No oracle-cards-*.json in {raw_dir}. Run scripts/download_scryfall.py first."
+            f"No oracle-cards-*.jsonl.gz in {raw_dir}. Run scripts/download_scryfall.py first."
         )
     return candidates[-1]
 
@@ -121,7 +121,7 @@ def main() -> int:
         "--bulk",
         type=Path,
         default=None,
-        help="Path to oracle-cards-*.json. Defaults to newest under data/raw/.",
+        help="Path to oracle-cards-*.jsonl.gz. Defaults to newest under data/raw/.",
     )
     parser.add_argument(
         "--dry-run",
@@ -146,9 +146,10 @@ def main() -> int:
 
         with conn_ctx as conn:
             cur = None if args.dry_run else conn.cursor()
-            with bulk_path.open("rb") as fh:
-                stream = tqdm(ijson.items(fh, "item"), desc="ingest", unit="card")
-                for card in stream:
+            with gzip.open(bulk_path, "rt", encoding="utf-8") as fh:
+                stream = tqdm(fh, desc="ingest", unit="card")
+                for line in stream:
+                    card = json.loads(line)
                     reason = should_include(card)
                     if reason is not None:
                         run.skip(reason)

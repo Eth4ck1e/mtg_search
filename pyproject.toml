@@ -26,8 +26,9 @@ dependencies = [
     # Embeddings
     "sentence-transformers>=3.0",
     "torch>=2.2",                  # CPU build by default; override per-platform if GPU
+    "einops>=0.8",                 # required by Nomic Embed custom pooling code
 
-    # LLM (HyDE query rewriter)
+    # LLM (HyDE query rewriter, LLM-crafted Scryfall queries for comparator)
     "anthropic>=0.40",
 
     # Config & data
@@ -39,7 +40,6 @@ dependencies = [
     # Data ingestion
     "requests>=2.32",
     "tqdm>=4.66",
-    "ijson>=3.3",                  # streaming JSON parser — needed for 500MB+ Scryfall bulk
 ]
 
 [project.optional-dependencies]
