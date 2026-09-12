@@ -106,6 +106,28 @@ Read in this order for maximum efficiency:
 
 ---
 
+## Filtered vector search (SQL pre-filter methodology)
+
+### Filter-Agnostic Vector Search on a PostgreSQL Database System (2026)
+- **File:** `2026_filter-agnostic-vector-search-postgres.pdf`
+- **arXiv:** [2603.23710](https://arxiv.org/abs/2603.23710)
+- **Why cite:** **Directly relevant** — this paper studies filtered ANN search *in PostgreSQL*, which is exactly your pgvector setup. Compares pre-filter vs. post-filter strategies on Postgres and quantifies when each wins.
+- **How to use:** Related Work + Methodology — primary citation for your SQL pre-filter design decision. Cite alongside your CLAUDE.md §2 statement "pre-filter is critical or recall collapses on constrained queries."
+
+### Attribute Filtering in Approximate Nearest Neighbor Search: An In-depth Experimental Study (2025)
+- **File:** `2025_attribute-filtering-ann-study.pdf`
+- **arXiv:** [2508.16263](https://arxiv.org/abs/2508.16263)
+- **Why cite:** Comprehensive experimental study comparing filtered ANN algorithms across pre-filter, post-filter, and hybrid strategies. Frames the design-space tradeoffs your cascade navigates.
+- **How to use:** Related Work — background for the SQL pre-filter design decision. Discussion — reference for defending pre-filter choice over post-filter.
+
+### Benchmarking Filtered ANN Search Algorithms on Transformer-based Embedding Vectors (2025)
+- **File:** `2025_filtered-ann-transformer-embeddings-benchmark.pdf`
+- **arXiv:** [2507.21989](https://arxiv.org/abs/2507.21989)
+- **Why cite:** Benchmarks filtered ANN specifically on transformer-based (BERT-family) embeddings — the same class as your Nomic Embed encoder. Empirical baseline for filtered-search performance on modern dense embeddings.
+- **How to use:** Related Work + Discussion — grounding for filtered vector search performance expectations with modern encoders.
+
+---
+
 ## Product / catalog search (generalization anchor)
 
 ### Nigam et al. 2020 — Semantic Product Search for Matching Structured Product Catalogs in E-Commerce
