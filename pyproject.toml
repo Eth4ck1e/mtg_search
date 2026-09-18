@@ -29,7 +29,13 @@ dependencies = [
     "einops>=0.8",                 # required by Nomic Embed custom pooling code
 
     # LLM (HyDE query rewriter, LLM-crafted Scryfall queries for comparator)
-    "anthropic>=0.40",
+    "anthropic>=0.40",             # Optional Claude usage — comparator queries, LLM-eval
+
+    # HyDE local inference — MLX on Apple Silicon.
+    # Platform-conditional: mlx-lm only installs on macOS arm64. On other platforms
+    # this line is a no-op; use llama.cpp / vLLM / TGI as your local-serve backend
+    # and set HYDE_SERVER_URL in .env to point at whichever OpenAI-compatible endpoint.
+    "mlx-lm>=0.20; platform_system == 'Darwin' and platform_machine == 'arm64'",
 
     # Config & data
     "pydantic>=2.7",

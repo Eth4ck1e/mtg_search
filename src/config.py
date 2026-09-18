@@ -48,11 +48,41 @@ class Settings(BaseSettings):
         ),
     )
     hyde_model: str = Field(
-        default="meta-llama/Llama-3.1-8B-Instruct",
+        default="mlx-community/Meta-Llama-3.1-8B-Instruct-4bit",
         description=(
-            "Local instruction-tuned LLM used for HyDE query rewriting. Selected during M4 "
-            "candidate evaluation (task #27); override via HYDE_MODEL in .env if a different "
-            "checkpoint wins the evaluation."
+            "Local instruction-tuned LLM used for HyDE query rewriting. MLX-quantized variant "
+            "for Apple Silicon inference (~57 tok/sec generation on M3 4-bit, 4.8GB peak). "
+            "Selected 2026-09-18 during M4 candidate evaluation kickoff; override via "
+            "HYDE_MODEL in .env for benchmarking other checkpoints (e.g., 6-bit or 8-bit "
+            "quantizations, or an entirely different model)."
+        ),
+    )
+    hyde_server_url: str = Field(
+        default="http://localhost:8080/v1",
+        description=(
+            "OpenAI-compatible endpoint URL for the local MLX inference server "
+            "(`mlx_lm.server`). Model stays hot between calls; sub-second responses "
+            "after warm-up. Start with: `mlx_lm.server --model <HYDE_MODEL> --port 8080`."
+        ),
+    )
+    hyde_max_tokens: int = Field(
+        default=256,
+        description=(
+            "Max tokens HyDE may generate for its structured JSON output. Reduced from 512 "
+            "(the original HyDE paper's default for full hypothetical documents) to 256 "
+            "because our JSON schema is compact — filters object plus a single-sentence "
+            "hypothetical_card typically fits in 100-180 tokens. Setting a tighter cap "
+            "reclaims latency budget without truncating real outputs; raise if empirical "
+            "outputs start hitting the cap. See docs/sources/2025_never-come-up-empty-*.pdf "
+            "and the HyDE-latency section of docs/sources/README.md for the tradeoff."
+        ),
+    )
+    hyde_temperature: float = Field(
+        default=0.0,
+        description=(
+            "Sampling temperature for HyDE. Default 0.0 (deterministic) for reproducible "
+            "structured output; raise cautiously if JSON reliability holds but hypothetical "
+            "card text is too rigid."
         ),
     )
 

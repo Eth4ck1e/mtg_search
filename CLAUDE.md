@@ -18,7 +18,7 @@ The technical response is a **three-stage retrieval cascade** that addresses the
 
 Three sequential stages in a retrieval cascade (Wang et al. 2011 tradition). Execution order matches numbering:
 
-1. **HyDE query rewriter (Stage 1).** A local instruction-tuned LLM (`meta-llama/Llama-3.1-8B-Instruct` at the current default; final choice pending M4 candidate evaluation) transforms the user's natural-language query into a structured JSON output with two fields: (a) filter attributes for Stage 2, and (b) a hypothetical MTG card ability text for Stage 3. Reference: Gao et al. 2022, *"Precise Zero-Shot Dense Retrieval without Relevance Labels."* Preserved at [`docs/sources/2022_gao_hyde.pdf`](docs/sources/2022_gao_hyde.pdf).
+1. **HyDE query rewriter (Stage 1).** A local instruction-tuned LLM (`mlx-community/Meta-Llama-3.1-8B-Instruct-4bit` — MLX-quantized for Apple Silicon inference via `mlx_lm.server`; final choice pending M4 candidate evaluation) transforms the user's natural-language query into a structured JSON output with two fields: (a) filter attributes for Stage 2, and (b) a hypothetical MTG card ability text for Stage 3. Served over an OpenAI-compatible HTTP endpoint so `query_rewriter.py` is backend-agnostic (swap MLX → vLLM/llama.cpp/TGI without touching Python). Reference: Gao et al. 2022, *"Precise Zero-Shot Dense Retrieval without Relevance Labels."* Preserved at [`docs/sources/2022_gao_hyde.pdf`](docs/sources/2022_gao_hyde.pdf).
 2. **SQL pre-filter (Stage 2).** Structured attributes handed off from Stage 1 — color identity, mana value, type line, P/T, legality, and other categorical or numeric facts — narrow the candidate set. Postgres handles this natively; the pre-filter runs before any vector operation.
 3. **Semantic vector search (Stage 3).** The Stage 1 hypothetical ability text is embedded with `nomic-ai/nomic-embed-text-v1.5` (137M-param bi-encoder, 768-dim output). ANN search runs **inside** the candidate set narrowed by Stage 2 — pre-filter, not post-filter on top-K. Post-filter on top-K collapses recall on constrained queries.
 
@@ -198,6 +198,13 @@ PYTHONPATH="$PWD" python scripts/download_scryfall.py   # oracle-cards .jsonl.gz
 PYTHONPATH="$PWD" python scripts/ingest.py              # → cards table UPSERT
 PYTHONPATH="$PWD" python scripts/build_keyword_dict.py  # reminder-text dictionary
 PYTHONPATH="$PWD" python scripts/embed.py               # missing/stale embeddings updated
+
+# Start MLX HyDE server (Apple Silicon; leave running in a separate shell)
+PYTHONPATH="$PWD" python -m mlx_lm server \
+  --model mlx-community/Meta-Llama-3.1-8B-Instruct-4bit \
+  --port 8080 --log-level WARNING
+# ~57 tok/sec generation, ~4.8GB peak on M3. OpenAI-compatible endpoint at
+# http://localhost:8080/v1 — query_rewriter.py hits /v1/chat/completions.
 
 # Ad-hoc query testing (naive dense retrieval only; no HyDE, no SQL pre-filter)
 PYTHONPATH="$PWD" python scripts/test_search.py --dedupe "cheap red removal"

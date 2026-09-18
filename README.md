@@ -100,11 +100,19 @@ PYTHONPATH="$PWD" python scripts/build_keyword_dict.py
 # 9. Encode the corpus (embeddings → pgvector)
 PYTHONPATH="$PWD" python scripts/embed.py
 
-# 10. Run a retrieval configuration and log the results
+# 10. Start the MLX HyDE server (Apple Silicon only; leave running in a
+#     separate terminal for the retrieval pipeline to call)
+PYTHONPATH="$PWD" python -m mlx_lm server \
+  --model mlx-community/Meta-Llama-3.1-8B-Instruct-4bit \
+  --port 8080 --log-level WARNING
+
+# 11. Run a retrieval configuration and log the results
 PYTHONPATH="$PWD" python scripts/evaluate.py --config configs/baseline.yaml
 ```
 
 > **Note on `PYTHONPATH`:** Python 3.13.0 has a `.pth` file processing bug that breaks editable-install imports. Prefixing `PYTHONPATH="$PWD"` works around it. Upgrading to a patched Python 3.13.x (via `brew upgrade python@3.13`) removes the need for the prefix.
+
+> **Note on MLX (Apple Silicon):** the HyDE stage uses [`mlx-lm`](https://github.com/ml-explore/mlx-examples/tree/main/llms) for local LLM inference — ~50% faster than llama.cpp-based backends on M-series chips. The 4-bit Llama 3.1 8B Instruct variant runs at ~57 tokens/sec on an M3 with ~4.8GB peak memory. On non-macOS platforms, `mlx-lm` is skipped by the platform marker in `pyproject.toml`; substitute any OpenAI-compatible local-serve backend (vLLM, llama.cpp server, TGI) and point `HYDE_SERVER_URL` in `.env` at it.
 
 ## Where to look next
 

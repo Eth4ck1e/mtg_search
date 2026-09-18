@@ -106,6 +106,22 @@ Read in this order for maximum efficiency:
 
 ---
 
+## HyDE latency and query-rewriter efficiency
+
+### Never Come Up Empty: Adaptive HyDE Retrieval for Improving LLM Developer Support (2025)
+- **File:** `2025_never-come-up-empty-adaptive-hyde.pdf`
+- **arXiv:** [2507.16754](https://arxiv.org/abs/2507.16754)
+- **Why cite:** **Direct HyDE optimization paper (2025).** Proposes adaptive HyDE — a runtime decision layer that skips or shortens hypothetical-document generation when the query already has sufficient signal, reducing latency without accuracy loss. The most current published work on the specific problem of "HyDE is slow, how do we fix it."
+- **How to use:** Methodology (justifies your choice of single-shot HyDE over the original 8-sample ensemble). Discussion/Future Work (an adaptive-skip layer is a natural M6 optimization if base HyDE latency turns out to bottleneck end-to-end performance).
+
+### Retrieval-Feedback-Driven Distillation and Preference Alignment for Efficient LLM-based Query Expansion (2026)
+- **File:** `2026_retrieval-feedback-distillation-query-expansion.pdf`
+- **arXiv:** [2603.13776](https://arxiv.org/abs/2603.13776)
+- **Why cite:** Shows that a distilled small model (Qwen3-4B) reaches ~97% of a 685B teacher model's performance on query-expansion retrieval tasks. Direct evidence that a specialized small HyDE model can match a much larger general model — supports Future Work argument for a distilled query-rewriter as an M6 optimization.
+- **How to use:** Future Work (distillation-based HyDE for tighter latency budgets). Related Work (framing for smaller-model choices in the design space).
+
+---
+
 ## Filtered vector search (SQL pre-filter methodology)
 
 ### Filter-Agnostic Vector Search on a PostgreSQL Database System (2026)
