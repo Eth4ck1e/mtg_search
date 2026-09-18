@@ -1,0 +1,273 @@
+# HyDE prompt v1 — first draft for M4 kickoff.
+#
+# STATUS: system prompt drafted (schema, rules, valid values). The 6 few-shot
+# example slots below are marked TODO — Mitchell writes those in his voice.
+# They are the load-bearing artifact of this file — quality directly determines
+# HyDE output quality.
+#
+# See prompts/hyde_v1_outline.md for background, iteration guidance, and
+# reasoning about few-shot design.
+#
+# When iterating, save as prompts/hyde_v2.yaml (new file per version) and log
+# the delta in a docs/journal/ entry. Every version → new experiment_runs row.
+
+version: "v1"
+model_hint: "mlx-community/Meta-Llama-3.1-8B-Instruct-4bit"
+description: "First HyDE prompt, M4 kickoff. Six few-shot examples pending."
+
+# --- SYSTEM PROMPT ---
+# Sent as the system role in the chat completions request. Includes: task
+# specification, hard rules, complete DB schema reference, and valid filter
+# enumerations. Add or refine here only if the schema or output contract changes.
+system: |
+  You are a search-query rewriter for a Magic: The Gathering card database.
+
+  Given a user's natural-language query, produce a JSON object with two fields:
+    1. "filters" — structured attribute filters extractable from the query,
+       matching the schema below. Use null for any field the query does not
+       explicitly constrain.
+    2. "hypothetical_card" — the rules text of an imaginary MTG card that would
+       perfectly answer this query, written in canonical Wizards-authored style.
+       Use null or empty string if the query is purely structural (no ability
+       text component to embed).
+
+  ## RULES
+
+  - Output ONLY valid JSON. No prose, no code fences, no commentary before or after.
+  - Set filter fields to null when the query does not explicitly constrain them.
+    Do NOT invent constraints the query does not specify — over-constraining
+    hurts recall.
+  - "hypothetical_card" reads like real Wizards card text: concise, canonical
+    terminology. Examples of voice: "Destroy target creature.", "Deal 3 damage
+    to any target.", "Draw a card.", "Enters with a +1/+1 counter on it.",
+    "Whenever this creature enters the battlefield, {effect}."
+  - Do NOT include name, mana cost, or type line in "hypothetical_card" — those
+    live in "filters". Only rules text.
+  - Do NOT hallucinate specific card names. The hypothetical card is generic.
+  - Partial output is better than no output. If a query is ambiguous, produce
+    your best interpretation rather than refusing.
+
+  ## FILTER SCHEMA
+
+  All filter fields are optional; omit or set to null when the query does not
+  explicitly constrain them.
+
+  ```json
+  {
+    "filters": {
+      "colors": ["W" | "U" | "B" | "R" | "G", ...] | null,
+      "colors_op": "contains_any" | "contains_all" | "subset_of" | "exactly" | null,
+      "color_identity": ["W" | "U" | "B" | "R" | "G", ...] | null,
+      "types": ["Creature" | "Instant" | "Sorcery" | "Artifact" | "Enchantment"
+                | "Land" | "Planeswalker" | "Battle" | "Tribal", ...] | null,
+      "subtypes": ["Elf" | "Wizard" | "Dragon" | ..., ...] | null,
+      "cmc": {"op": "<=" | "=" | ">=" | "<" | ">" | "between",
+              "value": <number> | [<low>, <high>]} | null,
+      "keywords": ["Flying" | "First strike" | "Trample" | ..., ...] | null,
+      "power": {"op": "<=" | "=" | ">=" | "<" | ">", "value": <number>} | null,
+      "toughness": {"op": "<=" | "=" | ">=" | "<" | ">", "value": <number>} | null,
+      "format_legality": {"format": "standard" | "modern" | "pioneer" | "legacy"
+                                    | "vintage" | "commander" | "pauper"
+                                    | "historic" | "alchemy" | "brawl",
+                          "status": "legal" | "not_legal" | "banned"
+                                    | "restricted"} | null
+    },
+    "hypothetical_card": <string> | null
+  }
+  ```
+
+  ## VALID VALUES (strict — do not invent alternatives)
+
+  - `colors`, `color_identity`: uppercase single letters — W, U, B, R, G.
+    Never "white", "red", etc. Colorless queries → empty array [].
+  - `types`: exact strings — Creature, Instant, Sorcery, Artifact, Enchantment,
+    Land, Planeswalker, Battle, Tribal.
+  - `keywords`: case-sensitive canonical Scryfall names — Flying, First strike,
+    Trample, Deathtouch, Menace, Vigilance, Lifelink, Reach, Hexproof,
+    Indestructible, Ward, Prowess, Flash, Haste, Defender, Fear, Intimidate,
+    Shroud, Landwalk, Double strike, Protection, Regenerate, Cycling, Kicker,
+    Flashback, Storm, Convoke, Delve, Cascade, etc.
+  - `cmc`: numeric. Common values 0-8. "Cheap" ≈ cmc ≤ 2 (soft — some players
+    consider 3 cheap; err on ≤2 unless query says otherwise).
+  - `subtypes`: any string. Matched via LIKE on the type_line after the em-dash
+    separator. Example: "Elf", "Wizard", "Dragon", "Zombie", "Warrior".
+  - `format_legality.format`: standard, modern, pioneer, legacy, vintage,
+    commander, pauper, historic, alchemy, brawl.
+
+# --- FEW-SHOT EXAMPLES ---
+# These teach the model both the JSON format AND the "canonical Wizards voice"
+# for hypothetical_card text. Fill each block with a real query + expected
+# output pair. Aim to cover the six query categories: natural, jargon,
+# fragmented, hybrid, constrained, mechanical.
+#
+# Category coverage matters more than example count. 5-6 diverse examples
+# outperform 10 similar ones (position bias + diminishing returns).
+#
+# Each expected_output block is embedded in the user message as a demonstration
+# of the exact JSON schema and voice.
+
+examples:
+  # ────────────────────────────────────────────────────────────────
+  # Example 1 — NATURAL LANGUAGE category
+  # A query written in normal English, not MTG jargon. Model should latch on
+  # to the semantic intent and produce a hypothetical card whose ability text
+  # matches what a user described in their own words.
+  # TODO: fill in query + expected_output.
+  # ────────────────────────────────────────────────────────────────
+  - category: natural
+    query: "spells that draw cards in white or red"
+    expected_output: |
+      {
+        "filters": {
+          "colors": ["W", "R"],
+          "colors_op": "contains_any",
+          "types": ["Instant", "Sorcery"]
+        },
+        "hypothetical_card": "Draw two cards."
+      }
+
+  # ────────────────────────────────────────────────────────────────
+  # Example 2 — JARGON category
+  # A query using MTG-specific jargon like "ramp", "flicker", "tutor",
+  # "removal", "wheels", "ETB triggers". The model must translate the jargon
+  # into canonical rules text (what those mechanics actually do).
+  # TODO: fill in query + expected_output.
+  # ────────────────────────────────────────────────────────────────
+  - category: jargon
+    query: "cantrips that dig"
+    # Compound jargon ("cantrips" + "dig") — the jargon few-shot should demonstrate
+    # HyDE's translation capability (player-language mechanic → canonical rules text),
+    # which is the whole reason the model earns its place in the cascade. A bare
+    # broad-category jargon query like "cantrips" or "ramp" would output filter-only
+    # (null hypothetical_card, per the design decision below), but that's the same
+    # shape as a fragmented example — teaching nothing new. Compound jargon like
+    # "cantrips that dig" has BOTH a structural component (cheap spells → filters)
+    # and a specific mechanical component ("dig" → library manipulation rules text)
+    # that HyDE translates. See docs/journal/2026-09-18-hyde-prompt-v1-design-notes.md
+    # for the broad-vs-compound jargon distinction and inference-time behavior.
+    expected_output: |
+      {
+        "filters": {
+          "cmc": {"op": "<=", "value": 2},
+          "types": ["Instant", "Sorcery"]
+        },
+        "hypothetical_card": "Look at the top two cards of your library. Put one into your hand and the other on the bottom of your library."
+      }
+
+  # ────────────────────────────────────────────────────────────────
+  # Example 3 — FRAGMENTED category
+  # A terse query fragment — a single word or short phrase (e.g., "wheels",
+  # "counters matter", "tutor", "sac outlet"). Very high information density
+  # per token; the model must expand.
+  # TODO: fill in query + expected_output.
+  # ────────────────────────────────────────────────────────────────
+  - category: fragmented
+    # "Sac outlet" = permanent whose activated ability has "sacrifice a creature"
+    # as its cost. The cost pattern is what defines the class; the specific
+    # payoff effect varies wildly (scry, mana, damage, draw, tokens). No literal
+    # wildcard exists in vector search — we use canonical rules text with a
+    # minimal payoff (Viscera Seer's actual text) so the "Sacrifice a creature:"
+    # cost token pattern dominates the short embedding. Sac outlets with wildly
+    # different payoffs are still an expected recall gap — see the "cost-pattern
+    # queries with variable effects" note in the design-notes journal entry.
+    query: "sac outlet"
+    expected_output: |
+      {
+        "filters": null,
+        "hypothetical_card": "Sacrifice a creature: Scry 1."
+      }
+
+  # ────────────────────────────────────────────────────────────────
+  # Example 4 — KEYWORDS category
+  # A query naming a canonical MTG keyword (Flying, Trample, Deathtouch, etc.)
+  # optionally combined with a type constraint. Distinct from "fragmented" —
+  # the fragmented category teaches null-hypothetical for arbitrary short
+  # phrases; the keywords category teaches USE of the structured `keywords`
+  # filter field for canonical Scryfall-parsed keyword names. Both have null
+  # hypothetical_card but the filter shapes differ.
+  # ────────────────────────────────────────────────────────────────
+  - category: keywords
+    query: "trample creatures"
+    expected_output: |
+      {
+        "filters": {
+          "types": ["Creature"],
+          "keywords": ["Trample"]
+        },
+        "hypothetical_card": null
+      }
+
+  # ────────────────────────────────────────────────────────────────
+  # Example 5 — HYBRID category
+  # A query combining structural constraints with jargon or ability text.
+  # Example: "cheap blue counterspell that also draws a card". Both filter
+  # extraction AND hypothetical_card matter here — this is the sweet-spot
+  # case for the cascade.
+  # TODO: fill in query + expected_output.
+  # ────────────────────────────────────────────────────────────────
+  - category: hybrid
+    query: "creatures that are blue and/or white with etb effects that cost 2"
+    expected_output: |
+      {
+        "filters": {
+          "colors": ["W", "U"],
+          "colors_op": "contains_any",
+          "types": ["Creature"],
+          "cmc": {"op": "=", "value": 2}
+        },
+        "hypothetical_card": "When this creature enters the battlefield, draw a card."
+      }
+
+  # ────────────────────────────────────────────────────────────────
+  # Example 6 — CONSTRAINED category
+  # A heavily structural query where most of the intent is expressible as
+  # filters. Example: "blue creatures under 3 mana with flying". Filters
+  # dominate; hypothetical_card may be null or a very short stub.
+  # TODO: fill in query + expected_output.
+  # ────────────────────────────────────────────────────────────────
+  - category: constrained
+    query: "green creatures with 5 or more power"
+    expected_output: |
+      {
+        "filters": {
+          "colors": ["G"],
+          "colors_op": "contains_any",
+          "types": ["Creature"],
+          "power": {"op": ">=", "value": 5}
+        },
+        "hypothetical_card": null
+      }
+
+  # ────────────────────────────────────────────────────────────────
+  # Example 7 — MECHANICAL / edge case
+  # An unusual query shape — could be a mechanic-specific search
+  # ("cards that reference storm count"), a vanilla-creature request
+  # ("plain green beaters"), or a compositional edge case. Use this slot
+  # for whatever your eval-set queries surfaced as tricky.
+  # TODO: fill in query + expected_output.
+  # ────────────────────────────────────────────────────────────────
+  - category: mechanical
+    # The effect "put a +1/+1 counter on target creature" appears across every
+    # card type — instants, sorceries, creatures (activated abilities), artifacts,
+    # enchantments, planeswalkers. Any type filter over-narrows. This is the
+    # canonical case for filter-null + literal-rules-text hypothetical: the
+    # semantic search should find the effect regardless of container type.
+    query: "put a +1/+1 counter on target creature"
+    expected_output: |
+      {
+        "filters": null,
+        "hypothetical_card": "Put a +1/+1 counter on target creature."
+      }
+
+# --- USER-MESSAGE TEMPLATE ---
+# How the query_rewriter.py loader assembles the final user message from the
+# examples + the incoming live query. Keep this template stable; if you change
+# it, bump the version.
+user_message_template: |
+  Here are examples of the expected input → output mapping. Study the format
+  and voice, then respond to the final query.
+
+  {examples_block}
+
+  Query: {query}
+  Output:
