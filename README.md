@@ -46,6 +46,7 @@ The full architecture spec, working conventions, and anti-patterns live in [`CLA
 │   ├── download_scryfall.py     # Scryfall bulk-data download
 │   ├── survey_corpus.py         # Corpus characterization
 │   ├── ingest.py                # Bulk file → cards table UPSERT
+│   ├── ingest_tags.py           # Scryfall oracle-tags bulk → oracle_tags + card_tags
 │   ├── build_keyword_dict.py    # Reminder-text extraction from corpus
 │   ├── embed.py                 # Encode cards → pgvector
 │   ├── migrate.py               # SQL migration runner
@@ -99,6 +100,11 @@ PYTHONPATH="$PWD" .venv/bin/python scripts/build_keyword_dict.py
 
 # 9. Encode the corpus (embeddings → pgvector)
 PYTHONPATH="$PWD" .venv/bin/python scripts/embed.py
+
+# 9b. (Optional, M6) Load Scryfall Tagger oracle tags — official bulk file,
+#     one metadata call + one unthrottled download, no search-API scraping
+PYTHONPATH="$PWD" .venv/bin/python scripts/download_scryfall.py --dataset oracle-tags
+PYTHONPATH="$PWD" .venv/bin/python scripts/ingest_tags.py
 
 # 10. Start the MLX HyDE server (Apple Silicon only; leave running in a
 #     separate terminal for the retrieval pipeline to call)

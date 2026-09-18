@@ -1,25 +1,29 @@
-"""Download the Scryfall ``oracle_cards`` bulk file.
+"""Download a Scryfall bulk-data file (``oracle_cards`` or ``oracle_tags``).
 
-Hits Scryfall's typed bulk-data endpoint for ``oracle_cards`` (returns
-metadata for that dataset directly, no filtering required), then
+Hits Scryfall's typed bulk-data endpoint for the requested dataset
+(returns metadata for that dataset directly, no filtering required), then
 stream-downloads the referenced ``.jsonl.gz`` bulk file to
-``data/raw/oracle-cards-<UTC-date>.jsonl.gz``. The file is staged
-through a ``.partial`` tempfile and atomically renamed on success, so a
-half-finished download cannot masquerade as a complete file. SHA-256 is
-computed while streaming and recorded in the run log.
+``data/raw/<dataset>-<UTC-date>.jsonl.gz``. The file is staged through a
+``.partial`` tempfile and atomically renamed on success, so a half-finished
+download cannot masquerade as a complete file. SHA-256 is computed while
+streaming and recorded in the run log.
 
-Scryfall API contract (verified 2026-09-11):
+Scryfall API contract (verified 2026-09-11 for oracle-cards, 2026-09-18 for
+oracle-tags):
     Endpoint returns a single bulk_data object (not wrapped in ``data``):
         {
           "object": "bulk_data",
-          "type": "oracle_cards",
+          "type": "oracle_cards" | "oracle_tags",
           "updated_at": "...",
           "jsonl_download_uri": "https://data.scryfall.io/...jsonl.gz",
           "compressed_size": <bytes>,
           ...
         }
     The download is gzipped JSON-Lines; downstream ingestion must decompress
-    and iterate line by line.
+    and iterate line by line. ``data.scryfall.io`` file origins are exempt
+    from Scryfall's API rate limits (https://scryfall.com/docs/api/rate-limits);
+    the single metadata call to ``api.scryfall.com`` is the only rate-limited
+    request this script makes.
 
 Idempotent within a day — if today's file already exists, the script
 no-ops unless ``--force`` is passed. Re-running on a later date always
@@ -27,7 +31,8 @@ produces a fresh dated file.
 
 Usage::
 
-    python scripts/download_scryfall.py
+    python scripts/download_scryfall.py                        # oracle-cards
+    python scripts/download_scryfall.py --dataset oracle-tags  # Tagger oracle tags
     python scripts/download_scryfall.py --force
     python scripts/download_scryfall.py --out-dir /tmp
 """
@@ -48,6 +53,13 @@ from src.logging_utils import PipelineRun
 
 CHUNK_SIZE = 1024 * 1024  # 1 MiB
 HTTP_TIMEOUT_S = 30
+
+# CLI dataset name -> (bulk-data endpoint, expected Scryfall ``type`` field).
+# The CLI name doubles as the output filename prefix.
+DATASETS: dict[str, tuple[str, str]] = {
+    "oracle-cards": (settings.scryfall_bulk_endpoint, "oracle_cards"),
+    "oracle-tags": (settings.scryfall_oracle_tags_endpoint, "oracle_tags"),
+}
 
 
 def _http_headers() -> dict[str, str]:
@@ -100,16 +112,22 @@ def main() -> int:
         action="store_true",
         help="Re-download even if today's file already exists.",
     )
+    parser.add_argument(
+        "--dataset",
+        choices=sorted(DATASETS),
+        default="oracle-cards",
+        help="Which Scryfall bulk dataset to fetch (default: oracle-cards).",
+    )
     args = parser.parse_args()
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
     today = datetime.now(UTC).strftime("%Y-%m-%d")
-    out_path = args.out_dir / f"oracle-cards-{today}.jsonl.gz"
-    endpoint = settings.scryfall_bulk_endpoint
+    out_path = args.out_dir / f"{args.dataset}-{today}.jsonl.gz"
+    endpoint, expected_type = DATASETS[args.dataset]
 
     with PipelineRun(
         "download_scryfall",
-        inputs={"endpoint": endpoint, "out_path": str(out_path)},
+        inputs={"dataset": args.dataset, "endpoint": endpoint, "out_path": str(out_path)},
     ) as run:
         resp = requests.get(endpoint, headers=_http_headers(), timeout=HTTP_TIMEOUT_S)
         resp.raise_for_status()
@@ -127,9 +145,9 @@ def main() -> int:
                 f"Response keys: {sorted(meta.keys())}"
             ) from exc
 
-        if bulk_type != "oracle_cards":
+        if bulk_type != expected_type:
             raise RuntimeError(
-                f"Endpoint returned type={bulk_type!r}, expected 'oracle_cards'. "
+                f"Endpoint returned type={bulk_type!r}, expected {expected_type!r}. "
                 f"Wrong endpoint configured?"
             )
 

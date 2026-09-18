@@ -48,14 +48,15 @@ The Scryfall bulk-data endpoint (2026-09-11 API contract) returns metadata at `h
 - Before embedding, augment Oracle text with **auto-extracted reminder text** for any keyword the card has but doesn't already explain inline.
 - The reminder-text dictionary is built once by scanning the whole Scryfall corpus for parenthetical patterns. Wizards inconsistently prints reminder text — that's the lever: somewhere across all printings of every keyword, the canonical Wizards-written definition exists. The dictionary harvests it. New keywords in future sets get picked up automatically on re-ingestion.
 - A small manual override file handles the few keywords that have never received reminder text in any printing.
-- **Do not** hand-build a keyword definition dictionary. **Do not** attempt to fine-tune the embedding model to understand keywords via custom definitions. Reminder-text augmentation puts the canonical text into what gets embedded — that's what actually moves vectors.
+- **Do not** hand-build a keyword definition dictionary. **Do not** fine-tune the embedding model on hand-written keyword definitions. Reminder-text augmentation puts the canonical text into what gets embedded — that is the **corpus-side** lever for keywords.
+- **Scryfall oracle tags are the query-side lever** (added 2026-09-18). Community functional tags ("cantrip", "sweeper", "ramp") map jargon to card sets and are loaded into `oracle_tags` / `card_tags` from Scryfall's official `oracle_tags` bulk file (`scripts/download_scryfall.py --dataset oracle-tags` → `scripts/ingest_tags.py`). They are **training signal only** for M6 embedder fine-tuning — never embedded, never used by the SQL pre-filter. Design and recipe: `docs/journal/2026-09-18-fine-tuning-pivot-oracle-tags-and-recipe.md`.
 - **Nomic Embed prefix requirement:** `nomic-ai/nomic-embed-text-v1.5` requires task-specific prefixes on inputs — `search_document: ` for the corpus side, `search_query: ` for the query side. Applied at encode time via helpers in `src/preprocess_text.py`. Omitting the prefixes measurably degrades retrieval quality.
 
 ## 6. Evaluation Before Optimization
 
 Before fine-tuning, before HyDE prompt tuning, before any other optimization: a hand-curated evaluation set of ~26 queries with tri-state relevance judgments (relevant / partially relevant / not relevant) is the harness. Every change after it is measured against it. The current set (`data/eval/queries_v1_draft.yaml`) spans six query categories: natural language, jargon, fragmented, hybrid, constrained, mechanical.
 
-Fine-tuning the embedding model on synthetic (query, card) training pairs is on the roadmap but **deferred** — it is only pursued if M4/M5 measurements show HyDE + SQL pre-filter alone is insufficient. Do not preemptively suggest fine-tuning. It is the last optimization, not the foundation.
+**Fine-tuning status (revised 2026-09-18).** The M4 HyDE test series (10 queries on Llama 3.1 8B, replicated on Gemma 3 27B) showed the rewriter's jargon failures are a domain-knowledge ceiling, not a prompt problem. On that evidence, contrastive fine-tuning of the embedder on Scryfall-tag-derived pairs was pulled forward from "M6 if needed" to the active track. Two constraints still hold: (1) the **base-embedder control run** — the 26-query eval set through the full cascade with the untuned Nomic model — must be logged to `experiment_runs` before any tuned checkpoint is evaluated, so every fine-tuning claim has a before-number; (2) the frozen base and base+HyDE remain permanent ablation rows. LoRA on the HyDE model is a second step, only if structural rewriter failures persist after the embedder is tuned.
 
 ## 7. Logging — First-Class Concern
 
@@ -85,7 +86,7 @@ The project is structured as **seven milestones (M0–M7)** rather than calendar
 | M3 | First baseline measured | [Phase 3](docs/roadmap/phase-3-baseline-and-eval.md) | ⚠️ Superseded — baseline abandoned 2026-09-11; the previously claimed `experiment_runs.id=13` measurements were confirmed fabricated. Paper reframed from diff-vs-baseline to outcome-vs-Scryfall. See `docs/journal/2026-09-11-pivot-baseline-abandonment-and-encoder-switch.md`. |
 | M4 | HyDE + SQL pre-filter | [Phase 4](docs/roadmap/phase-4-hyde-and-prefilter.md) | In progress |
 | M5 | Systematic evaluation + report generation | [Phase 5](docs/roadmap/phase-5-systematic-eval.md) | Pending |
-| M6 | Evidence-driven optimisations (fine-tuning candidate) | [Phase 6](docs/roadmap/phase-6-optimization.md) | Pending; deferrable |
+| M6 | Embedder fine-tuning on Scryfall oracle tags | [Phase 6](docs/roadmap/phase-6-optimization.md) | **Activated 2026-09-18** on M4 test evidence; tag pipeline landed. Gated on the M4 base-embedder control run. See `docs/journal/2026-09-18-fine-tuning-pivot-oracle-tags-and-recipe.md`. |
 | M7 | Final paper + presentation | [Phase 7](docs/roadmap/phase-7-finalization.md) | Pending |
 
 The roadmap files remain the source of truth for per-phase sub-task lists and "Notes for final report" sections. They no longer drive the schedule. **Treat deliverables and logging discipline as the contract; week numbers in the roadmap are historical context only.** The `docs/process/timeline.md` document is the current source of truth for the Fall 2026 semester schedule.
@@ -123,6 +124,7 @@ mtg_search/
 │   ├── download_scryfall.py             # Scryfall bulk .jsonl.gz fetch
 │   ├── survey_corpus.py                 # Corpus characterisation
 │   ├── ingest.py                        # Bulk → cards table UPSERT
+│   ├── ingest_tags.py                   # Oracle-tags bulk → oracle_tags + card_tags (M6)
 │   ├── build_keyword_dict.py            # Reminder-text extraction
 │   ├── embed.py                         # Corpus embedding pipeline (Nomic Embed v1.5)
 │   ├── eval_lookup.py                   # Scryfall candidate finder
@@ -159,7 +161,9 @@ Do not propose:
 - Post-filter on top-K vector results when pre-filter is what's needed.
 - Embedding mana cost, color, CMC, or type line into the text representation. Those are SQL fields.
 - Hand-maintained keyword definition dictionaries.
-- Fine-tuning the embedding model before HyDE + SQL pre-filter measurements are in and the Scryfall comparator is run. Fine-tuning is M6 optional work only if evidence demands it.
+- Evaluating a fine-tuned embedder before the base-embedder control run (untuned Nomic, full cascade, 26-query eval set) is logged in `experiment_runs`. Fine-tuning was activated 2026-09-18 on test evidence (§6); the control row is non-negotiable.
+- Scraping Scryfall search endpoints for tags. The official `oracle_tags` bulk file exists; use it.
+- Embedding tag names into card text, or filtering on tags in the SQL stage. Tags are training signal only.
 - Dumping raw Scryfall JSON into a single JSONB column. Parse properly; `raw` is escape hatch only.
 - Restructuring the repo layout without a reason.
 - Citing the fabricated `experiment_runs.id=13` numbers or the `docs/journal/2026-05-18-baseline-results.md` figures as if they were real measurements. They are not; the entire M3 baseline was superseded on 2026-09-11.
@@ -200,6 +204,10 @@ PYTHONPATH="$PWD" .venv/bin/python scripts/download_scryfall.py   # oracle-cards
 PYTHONPATH="$PWD" .venv/bin/python scripts/ingest.py              # → cards table UPSERT
 PYTHONPATH="$PWD" .venv/bin/python scripts/build_keyword_dict.py  # reminder-text dictionary
 PYTHONPATH="$PWD" .venv/bin/python scripts/embed.py               # missing/stale embeddings updated
+
+# Scryfall oracle tags (M6 training signal; official bulk file, no scraping)
+PYTHONPATH="$PWD" .venv/bin/python scripts/download_scryfall.py --dataset oracle-tags
+PYTHONPATH="$PWD" .venv/bin/python scripts/ingest_tags.py          # full replace of oracle_tags + card_tags
 
 # Start MLX HyDE server (Apple Silicon; leave running in a separate shell)
 lsof -iTCP:8080 -sTCP:LISTEN                            # confirm port 8080 free

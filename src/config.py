@@ -96,6 +96,15 @@ class Settings(BaseSettings):
             "'.jsonl.gz'."
         ),
     )
+    scryfall_oracle_tags_endpoint: str = Field(
+        default="https://api.scryfall.com/bulk-data/oracle-tags",
+        description=(
+            "Scryfall bulk-data API endpoint for the oracle-tags dataset (community "
+            "functional tags from Tagger, published daily since 2026). Same response shape "
+            "as the oracle-cards endpoint; the file is one Tag object per line with "
+            "embedded taggings keyed by oracle_id. See https://scryfall.com/docs/api/tags."
+        ),
+    )
     scryfall_user_agent: str = Field(
         default="mtg_search/0.2.0 (+https://github.com/Eth4ck1e/mtg_search)",
         description="User-Agent header sent to Scryfall API per their courtesy guidelines.",
