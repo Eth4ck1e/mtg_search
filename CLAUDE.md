@@ -180,7 +180,9 @@ The conference presentation is end of Fall 2026 or Spring 2027. The final paper 
 ## 13. Quick Reference
 
 ```bash
-# Activate environment
+# Environment activation (optional — commands below use .venv/bin/python explicitly
+# so they work regardless of shell state, e.g., Anaconda auto-activated shells).
+# If you activate the venv, you can drop the .venv/bin/ prefix.
 source .venv/bin/activate            # macOS/Linux (.venv, not venv)
 
 # Note: Python 3.13.0 has a .pth-file processing bug that breaks editable-install
@@ -191,27 +193,32 @@ source .venv/bin/activate            # macOS/Linux (.venv, not venv)
 docker compose up -d
 
 # Migrations (idempotent — safe to re-run)
-PYTHONPATH="$PWD" python scripts/migrate.py
+PYTHONPATH="$PWD" .venv/bin/python scripts/migrate.py
 
 # Ingestion pipeline
-PYTHONPATH="$PWD" python scripts/download_scryfall.py   # oracle-cards .jsonl.gz → data/raw/
-PYTHONPATH="$PWD" python scripts/ingest.py              # → cards table UPSERT
-PYTHONPATH="$PWD" python scripts/build_keyword_dict.py  # reminder-text dictionary
-PYTHONPATH="$PWD" python scripts/embed.py               # missing/stale embeddings updated
+PYTHONPATH="$PWD" .venv/bin/python scripts/download_scryfall.py   # oracle-cards .jsonl.gz → data/raw/
+PYTHONPATH="$PWD" .venv/bin/python scripts/ingest.py              # → cards table UPSERT
+PYTHONPATH="$PWD" .venv/bin/python scripts/build_keyword_dict.py  # reminder-text dictionary
+PYTHONPATH="$PWD" .venv/bin/python scripts/embed.py               # missing/stale embeddings updated
 
 # Start MLX HyDE server (Apple Silicon; leave running in a separate shell)
-PYTHONPATH="$PWD" python -m mlx_lm server \
+lsof -iTCP:8080 -sTCP:LISTEN                            # confirm port 8080 free
+PYTHONPATH="$PWD" .venv/bin/python -m mlx_lm server \
   --model mlx-community/Meta-Llama-3.1-8B-Instruct-4bit \
   --port 8080 --log-level WARNING
 # ~57 tok/sec generation, ~4.8GB peak on M3. OpenAI-compatible endpoint at
 # http://localhost:8080/v1 — query_rewriter.py hits /v1/chat/completions.
+# If port 8080 is bound: `lsof -ti:8080 | xargs kill -9` to reclaim it.
+
+# Ad-hoc HyDE query rewrite (requires MLX server running above)
+PYTHONPATH="$PWD" .venv/bin/python -m src.query_rewriter "cheap red removal"
 
 # Ad-hoc query testing (naive dense retrieval only; no HyDE, no SQL pre-filter)
-PYTHONPATH="$PWD" python scripts/test_search.py --dedupe "cheap red removal"
+PYTHONPATH="$PWD" .venv/bin/python scripts/test_search.py --dedupe "cheap red removal"
 
 # Evaluation (writes to experiment_runs)
-PYTHONPATH="$PWD" python scripts/evaluate.py --config configs/baseline.yaml
+PYTHONPATH="$PWD" .venv/bin/python scripts/evaluate.py --config configs/baseline.yaml
 
 # Reporting (M5+)
-PYTHONPATH="$PWD" python scripts/generate_report.py --since 2026-09-01 --out docs/reports/
+PYTHONPATH="$PWD" .venv/bin/python scripts/generate_report.py --since 2026-09-01 --out docs/reports/
 ```

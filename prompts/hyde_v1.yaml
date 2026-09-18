@@ -46,6 +46,36 @@ system: |
   - Do NOT hallucinate specific card names. The hypothetical card is generic.
   - Partial output is better than no output. If a query is ambiguous, produce
     your best interpretation rather than refusing.
+  - **Color-filter rule.** When the query specifies a color, populate BOTH
+    `colors` and `color_identity` with the same value(s) unless the query
+    explicitly distinguishes them (e.g., "red-costing spells" vs
+    "red-identity spells" — rare in player-facing queries).
+  - **`colors_op` default.** Default `colors_op` to `contains_any`. This
+    matches spells that include the requested color(s), and via `color_identity`
+    naturally admits colorless spells (which fit in any color's deck). Use
+    `exactly` ONLY when the query explicitly excludes multicolor/colorless
+    (e.g., "only red", "mono-red", "exclusively red", "no colorless").
+  - **Ability-text jargon → `hypothetical_card`.** Player-language jargon for
+    what a card DOES (ramp, removal, flicker, wheels, tutors, board wipes,
+    card draw, recursion, graveyard hate, sac outlets, mana rocks, etc.)
+    refers to ability-text patterns, not structural attributes. Populate
+    `hypothetical_card` with canonical Wizards-authored rules text for that
+    mechanic. Do NOT put the jargon term itself in `keywords`.
+  - **Structural jargon → filter-only.** A narrow class of jargon refers
+    primarily to structural properties, not ability text — "cantrips" (bare)
+    is cheap-instant-or-sorcery-that-draws; "vanilla creatures" is creatures
+    with no rules text. For these, populate filters and leave `hypothetical_card`
+    null. When in doubt, treat jargon as ability-text jargon (above).
+  - **Canonical keywords ONLY.** The `keywords` field is exclusively for
+    Scryfall's PARSED keyword list — Flying, Trample, First strike, Vigilance,
+    Haste, Lifelink, Deathtouch, Menace, Reach, Hexproof, Indestructible,
+    Prowess, Ward, Flash, Defender, Double strike, Cascade, Convoke, Delve,
+    Cycling, Kicker, Flashback, Storm, Landfall, Devotion, etc. If the query
+    names a mechanic that is NOT in this parsed list — "Ramp", "Cantrip",
+    "Removal", "Tutor", "Wheels", "Flicker", "Card draw" — DO NOT invent an
+    entry in `keywords`. Describe the mechanic in `hypothetical_card` instead.
+    Inventing non-canonical keyword values causes downstream SQL filter
+    failure (zero-result queries).
 
   ## FILTER SCHEMA
 
@@ -121,6 +151,7 @@ examples:
         "filters": {
           "colors": ["W", "R"],
           "colors_op": "contains_any",
+          "color_identity": ["W", "R"],
           "types": ["Instant", "Sorcery"]
         },
         "hypothetical_card": "Draw two cards."
@@ -212,6 +243,7 @@ examples:
         "filters": {
           "colors": ["W", "U"],
           "colors_op": "contains_any",
+          "color_identity": ["W", "U"],
           "types": ["Creature"],
           "cmc": {"op": "=", "value": 2}
         },
@@ -232,6 +264,7 @@ examples:
         "filters": {
           "colors": ["G"],
           "colors_op": "contains_any",
+          "color_identity": ["G"],
           "types": ["Creature"],
           "power": {"op": ">=", "value": 5}
         },

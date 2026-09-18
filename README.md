@@ -86,31 +86,36 @@ cp .env.example .env
 docker compose up -d
 
 # 5. Run migrations to create the cards + experiment_runs tables
-PYTHONPATH="$PWD" python scripts/migrate.py
+PYTHONPATH="$PWD" .venv/bin/python scripts/migrate.py
 
 # 6. Download the current Scryfall bulk-data (oracle-cards, ~24MB gzipped)
-PYTHONPATH="$PWD" python scripts/download_scryfall.py
+PYTHONPATH="$PWD" .venv/bin/python scripts/download_scryfall.py
 
 # 7. Parse the bulk file into the cards table
-PYTHONPATH="$PWD" python scripts/ingest.py
+PYTHONPATH="$PWD" .venv/bin/python scripts/ingest.py
 
 # 8. Build the reminder-text keyword dictionary
-PYTHONPATH="$PWD" python scripts/build_keyword_dict.py
+PYTHONPATH="$PWD" .venv/bin/python scripts/build_keyword_dict.py
 
 # 9. Encode the corpus (embeddings → pgvector)
-PYTHONPATH="$PWD" python scripts/embed.py
+PYTHONPATH="$PWD" .venv/bin/python scripts/embed.py
 
 # 10. Start the MLX HyDE server (Apple Silicon only; leave running in a
 #     separate terminal for the retrieval pipeline to call)
-PYTHONPATH="$PWD" python -m mlx_lm server \
+lsof -iTCP:8080 -sTCP:LISTEN     # confirm port 8080 is free — output should be empty
+PYTHONPATH="$PWD" .venv/bin/python -m mlx_lm server \
   --model mlx-community/Meta-Llama-3.1-8B-Instruct-4bit \
   --port 8080 --log-level WARNING
 
 # 11. Run a retrieval configuration and log the results
-PYTHONPATH="$PWD" python scripts/evaluate.py --config configs/baseline.yaml
+PYTHONPATH="$PWD" .venv/bin/python scripts/evaluate.py --config configs/baseline.yaml
 ```
 
 > **Note on `PYTHONPATH`:** Python 3.13.0 has a `.pth` file processing bug that breaks editable-install imports. Prefixing `PYTHONPATH="$PWD"` works around it. Upgrading to a patched Python 3.13.x (via `brew upgrade python@3.13`) removes the need for the prefix.
+
+> **Note on `.venv/bin/python`:** commands use the venv's Python explicitly so they work regardless of shell state (e.g., if you have Anaconda auto-activated). If you `source .venv/bin/activate` first, bare `python` also works. If a command errors with "No module named ..." check that the venv's Python is actually being called.
+
+> **Note on port 8080:** the MLX server binds it. If step 10 errors with `OSError: [Errno 48] Address already in use`, an earlier server is still running — kill it with `lsof -ti:8080 | xargs kill -9` (or use a different `--port` value + set `HYDE_SERVER_URL` in `.env` to match).
 
 > **Note on MLX (Apple Silicon):** the HyDE stage uses [`mlx-lm`](https://github.com/ml-explore/mlx-examples/tree/main/llms) for local LLM inference — ~50% faster than llama.cpp-based backends on M-series chips. The 4-bit Llama 3.1 8B Instruct variant runs at ~57 tokens/sec on an M3 with ~4.8GB peak memory. On non-macOS platforms, `mlx-lm` is skipped by the platform marker in `pyproject.toml`; substitute any OpenAI-compatible local-serve backend (vLLM, llama.cpp server, TGI) and point `HYDE_SERVER_URL` in `.env` at it.
 

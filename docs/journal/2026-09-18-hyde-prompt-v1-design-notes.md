@@ -7,26 +7,29 @@
 
 ## 1. Design decision: three jargon shapes, three HyDE output shapes
 
-**Setup.** The eval set contains queries at multiple abstraction levels. Some are specific mechanics ("ETB triggers"); some are broad category names ("cantrips", "removal", "ramp"); some are compound player-language phrases ("cantrips that dig", "cheap red removal"). HyDE's correct output shape differs for each — and the difference matters enough that it should be encoded in the few-shot examples so the model learns it.
+> **Correction (2026-09-18, later in the same session):** an earlier draft of this section grouped "cantrips", "ramp", and "removal" together as "broad-category jargon" that should all be filter-only. Empirical testing surfaced that this was wrong. "Ramp" and "removal" are ability-text jargon (they refer to what a card DOES via its rules text), so they warrant populated hypotheticals — that's HyDE's core value-add. "Cantrip" (bare) is the outlier: it refers primarily to structural properties (cheap spell that draws a card), so filter-only is correct there. The corrected framework below distinguishes structural from ability-text jargon.
 
-**The three shapes:**
+**Setup.** The eval set contains queries at multiple abstraction levels. Jargon queries in particular vary in what they refer to — some name a structural class of card, most name an ability-text pattern, some combine both. HyDE's correct output shape differs for each.
 
-| Query shape | Example | HyDE output shape | Rationale |
+**The three jargon shapes (corrected):**
+
+| Jargon sub-shape | Refers to | Examples | HyDE output |
 |---|---|---|---|
-| **Broad-category jargon** | "cantrips", "ramp", "removal" | filters only, `hypothetical_card = null` | Names a class defined primarily by structural properties (mana cost, types, keywords). SQL pre-filter defines the search space; forcing a specific hypothetical_card narrows the search to a subset of the true class. |
-| **Compound jargon** | "cantrips that dig", "cheap red removal" | filters + populated `hypothetical_card` | Combines structural constraints with a specific mechanical component. Filters carry the structural half; hypothetical_card translates the mechanical half into canonical rules text. |
-| **Mechanic-specific jargon** | "flicker effects", "ETB triggers" | filters (thin or null) + populated `hypothetical_card` | Names a specific rules-text pattern. Hypothetical_card is the dominant signal; filters are minimal or absent. |
+| **Structural jargon** | Structural properties — cost, type, or structural absence of rules text | "cantrips" (bare), "vanilla creatures" | Filter-only. `hypothetical_card = null`. Populating a hypothetical would narrow the search to one specific ability profile within the broader structural class. |
+| **Ability-text jargon** *(most common)* | What the card DOES via its rules text | "ramp", "removal", "flicker", "wheels", "tutors", "card draw", "board wipes", "recursion", "graveyard hate", "sac outlets", "mana rocks" | Populated `hypothetical_card` with canonical Wizards-authored rules text for that mechanic. Filters minimal or absent (whatever the query does specify structurally). **This is HyDE's core value-add.** |
+| **Compound jargon** | Both structural AND ability | "cantrips that dig", "cheap red removal" | Both populated. Filters carry the structural half; `hypothetical_card` translates the mechanical half into canonical rules text. |
 
-**Concrete case that surfaced this.** The initial `jargon` few-shot draft used the bare query `"cantrips"` with a specific hypothetical_card (Opt's rules text: `"Look at the top two cards of your library. Put one into your hand and the other on the bottom of your library."`). Two problems surfaced:
+**Concrete cases that surfaced this framework.**
 
-1. **Over-narrowing** — Opt-style text is *one kind* of cantrip (library-digging). "Cantrip" as a class includes anything cheap that draws or replaces itself. The specific hypothetical would drag semantic search toward Opt-family cards and miss the broader class.
-2. **Fragmented-shape collision** — dropping the hypothetical to null (filter-only) fixes the over-narrowing problem, but a single-word query with filter-only output has the same structural shape as a fragmented-category example ("trample creatures", "creatures with flying"). Two examples teaching the model the same shape wastes a few-shot slot.
+1. **Cantrips edge case.** The initial `jargon` few-shot used bare `"cantrips"` with Opt's rules text as the hypothetical. Two problems: (a) Opt-style text is *one specific* cantrip (library-digging), narrowing semantic search away from the broader cantrip class; (b) making it filter-only produces the same shape as a fragmented example. Resolution: replaced the few-shot with `"cantrips that dig"` (compound jargon) which demonstrates HyDE's translation capability. Bare "cantrips" behavior (filter-only) is expressed via a system-prompt rule, not a dedicated few-shot.
 
-**Resolution.** The `jargon` few-shot uses `"cantrips that dig"` — a compound query where the structural half ("cantrips" → cheap spell) becomes filters and the mechanical half ("dig" → library manipulation) becomes canonical rules text. This teaches the model HyDE's actual value-add: translating player-language mechanics into Wizards-authored voice. The broad-category behavior (filter-only for bare "cantrips") is described in the system prompt's rules and is expected as an inference-time output shape — even without an explicit few-shot for it.
+2. **Ramp keyword hallucination.** When tested against `"ramp spells"` (an ability-text jargon query), HyDE correctly populated `types: [Instant, Sorcery]` and a canonical hypothetical (`"Add 2 mana of any one color."`), but ALSO invented `keywords: ["Ramp"]` — a non-canonical entry that would produce zero SQL matches downstream. This surfaced a distinct-but-related bug: the model treats broad player-language mechanic names as if they were canonical Scryfall keywords. Resolution: added an explicit "canonical keywords only" rule to the system prompt with a list of common non-keyword jargon terms flagged as forbidden values for the `keywords` field.
+
+**Longer-term intervention.** Both classes of failure (jargon misclassification, non-canonical keyword hallucination) would be more cleanly resolved by fine-tuning or retrieval-augmenting the HyDE model on **Scryfall tag data** — Scryfall assigns tags like `card-draw`, `ramp`, `removal`, `tutor`, `combo-piece` to cards, and these tags provide a canonical mapping from player-language jargon to card-level anchors. Task #17 (Scryfall tags investigation) and task #27 (M6 fine-tuning consideration) both intersect here. Prompt engineering can push accuracy to a point; specialized training on Scryfall tags is the natural next intervention.
 
 **Notes for final report — Methodology (Prompt Design subsection):**
 
-> HyDE's output structure is designed to reflect three distinct query shapes in the evaluation set. Broad-category jargon queries (e.g., "cantrips", "ramp", "removal") name a class of cards defined primarily by structural properties; for these, the query rewriter produces filter attributes only, leaving the hypothetical_card field null so the SQL pre-filter defines the search space without over-narrowing. Compound jargon queries (e.g., "cantrips that dig", "cheap red removal") combine structural and mechanical components; both filters and a hypothetical_card are produced. Mechanic-specific jargon (e.g., "flicker effects", "ETB triggers") names a specific rules-text pattern rather than a structural class; the hypothetical_card carries the dominant signal, with filters minimal or absent. The distinction is taught to the query-rewriter model through the choice of few-shot demonstrations and reinforced in the system-prompt rules.
+> HyDE's output structure is designed to reflect three distinct jargon-query shapes observed in the evaluation set. Ability-text jargon queries — the most common shape — name a mechanic by its player-language term (e.g., "ramp", "removal", "flicker", "wheels", "tutors") and refer to what a card does through its rules text; for these, the query rewriter populates `hypothetical_card` with canonical Wizards-authored rules text, and filter fields carry whatever structural attributes the query separately specifies. Structural jargon — a narrower class exemplified by "cantrips" (bare) and "vanilla creatures" — refers primarily to structural properties (mana cost, absence of rules text); for these, the rewriter produces filter attributes only and leaves the hypothetical_card null, so the SQL pre-filter defines the search space without over-narrowing to a specific ability profile within the broader structural class. Compound jargon (e.g., "cantrips that dig", "cheap red removal") combines both dimensions; both filters and a hypothetical_card are produced. The system prompt enforces a hard constraint that the `keywords` filter field accepts only Scryfall's canonical parsed keyword list; non-canonical player-language jargon must go in `hypothetical_card` and cannot be filtered on directly at this stage. Longer-term, Scryfall's card-level tags (card-draw, ramp, removal, tutor, combo-piece) provide a canonical anchor for player-language jargon that would enable either fine-tuning or retrieval-augmenting the HyDE model on domain-labeled data — a natural extension left as future work.
 
 ---
 
@@ -88,6 +91,23 @@ Seven examples chosen to teach seven distinct HyDE output shapes. The set does n
 - **Eval "mechanical"** — covered by #7
 
 **None of these queries appear in `data/eval/queries_v1_draft.yaml`** — verified before selection to avoid data leakage between few-shot demonstrations and eval-time inputs. Prompt iteration will land in future versions (`v2`, `v3`, ...) each with its own `experiment_runs` row.
+
+---
+
+## 5. Future work — interactive filter refinement
+
+Design observation from M4 kickoff testing (this session): the HyDE output shape has a natural production extension — **user-adjustable filters after initial display**.
+
+In a production UI, the flow would be:
+
+1. User submits natural-language query → HyDE runs → filters + hypothetical_card produced
+2. Filters displayed as editable UI controls (color pickers, mana-value sliders, type checkboxes, etc.)
+3. User adjusts filters as needed (e.g., broadens colors from `contains_any: [R]` to `contains_any: [R, B]`, tightens `cmc <= 2` to `cmc = 1`)
+4. Re-run uses the ADJUSTED filters + **original hypothetical_card** — no HyDE re-inference
+
+The key insight is that HyDE inference is the expensive stage (~500ms–2s per call on local hardware); SQL filter adjustment is cheap (a single Postgres query). Separating them lets users interactively refine retrieval without repeated LLM calls. Architecturally, `query_rewriter.py` produces a `HyDEResult` object whose `filters` field can be modified in place before being passed to `search.py` — no code change needed to support this pattern; it's a UI-layer concern.
+
+Out of scope for this thesis (no production frontend planned; the PHP frontend was dropped from term scope on 2026-08-30). Worth noting in the paper's Future Work section because the cascade architecture naturally supports this interactive refinement pattern, which is one of the accessibility-story angles: non-expert users benefit from LLM-driven initial-filter proposal + expert-mode manual refinement.
 
 ---
 
