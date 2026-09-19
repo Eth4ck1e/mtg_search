@@ -1,0 +1,29 @@
+# Tag-label ORACLE — the ceiling for "v2 prompt x embedder".
+#
+# Stage 1: rewriter runs but its filters are DISCARDED (embedder-only ceiling).
+# Stage 3: embeds the TAG LABEL(S) a perfect v2 rewriter would have emitted
+#          (data/eval/tag_label_oracle_v1.yaml) instead of the user's words.
+#          Queries with no functional tag fall through to the raw query.
+#
+# Not a system configuration — a human-supplied upper bound. If this row
+# beats the base+hypothetical control, building the v2 prompt is justified;
+# if it does not, the training data needs work before the prompt does.
+
+name: "oracle_tag_label_nosql"
+
+description: >
+  NO filters; embedded text = hand-mapped tag label(s) per eval
+  query. Upper bound for the v2-prompt cell of the grid.
+
+eval_set: "data/eval/queries_v1_draft.yaml"
+
+retrieval:
+  type: cascade
+  stage1: passthrough
+  sql: false
+  keywords_filter: false
+  k: 10
+  label_oracle: data/eval/tag_label_oracle_v1.yaml
+
+notes: >
+  Oracle row. Run once per embedder checkpoint.

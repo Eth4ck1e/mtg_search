@@ -394,12 +394,17 @@ class Searcher:
         k: int = 10,
         mode: Stage1Mode | str = Stage1Mode.HYDE,
         use_sql: bool = True,
+        embed_text: str | None = None,
     ) -> SearchResult:
         """Run the cascade for one query.
 
         ``use_sql=False`` is the minus-SQL ablation: Stage 1 still runs (in hyde /
         passthrough modes) but its filters are discarded and Stage 3 searches
         the whole corpus.
+
+        ``embed_text`` overrides what Stage 3 embeds (filters still come from
+        the mode's Stage 1 behaviour). Used by the tag-label oracle to embed
+        a tag label in place of the user's words.
         """
         mode = Stage1Mode(mode)
         timings: dict[str, float] = {}
@@ -412,7 +417,9 @@ class Searcher:
             hyde = rewrite_query(query, prompt_path=self.prompt_path)
             timings["stage1_ms"] = (time.perf_counter() - t0) * 1000
 
-        if mode is Stage1Mode.HYDE:
+        if embed_text is not None and embed_text.strip():
+            query_text = embed_text.strip()
+        elif mode is Stage1Mode.HYDE:
             query_text = (hyde.hypothetical_card or "").strip() if hyde else ""
             if not query_text:
                 warnings.append("hyde returned no hypothetical_card; embedding raw query")

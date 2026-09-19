@@ -14,6 +14,7 @@ Config contract (``retrieval`` block)::
       sql: true                # false = minus-SQL ablation
       keywords_filter: false   # FilterPolicy.keywords
       k: 10
+      label_oracle: data/eval/tag_label_oracle_v1.yaml   # optional: embed tag LABELS instead of query text
 
 Every run logs the Stage 1 output, the compiled WHERE clause, the candidate
 count, and per-stage timings for each query, so the grid in the 2026-09-18
@@ -34,6 +35,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+import psycopg
 import yaml
 from tqdm import tqdm
 
@@ -99,6 +101,22 @@ def _ids(query: dict[str, Any], key: str) -> set[str]:
     return {p["id"] for p in (query.get(key) or [])}
 
 
+def _load_label_oracle(path: Path) -> dict[str, str]:
+    """query_id -> text to embed (tag labels joined with ', '); queries with no tags omitted."""
+    spec = yaml.safe_load(path.read_text(encoding="utf-8"))
+    wanted: dict[str, list[str]] = {
+        qid: list(entry.get("tags") or []) for qid, entry in spec["queries"].items()
+    }
+    slugs = sorted({s for tags in wanted.values() for s in tags})
+    with psycopg.connect(settings.database_url) as conn, conn.cursor() as cur:
+        cur.execute("SELECT slug, label FROM oracle_tags WHERE slug = ANY(%s)", (slugs,))
+        label_by_slug = dict(cur.fetchall())
+    missing = [s for s in slugs if s not in label_by_slug]
+    if missing:
+        raise ValueError(f"label_oracle references unknown tag slugs: {missing}")
+    return {qid: ", ".join(label_by_slug[s] for s in tags) for qid, tags in wanted.items() if tags}
+
+
 def _parse_retrieval(cfg: dict[str, Any]) -> tuple[Stage1Mode, bool, FilterPolicy, int]:
     retrieval = cfg.get("retrieval", {})
     rtype = retrieval.get("type", "cascade")
@@ -148,6 +166,8 @@ def main() -> int:
 
     mode, use_sql, policy, k = _parse_retrieval(cfg)
     config_name = cfg.get("name", args.config.stem)
+    oracle_path = cfg.get("retrieval", {}).get("label_oracle")
+    label_oracle = _load_label_oracle(Path(oracle_path)) if oracle_path else {}
 
     with PipelineRun(
         "evaluate",
@@ -160,6 +180,7 @@ def main() -> int:
             "sql": use_sql,
             "keywords_filter": policy.keywords,
             "k": k,
+            "label_oracle": oracle_path,
             "dry_run": args.dry_run,
         },
     ) as run:
@@ -170,6 +191,8 @@ def main() -> int:
         if mode is not Stage1Mode.RAW:
             print(f"  HyDE model:    {settings.hyde_model}")
         print(f"  Queries:       {len(queries)}")
+        if label_oracle:
+            print(f"  Label oracle:  {oracle_path}  ({len(label_oracle)} queries overridden)")
         print()
 
         per_query: list[dict[str, Any]] = []
@@ -183,7 +206,13 @@ def main() -> int:
                 borderline_ids = _ids(q, "borderline")
 
                 t0 = time.perf_counter()
-                result = searcher.search(q["query"], k=k, mode=mode, use_sql=use_sql)
+                result = searcher.search(
+                    q["query"],
+                    k=k,
+                    mode=mode,
+                    use_sql=use_sql,
+                    embed_text=label_oracle.get(q["id"]),
+                )
                 latency_ms = (time.perf_counter() - t0) * 1000
 
                 top_k_ids = [hit.oracle_id for hit in result.hits]
@@ -252,6 +281,7 @@ def main() -> int:
                 "preprocess_version": settings.preprocess_version,
                 "hyde_model": settings.hyde_model if mode is not Stage1Mode.RAW else None,
                 "hyde_prompt": searcher.prompt_version if mode is not Stage1Mode.RAW else None,
+                "label_oracle": oracle_path,
                 "eval_set_path": str(eval_set_path),
                 "description": cfg.get("description"),
             },

@@ -236,7 +236,79 @@ Corpus re-embedded with `models/nomic-mtg-v1` (`embedding_version = models/nomic
 
 **Latency.** Unchanged, as expected: p50 ~1.0–1.2 s with the rewriter, 88 ms without. The embedder swap costs nothing at query time.
 
+### 5d. Tag-label oracle — the v2 ceiling, measured (2026-09-19, rows 26–29)
+
+**What the oracle is.** The v2 prompt was going to make HyDE emit the query's concept in tag vocabulary ("board wipes" → `sweeper`) and let the tuned embedder do the rest. Before writing that prompt, we can measure its *ceiling* by playing the perfect rewriter by hand: for each eval query, a human picks the tag a flawless v2 would emit, the harness embeds that tag's **label** instead of the user's words (filters still come from the v1 rewriter), and we score against the eval judgments. No prompt can beat its own oracle, so if the oracle loses to the current control, v2-as-label-emitter is not worth building. Mapping: `data/eval/tag_label_oracle_v1.yaml` (21 of 26 queries mapped; keyword/structural/ETB queries have no functional tag and fall through to the raw query). Configs: `configs/oracle_tag_label{,_nosql}.yaml`; `Searcher.search(embed_text=...)` is the override hook.
+
+**Eval-judgment coverage first.** Before trusting the oracle, checked what fraction of each query's *relevant* set lies inside the chosen tag's closure pool: 93–100 % for every jargon query (sweeper 75/76, removal 71/72, ramp 26/28, flicker 30/32, tutor 37/37, recursion 32/33, mana-dork 23/23). So the tags *can* reach the judgments; the question is whether the embedder finds them from the label.
+
+**Result.**
+
+| Row | Embedder | Filters | P@10 | MRR |
+|---|---|---|---|---|
+| 28 | base | HyDE v1 | 0.065 | 0.185 |
+| 29 | base | none | 0.035 | 0.100 |
+| 26 | **tuned** | HyDE v1 | **0.073** | **0.153** |
+| 27 | tuned | none | 0.081 | 0.122 |
+| 11 | base | HyDE v1 + hypothetical text (control) | 0.112 | 0.294 |
+| 21 | tuned | HyDE v1 + raw user query (pass-through) | 0.081 | 0.206 |
+
+**The oracle loses to the control and to plain pass-through.** Embedding the tag label — even with the embedder trained on exactly those labels — scores 0.073 / 0.153 against the eval judgments. The pass-through row that embeds the user's own words scores higher (0.206 MRR). The base+hypothetical control is nearly double.
+
+**Why: a tag is a category, the judgments are its archetypes.** Per-query oracle P@10 (tuned, no filters) against the tag's pool size:
+
+| Tag | pool | P@10 | | Tag | pool | P@10 |
+|---|---|---|---|---|---|---|
+| counterspell-free | 13 | 0.20 | | tutor | 1,120 | 0.10 |
+| extra-turn | 53 | 0.60 | | removal-artifact | 1,105 | 0.00 |
+| fetchland | 53 | 0.40 | | cast-trigger-you | 1,175 | 0.00 |
+| wheel | 137 | 0.20 | | draw-engine | 1,497 | 0.00 |
+| flicker | 179 | 0.10 | | recursion | 2,090 | 0.00 |
+| mana-dork | 414 | 0.20 | | ramp | 2,136 | 0.00 |
+| counterspell | 513 | 0.10 | | draw | 4,043 | 0.00 |
+| sweeper | 871 | 0.10 | | removal | 5,968 | 0.00 |
+
+Narrow tags work; broad tags fail, monotonically. "Ramp" has 2,136 tagged cards and the eval set judges 28 of them relevant — the canonical ramp spells. The label "ramp" embeds to the *centre of the pool*, so the top 10 are ten arbitrary ramp-tagged cards (a land-fetching creature, a mana-doubling enchantment, a treasure maker), almost none of which are the 28 archetypes a player means. The hypothetical text "Search your library for a basic land card and put it onto the battlefield" is more specific than the category and lands on the archetypes. This is exactly the held-out probe's blind spot: there, relevant = the whole pool, so category-level retrieval scores well; against human judgments, category-level retrieval is too coarse.
+
+**Consequences for the hypothesis.** The strong form — HyDE emits a tag label, the embedder does the rest — is not supported. A label carries the *category* but drops the *specificity* that both the hypothetical text and the user's own phrasing carry. Three things survive intact:
+1. The tuned embedder's real win is on **user phrasing** (pass-through MRR 0.130 → 0.206, raw 0.067 → 0.102). The right query-side input is the user's words, or a HyDE output that keeps their specificity — not a category name.
+2. The hypothetical-text regression (control 0.112 → 0.089) is a **training-data** problem, fixable with doc-like anchors (`pairs_v2`), not evidence against HyDE.
+3. The prompt-simplification hypothesis becomes: **HyDE gets shorter because the embedder no longer needs a full paragraph of rules text** — a one-clause hypothetical ("search for a basic land, put it onto the battlefield") or the user's phrasing plus a concept word should suffice. That is testable: shorten `hypothetical_card` to one sentence in v2 and measure tokens and accuracy.
+
+**Revised next steps (replaces §7 items 6+):**
+- `pairs_v2`: keep label/alias/description anchors, add **doc-like anchors** (one-sentence rules-text paraphrase per card, LLM-written, or the card's first sentence) at ~30 %, and **synthetic user queries** (source 3) once the LLM batch job exists. Retrain; expect the control row to recover and pass-through to hold.
+- `hyde_v2`: same two-field contract, but `hypothetical_card` capped at one sentence and the rules/examples trimmed; concepts field **dropped** on this evidence. Measure output tokens and Stage 1 latency alongside P@10/MRR.
+- Direct-tag-lookup ablation is now more interesting, not less: it will fail on broad tags for the same reason, and that failure is the paper's argument for embedding over lookup.
+
+DB state after this section: `cards.embedding` holds the **base** vectors again (re-embedded for rows 28–29).
+
 **Schema note.** `cards.embedding` holds one vector per row, so re-embedding with the tuned model *replaces* the base vectors; switching back means re-embedding (~minutes). Fine for now — base rows are logged — but if the ablation grid grows past two or three checkpoints, move embeddings to a `card_embeddings (oracle_id, face_index, embedding_version)` table so checkpoints coexist and the searcher just changes its version pin. Candidate migration 0004.
+
+### 5e. CORRECTION to §5d — the oracle's "misses" are unjudged category members (2026-09-19)
+
+§5d concluded the tag-label oracle fails on broad tags. Checking that claim against tag membership instead of the eval judgments reverses the reading. For each mapped query, how many of the top 10 are members of the chosen tag's closure pool (no filters):
+
+| Row | judged-relevant @10 | **in tag pool @10** |
+|---|---|---|
+| Oracle, **tuned** (27) | 0.10 | **0.95** |
+| Oracle, base (29) | 0.04 | 0.35 |
+| Control, base + hypothetical text (11) | 0.12 | 0.56 |
+
+With the tuned embedder the label retrieves genuine category members almost every time: `ramp` 10/10 (base 0/10), `recursion` 10/10 (base 0/10), `flicker` 10/10 (base 0/10), `tutor` 10/10 (base 1/10), `sweeper` 10/10 (base 2/10). `burn` was a **held-out** tag and still scores 10/10. The only weak cell is `counterspell-free` (3/10), a 13-card pool.
+
+**So the mechanism is not "too few samples per tag" and not "label lands on junk".** The model learned the categories. The eval set judges ~30 archetypes per query out of pools of 1,000-6,000 legitimate members, and scores every unjudged member as a miss. This is the annotation-hole effect BEIR documents (Thakur et al. 2021, §6: ANCE went from below BM25 to above it once holes were judged). Our judgments were built from lexical Scryfall lookups, so they favour cards whose text matches the obvious phrasing, which is also what hypothetical text retrieves. The eval set is biased toward the control.
+
+**What is and is not established.**
+- Established: tuned + label retrieves tag members at 0.95 vs 0.35 base. Large, real, and the held-out `burn` case shows it is not pure memorisation.
+- Caveat: 20 of 21 mapped tags were in training, and "is tagged X" is the training objective, so this is mostly in-distribution. Tag membership is community-curated, not the same as "what a player wants".
+- Still true from §5d: a label returns *arbitrary* members, not the *best-known* ones. A player typing "ramp" probably wants Cultivate before an obscure land-fetching creature. That is a ranking-within-category question (popularity/EDHREC rank as a tiebreak), not an embedding failure.
+- Not established: that label-emitting v2 beats the control for users. Neither metric settles it; P@10-judged favours the control by construction, pool-membership favours the oracle by construction.
+
+**Revised plan.**
+1. **Fix the measuring stick first.** Judge the holes: pool the top-10 from every logged row per query, have Mitchell (or an LLM judge with Mitchell spot-checks, task #25) label the unjudged cards, freeze as eval v2. Until then, report both metrics side by side and say why.
+2. The concepts field is **back on the table** for v2; dropping it in §5d was premature.
+3. `pairs_v2` with doc-like anchors still stands (the hypothetical-text regression is real on either metric: control in-pool 0.56 is on the *base* embedder).
+4. Add a within-category ranking signal (Scryfall `edhrec_rank` is already in `raw`) as a cheap ablation.
 
 ## 6. CLAUDE.md revisions
 

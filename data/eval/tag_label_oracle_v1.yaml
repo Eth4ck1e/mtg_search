@@ -1,0 +1,45 @@
+# Tag-label oracle — v1 (2026-09-19)
+#
+# For each eval query: the Scryfall oracle tag(s) a *perfect* v2 rewriter would
+# emit as the query's functional concept. The evaluation harness embeds the
+# tag LABEL text in place of the user's query (filters still come from the
+# v1 rewriter), so this measures the ceiling of "v2 prompt x tuned embedder"
+# before any prompt engineering.
+#
+# Selection rule: the most specific tag whose closure pool covers >= ~90% of
+# the query's relevant set (see scripts output logged in the 2026-09-18
+# journal §5d). Queries with no functional tag (canonical keywords, pure
+# structure, "ETB" which Tagger does not tag generically) get `tags: []` and
+# fall through to the raw query, so they score exactly as pass-through.
+#
+# DRAFTED by Claude from the coverage table; Mitchell reviews the mapping.
+# Coverage = |relevant ∩ closure pool| / |relevant| at draft time.
+
+version: v1
+queries:
+  q_001: {tags: [], note: "canonical keyword Flying — structural, no functional tag"}
+  q_002: {tags: [removal-artifact], coverage: 1.00}
+  q_003: {tags: [draw], coverage: 1.00, note: "cantrip covers only 24%; 'draw' + the Instant filter is what v2 would emit"}
+  q_004: {tags: [burn], coverage: 1.00, note: "HELD-OUT tag — genuine generalisation test"}
+  q_005: {tags: [], note: "canonical keyword Haste — structural"}
+  q_006: {tags: [ramp], coverage: 0.93}
+  q_007: {tags: [counterspell], coverage: 1.00}
+  q_008: {tags: [sweeper], coverage: 0.99}
+  q_009: {tags: [removal], coverage: 0.99}
+  q_010: {tags: [draw-engine], coverage: 0.95}
+  q_011: {tags: [tutor], coverage: 1.00}
+  q_012: {tags: [recursion], coverage: 0.97}
+  q_013: {tags: [fetchland], coverage: 1.00}
+  q_014: {tags: [flicker], coverage: 0.94, note: "parent tag; alias 'blink'"}
+  q_015: {tags: [], note: "Tagger has no generic ETB-trigger tag (enters-in-company covers 9%)"}
+  q_016: {tags: [mana-dork], coverage: 1.00}
+  q_017: {tags: [wheel], coverage: 1.00}
+  q_018: {tags: [extra-turn], coverage: 1.00}
+  q_019: {tags: [counterspell-free], coverage: 0.73}
+  q_020: {tags: [], note: "pure structural"}
+  q_021: {tags: [], note: "pure structural"}
+  q_022: {tags: [tutor-creature], coverage: 0.70}
+  q_023: {tags: [cast-trigger-you], coverage: 1.00, note: "broad (1,175 cards); prowess/magecraft cover <=11%"}
+  q_024: {tags: [sweeper], coverage: 1.00}
+  q_025: {tags: [pinger], coverage: 0.91}
+  q_026: {tags: [counterspell], coverage: 1.00}
