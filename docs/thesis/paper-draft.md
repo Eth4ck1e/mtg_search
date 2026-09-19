@@ -268,7 +268,39 @@ Three patterns in the per-category breakdown carry into the fine-tuning design:
 
 Six queries returned filters but no hypothetical text, so the full cascade embedded the raw query for them. Two of those — "creatures with flying" and "haste creatures" — name a canonical keyword explicitly; with the keywords filter off they scored zero, which is the user-explicit case selective strictness is meant to keep strict (Section 6.2). A rule that applies the keywords filter only when the rewriter judged the query purely structural (filters present, no hypothetical text) is the cheapest candidate and is queued as an ablation row.
 
-*[TODO — tuned-embedder rows of the grid after M6 training; Scryfall comparator with result-parity and query-complexity measures; direct-tag-lookup ablation.]*
+### 5.4 Embedder fine-tuning on oracle tags
+
+*[DRAFTED — REVIEW. First run `nomic-mtg-v1`, 2026-09-18, `experiment_runs` id 19. Recipe per Section 6.3; run details in the 2026-09-18 journal §5b.]*
+
+The base encoder was fine-tuned for one epoch on 207,062 (anchor, card) pairs derived from 2,729 oracle tags, with 482 tags (15%, stratified by pool size) withheld entirely. Anchors were tag labels, aliases, and descriptions; positives were reminder-augmented Oracle text; the loss was in-batch-negative InfoNCE with tag-disjoint batching so that no card sharing a tag with an anchor could be sampled as its negative. Training took 71 minutes on an M3 laptop GPU. The training loss fell from chance (ln 256 ≈ 4.2) to 1.46; the in-training probe flattened after roughly 600 of 809 steps, so one epoch is near the knee.
+
+**Table 3 — Retrieval probes before and after fine-tuning (cosine, query = tag label).**
+
+| Probe | ndcg@10 | mrr@10 | map@10 | recall@100 |
+|---|---|---|---|---|
+| Training tags, 6.2k-card sub-corpus (in-distribution) — base | 0.195 | 0.249 | 0.150 | — |
+| Training tags — tuned | 0.536 | 0.600 | 0.467 | — |
+| **Held-out tags, full 31k corpus — base** | 0.114 | 0.193 | 0.079 | 0.164 |
+| **Held-out tags — tuned** | **0.242** | **0.325** | **0.187** | **0.327** |
+
+The in-distribution probe confirms the objective is doing what it should. The held-out probe is the result that matters for the argument in Section 6.4: on 482 functional tags the model never saw during training, queried by their label alone against the entire corpus, every metric roughly doubled. The encoder did not memorise a vocabulary list; it learned that a short functional phrase in player language maps to a region of rules text, and that mapping transferred to phrases it had not been shown. Absolute held-out scores are modest because many held-out tags are narrow (`bounceland`, `blood-artist-ability`) and compete with 31,000 distractors; the doubling of recall@100 is the cleaner read of the ranking shift.
+
+**Forgetting probe.** NanoBEIR ndcg@10 on three general-domain subsets, base → tuned: SciFact 0.731 → 0.736, FiQA 0.485 → 0.441, NFCorpus 0.326 → 0.309; mean 0.514 → 0.495. The fine-tune costs two points of general retrieval on average and four on the most query-like subset — mild, uneven forgetting consistent with the unregularised runs reported by Murtaza et al. (2026) and ChEmbed (2025), and nowhere near the collapse Murtaza et al. observed with aggressive settings. For a domain-specialised deployment this is an acceptable trade; the embedding-anchor regulariser or base-weight interpolation (Section 2.5) is the planned ablation should a later recipe push the loss past a few points.
+
+**Table 4 — The Section 3.4 grid with the tuned embedder (rows 20–23 vs 11–14; n = 26; keywords filter off).**
+
+| Configuration | Query-side text | P@10 base → tuned | MRR base → tuned |
+|---|---|---|---|
+| Raw dense | user query, no filters | 0.031 → 0.069 | 0.067 → 0.102 |
+| Pass-through | user query + HyDE filters | 0.050 → 0.081 | 0.130 → 0.206 |
+| Full cascade (v1 prompt) | hypothetical rules text + filters | **0.112** → 0.089 | **0.294** → 0.270 |
+| –SQL ablation | hypothetical rules text, no filters | 0.085 → 0.077 | 0.269 → 0.196 |
+
+The tuned embedder improved every configuration that embeds the user's own words and degraded every configuration that embeds hypothetical rules text. Both effects follow from the training data: anchors were short functional phrases, so the query-side representation moved toward short phrases and away from paragraph-length rules text used as a query. On the jargon category, pass-through with the tuned embedder (P@10 0.115) approaches the v1 cascade with the tuned embedder (0.131) without generating any hypothetical text, and beats it on latency by the full cost of Stage 1 for that text. The best single cell on this evaluation set, however, remains the v1 cascade on the *base* embedder (0.112 / 0.294).
+
+Two observations qualify the pass-through result as a test of the Section 6.3 hypothesis. First, pass-through embeds raw user phrasing, whereas the hypothesis has the rewriter normalise that phrasing toward tag vocabulary before the embedder sees it; the cell that tests the hypothesis is the v2 prompt combined with the tuned embedder, which is future work at the time of writing. Second, the training anchors expose each concept through a handful of strings — `sweeper` was trained with the aliases *wipe*, *boardwipe*, *mass removal*, and *wrath of god* — and the eval query *"board wipes"* still scored zero through pass-through while scoring 0.20 through hypothetical text. Single-string exposure per synonym is not enough to cover user phrasing; the synthetic-query anchor source (Section 6.3) is designed to close that gap. Fragmented queries remain at zero in every cell of the grid, tuned or not.
+
+*[TODO — v2-prompt × tuned-embedder cell (the hypothesis test); tag-label oracle upper bound; mixed-anchor training run to recover the hypothetical-text mode; Scryfall comparator with result-parity and query-complexity measures; direct-tag-lookup ablation.]*
 
 ---
 

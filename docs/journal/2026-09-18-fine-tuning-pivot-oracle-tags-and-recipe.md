@@ -181,6 +181,63 @@ Each stage adds, monotonically. On the base embedder the hypothetical text contr
 - Two zero-candidate queries, both Stage 1 jargon failures, not search bugs: "mana dorks" → invented subtype `Dork` + P/T = 1/1; "red pingers" → `types: [Instant, Sorcery]` plus P/T filters (pingers are creatures). Exactly the jargon-gap family the pivot targets.
 - Stage 1 is ~1 s of the ~1.04 s p50; Stage 2+3 together are under 100 ms at this corpus size.
 
+## 5b. First fine-tuning run — `nomic-mtg-v1` (2026-09-18 evening)
+
+Run as specified in §4a on the Mac (M3, MPS): 207,062 pairs, batch 256 (cached mini-batch 32), lr 2e-5, one epoch = 809 steps, tag-disjoint batching, prompts on. `experiment_runs.id = 19`. Checkpoint at `models/nomic-mtg-v1/` (547 MB safetensors, gitignored).
+
+**Throughput correction.** The 5-step smoke run predicted ~10 pairs/s (≈6 h); that was startup overhead. Steady state was **~49 pairs/s → 71 min of training**, ~1 h 45 min wall including the pre-training probe, the full-corpus held-out probe (base + tuned), and NanoBEIR. Two to three runs a day on the Mac is realistic; the 5060 Ti workstation is a convenience, not a requirement.
+
+**Loss:** 4.2 (≈ ln 256, chance) → 2.64 at step 100 → 1.80 at step 400 → 1.46 at step 805. Still falling at the end of the epoch, but the dev probe flattened after step ~600 (ndcg@10 0.523 → 0.536 over the last 200 steps), so one epoch is close to the knee. A second epoch is an ablation, not a default (Nussbaum: multiple epochs hurt).
+
+**Probe results (base → tuned):**
+
+| Probe | ndcg@10 | mrr@10 | map@10 | recall@10 | recall@100 |
+|---|---|---|---|---|---|
+| Dev (100 *training* tags, 6.2k-card corpus) | 0.195 → **0.536** | 0.249 → **0.600** | 0.150 → **0.467** | 0.097 → 0.229 | — |
+| **Held-out (482 tags never seen, full 31k corpus)** | 0.114 → **0.242** | 0.193 → **0.325** | 0.079 → **0.187** | 0.046 → 0.114 | 0.164 → **0.327** |
+
+- The dev probe is in-distribution and expected to jump; it says the loss is doing what it should.
+- **The held-out probe is the result.** On tags the model never saw, queried by label alone against the whole corpus, every metric roughly doubled. The model did not memorise 2,729 vocabulary items; it learned that a short functional phrase maps to a region of rules text. This is the generalisation evidence §4 said the paper needs, and it is what separates the tuned embedder from a tag lookup.
+- Absolute held-out numbers are modest because many held-out tags are narrow (`bounceland`, `blood-artist-ability`) and the corpus has 31k distractors; recall@100 doubling is the more honest read of the ranking shift.
+
+**NanoBEIR (forgetting probe).** Base measured separately after the run (`models/nomic-mtg-v1/nanobeir_base.json`).
+
+| NanoBEIR ndcg@10 | base | tuned | delta |
+|---|---|---|---|
+| SciFact | 0.731 | 0.736 | +0.005 |
+| FiQA2018 | 0.485 | 0.441 | −0.044 |
+| NFCorpus | 0.326 | 0.309 | −0.017 |
+| mean | 0.514 | 0.495 | −0.019 |
+
+Mild, uneven forgetting: two points mean, four on FiQA (financial QA, the most "query-like" of the three). Within what Murtaza et al. and ChEmbed report for unregularised fine-tunes and far from the 0.85→0.65 collapse Murtaza saw with aggressive settings. Acceptable for a domain-specialised deployment; the embedding-anchor regulariser (or weight interpolation with the base) is the ablation to run if a later recipe change pushes this past ~5 points. **Every future run reports this table**, base column fixed.
+
+### 5c. Tuned embedder through the cascade — grid rows 20–23 (2026-09-18, late)
+
+Corpus re-embedded with `models/nomic-mtg-v1` (`embedding_version = models/nomic-mtg-v1|preproc=v1`), same four configs, same 8B rewriter and v1 prompt, keywords filter off.
+
+| Config | Stage 1 text embedded | P@10 base → tuned | MRR base → tuned | rows |
+|---|---|---|---|---|
+| `raw_dense` | user query, no filters | 0.031 → **0.069** | 0.067 → **0.102** | 14 → 20 |
+| `cascade_passthrough` | user query + HyDE filters | 0.050 → **0.081** | 0.130 → **0.206** | 13 → 21 |
+| `cascade_hyde_v1` (control) | hypothetical rules text + filters | **0.112** → 0.089 | **0.294** → 0.270 | 11 → 22 |
+| `cascade_hyde_v1_nosql` | hypothetical rules text, no filters | 0.085 → 0.077 | 0.269 → 0.196 | 12 → 23 |
+
+**Reading.** The tuned embedder helps exactly where it was trained to and hurts exactly where §4a item 4 warned it might:
+
+- **Modes that embed the user's own words improved.** Raw dense more than doubled P@10; pass-through went 0.050 → 0.081 P@10 and 0.130 → 0.206 MRR. The encoder now maps short player phrasing closer to rules text without any rewriter help.
+- **Modes that embed hypothetical rules text got worse.** The control dropped 0.112 → 0.089. Training only on short anchors (labels, aliases, descriptions) pulled the query-side representation toward short functional phrases; a paragraph of Wizards-style rules text used *as a query* is now further from the document side than it was in the base model. This is the doc-like-anchor trade-off, measured.
+- **Best single cell on the eval set is still base + hypothetical text** (0.112 / 0.294). Pass-through + tuned is second on MRR (0.206) and closes most of the gap on the jargon category (P@10 0.115 vs 0.131 for hyde/tuned; MRR 0.158 vs 0.263).
+- **Per category (P@10):** natural 0.000 → 0.125 raw and 0.000 → 0.075 pass-through; jargon 0.054 → 0.077 raw, 0.062 → 0.115 pass-through, 0.146 → 0.131 hyde; constrained unchanged where the filter is present (it's Stage 2's category); fragmented still 0.000 in every cell — three queries no configuration touches.
+- **Vocabulary gap, concretely.** `sweeper` was trained with aliases `wipe`, `boardwipe`, `mass removal`, `wrath of god` — and "board wipes" (pass-through, tuned) still scored 0, while the same query through hypothetical text scored 0.20. "flicker effects" is 0 in every cell although `flicker-creature` (137 cards) and `flicker-slow` (110) were both trained. Two follow-ups: (i) check how much of each eval query's relevant set is even inside the closure pool of the tag we'd expect HyDE to pick — if the judgments and the tags disagree, no embedder fixes it; (ii) the `boardwipe`-vs-"board wipes" miss says single-alias exposure is not enough; the synthetic-query anchors (§4a source 3) are what teach user phrasing.
+
+**What this means for the hypothesis.** The pass-through row is *not yet* the hypothesis test, because the hypothesis was: HyDE normalises the query toward **tag vocabulary**, then the tuned embedder does the rest. Pass-through embeds raw user phrasing ("board wipes"), which is exactly what the tag-anchored training never showed the model. The cell that tests the hypothesis is **v2 prompt (concepts in tag vocabulary) × tuned embedder**, and it is not built yet. Two cheaper probes are available immediately and should run first tomorrow:
+1. **Tag-label oracle.** Hand-map each eval query to the tag(s) a perfect v2 rewriter would emit (e.g. "board wipes" → `sweeper`), embed the label, search with the tuned model. This is the upper bound for v2 + tuned before any prompt work. If it beats 0.112 / 0.294, build v2. If it doesn't, the training data needs source 3 before v2 is worth writing.
+2. **Mixed anchors run** (`pairs_v2`): add a doc-like slice (hypothetical-style anchors: the card's own rules text with names stripped, or one-sentence LLM paraphrases) at ~20–30 % so the hypothetical-text mode stops regressing. Then base + hyde vs tuned-v2 + hyde is a fair comparison, and the v2-prompt cell inherits an embedder that handles both input shapes.
+
+**Latency.** Unchanged, as expected: p50 ~1.0–1.2 s with the rewriter, 88 ms without. The embedder swap costs nothing at query time.
+
+**Schema note.** `cards.embedding` holds one vector per row, so re-embedding with the tuned model *replaces* the base vectors; switching back means re-embedding (~minutes). Fine for now — base rows are logged — but if the ablation grid grows past two or three checkpoints, move embeddings to a `card_embeddings (oracle_id, face_index, embedding_version)` table so checkpoints coexist and the searcher just changes its version pin. Candidate migration 0004.
+
 ## 6. CLAUDE.md revisions
 
 §5 (do not fine-tune the embedder on keyword definitions), §6 (fine-tuning deferred to M6), and §11 (anti-suggestion) all encode the pre-pivot position. Revised today to: reminder-text augmentation stays the corpus-side lever; tag-derived contrastive fine-tuning is the query-side lever, motivated by the 2026-09-18 test evidence and gated on the base-embedder control run in §5 above. Hand-written definition dictionaries remain banned.

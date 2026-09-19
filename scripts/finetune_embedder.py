@@ -66,6 +66,7 @@ from sentence_transformers import (
 from sentence_transformers.base.sampler import DefaultBatchSampler
 from sentence_transformers.sentence_transformer.evaluation import InformationRetrievalEvaluator
 from sentence_transformers.sentence_transformer.losses import CachedMultipleNegativesRankingLoss
+from transformers import TrainerCallback
 
 import src.utils.quiet  # noqa: F401
 from src.config import settings
@@ -80,6 +81,13 @@ from src.preprocess_text import (
 from src.utils.device import select_device
 
 PROMPTS = {"anchor": NOMIC_QUERY_PREFIX, "positive": NOMIC_DOCUMENT_PREFIX}
+
+
+def transformers_printer_callback() -> type[TrainerCallback]:
+    """HF's default PrinterCallback dumps the raw metrics dict; we replace it."""
+    from transformers.trainer_callback import PrinterCallback
+
+    return PrinterCallback
 
 
 # ---- Tag-aware batch sampler ---------------------------------------------
@@ -185,6 +193,66 @@ class TagAwareTrainer(SentenceTransformerTrainer):
         return sampler
 
 
+# ---- Progress reporting ------------------------------------------------------
+
+
+class ProgressCallback(TrainerCallback):
+    """One human-readable line per logging step + a JSONL event, so a multi-hour run
+    is visibly churning even through ``tee``. Replaces the tqdm bar (which is
+    unreadable in a piped log) and the raw metrics dict."""
+
+    def __init__(self, run: PipelineRun, total_pairs: int) -> None:
+        self.run = run
+        self.total_pairs = total_pairs
+        self.t0 = time.perf_counter()
+
+    def on_train_begin(self, args, state, control, **kwargs):
+        self.t0 = time.perf_counter()
+        print(
+            f"  Training: {state.max_steps} steps of {args.per_device_train_batch_size} pairs",
+            flush=True,
+        )
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        logs = logs or {}
+        if "loss" not in logs:
+            return
+        elapsed = time.perf_counter() - self.t0
+        done = state.global_step
+        rate = done / elapsed if elapsed else 0.0
+        eta = (state.max_steps - done) / rate if rate else float("nan")
+        pairs_s = done * args.per_device_train_batch_size / elapsed if elapsed else 0.0
+        print(
+            f"  step {done:>5}/{state.max_steps}  {done / state.max_steps:5.1%}  "
+            f"loss {logs['loss']:.4f}  lr {logs.get('learning_rate', 0):.2e}  "
+            f"{pairs_s:5.1f} pairs/s  elapsed {elapsed / 60:6.1f} min  eta {eta / 60:6.1f} min",
+            flush=True,
+        )
+        self.run.event(
+            "progress",
+            step=done,
+            max_steps=state.max_steps,
+            loss=logs["loss"],
+            lr=logs.get("learning_rate"),
+            elapsed_s=round(elapsed, 1),
+            eta_s=round(eta, 1) if eta == eta else None,
+            pairs_per_s=round(pairs_s, 2),
+        )
+
+    def on_evaluate(self, args, state, control, metrics=None, **kwargs):
+        metrics = metrics or {}
+        keep = {k.split("_cosine_")[-1]: v for k, v in metrics.items() if "_cosine_" in k}
+        summary = "  ".join(
+            f"{k} {v:.3f}"
+            for k, v in sorted(keep.items())
+            if k in ("ndcg@10", "mrr@10", "map@10", "recall@10")
+        )
+        print(f"  dev probe @ step {state.global_step}: {summary}", flush=True)
+        self.run.event(
+            "dev_probe", step=state.global_step, **{f"dev_{k}": v for k, v in keep.items()}
+        )
+
+
 # ---- Data loading ----------------------------------------------------------
 
 
@@ -272,7 +340,7 @@ def _holdout_evaluator(
 
 
 def main() -> int:
-    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--pairs-version", default="v1")
     parser.add_argument("--run-name", default=None, help="Output dir name under models/.")
@@ -289,6 +357,7 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=None, help="Subsample training pairs.")
     parser.add_argument("--max-steps", type=int, default=-1)
     parser.add_argument("--eval-steps", type=int, default=100)
+    parser.add_argument("--log-every", type=int, default=5, help="Progress line every N steps.")
     parser.add_argument("--dev-queries", type=int, default=100)
     parser.add_argument("--seed", type=int, default=20260918)
     parser.add_argument(
@@ -378,7 +447,8 @@ def main() -> int:
             bf16=False,
             eval_strategy="steps",
             eval_steps=args.eval_steps,
-            logging_steps=10,
+            logging_steps=args.log_every,
+            disable_tqdm=True,
             save_strategy="no",
             seed=args.seed,
             report_to="none",
@@ -392,9 +462,15 @@ def main() -> int:
             train_dataset=dataset,
             loss=loss,
             evaluator=dev_eval,
+            callbacks=[ProgressCallback(run, len(pairs))],
         )
+        trainer.remove_callback(transformers_printer_callback())
 
-        print("  Base-model dev probe (before training):")
+        print(
+            f"  Base-model dev probe (before training; encodes ~{len(dev_eval.corpus):,} cards, "
+            "a few minutes) ...",
+            flush=True,
+        )
         base_dev = dev_eval(model)
         for k_, v in sorted(base_dev.items()):
             if "ndcg" in k_ or "map" in k_ or "mrr" in k_:
@@ -432,7 +508,11 @@ def main() -> int:
         }
 
         if not args.skip_holdout:
-            print("\n  Held-out-tag probe (full corpus) — base then tuned:")
+            print(
+                "\n  Held-out-tag probe: encoding the full corpus twice (base, tuned) — "
+                "~10 minutes ...",
+                flush=True,
+            )
             hold_eval = _holdout_evaluator(manifest, holdout_path)
             base_model = SentenceTransformer(
                 settings.embedding_model, device=str(device), trust_remote_code=True
