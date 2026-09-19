@@ -1,0 +1,30 @@
+# Full cascade, v1 prompt — the base-embedder CONTROL ROW.
+#
+# Stage 1: HyDE (Llama 3.1 8B, prompts/hyde_v1.yaml) supplies filters and the
+#          hypothetical card text that gets embedded.
+# Stage 2: SQL pre-filter on the rewriter's structural filters. Keywords
+#          filter OFF (selective strictness — the 8B model over-narrows on
+#          inferred keywords; see docs/journal/2026-09-18-hyde-prompt-v1-*).
+# Stage 3: Nomic Embed v1.5 cosine search inside the filtered set.
+#
+# This is the "before" number for every fine-tuning claim. Log it with the
+# untuned embedder BEFORE evaluating any tuned checkpoint.
+
+name: "cascade_hyde_v1"
+
+description: >
+  Three-stage cascade: HyDE v1 prompt (8B) → SQL pre-filter (keywords off)
+  → Nomic Embed v1.5 search inside the candidate set. Base-embedder control.
+
+eval_set: "data/eval/queries_v1_draft.yaml"
+
+retrieval:
+  type: cascade
+  stage1: hyde
+  sql: true
+  keywords_filter: false
+  k: 10
+
+notes: >
+  Grid cell (hypothetical text, base embedder). Requires mlx_lm.server on
+  HYDE_SERVER_URL.

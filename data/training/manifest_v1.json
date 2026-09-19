@@ -1,0 +1,2431 @@
+{
+ "version": "v1",
+ "seed": 20260918,
+ "tags_bulk_date": "2026-09-18",
+ "preprocess_version": "v1",
+ "min_cards": 5,
+ "max_per_anchor": 150,
+ "holdout_frac": 0.15,
+ "eligible_tags": 3216,
+ "train_tags": 2729,
+ "holdout_tags": [
+  {
+   "id": "2e88f463-18d1-48bb-9298-e2f1cf4ccd8d",
+   "slug": "absorb",
+   "cards": 23
+  },
+  {
+   "id": "1cc7418f-4773-456c-bb85-458b28e9cfb1",
+   "slug": "alternate-cost-life",
+   "cards": 42
+  },
+  {
+   "id": "1061ce80-bbd4-4cc5-8ca9-41e996faf63a",
+   "slug": "any-player-ability",
+   "cards": 37
+  },
+  {
+   "id": "01f357fc-65f1-41ca-8454-0ec9a1004f3f",
+   "slug": "artifactfall",
+   "cards": 88
+  },
+  {
+   "id": "00dd108a-d034-45a8-92e1-02c8fc59980d",
+   "slug": "blood-artist-ability",
+   "cards": 36
+  },
+  {
+   "id": "eaa6534d-4125-4bb3-907c-3e1b525421fe",
+   "slug": "bottom-of-library-matters",
+   "cards": 5
+  },
+  {
+   "id": "7a468894-584e-4ac4-9065-f5340efbea37",
+   "slug": "bounceland",
+   "cards": 17
+  },
+  {
+   "id": "1b0c6de6-3ca0-4af3-8f92-c84b9db069c7",
+   "slug": "breaks-ktk-morph-rule",
+   "cards": 34
+  },
+  {
+   "id": "20af1439-9d51-47e4-9b8c-d27d131b0ad4",
+   "slug": "bribery",
+   "cards": 30
+  },
+  {
+   "id": "0641a74c-4dd5-426d-be58-2ab86d71995d",
+   "slug": "burn",
+   "cards": 2802
+  },
+  {
+   "id": "333eca4b-cd56-41b5-b250-b3a711e501c1",
+   "slug": "burst-draw",
+   "cards": 617
+  },
+  {
+   "id": "1cb782a5-b41d-46f0-a809-bd8080cff635",
+   "slug": "card-game-reference",
+   "cards": 5
+  },
+  {
+   "id": "6ac88a7b-c0ef-40c8-9625-8e8d0dcb0c27",
+   "slug": "cards-in-exile-matter",
+   "cards": 22
+  },
+  {
+   "id": "4539431a-4109-4fee-91fc-caea0fcccb88",
+   "slug": "cast-trigger",
+   "cards": 1627
+  },
+  {
+   "id": "238fae23-46b6-4d30-ad00-9a020cc58756",
+   "slug": "cast-trigger-self",
+   "cards": 226
+  },
+  {
+   "id": "93c7dfa5-b55a-47fb-a73c-c056c649e198",
+   "slug": "cast-trigger-you",
+   "cards": 1175
+  },
+  {
+   "id": "d87843cd-0ae2-4c1e-a87c-c080594b295b",
+   "slug": "castable-from-graveyard",
+   "cards": 393
+  },
+  {
+   "id": "21417ddf-300c-4f6d-9fa8-b56dc74d4ee1",
+   "slug": "casting-restriction",
+   "cards": 55
+  },
+  {
+   "id": "5e39c3e4-a6d8-4b3a-975c-c99a16d19d39",
+   "slug": "catalog",
+   "cards": 47
+  },
+  {
+   "id": "9ed3d104-27cd-48d8-be36-85bcd4d5e026",
+   "slug": "changeling",
+   "cards": 64
+  },
+  {
+   "id": "661d86a1-780b-49a1-8f2b-bb1222f61bba",
+   "slug": "charm",
+   "cards": 114
+  },
+  {
+   "id": "41001ec8-915d-4113-9f6d-e4d103cc4b5d",
+   "slug": "cheaper-than-mv",
+   "cards": 1954
+  },
+  {
+   "id": "49d48660-c095-4389-bdf9-f5668d3849fe",
+   "slug": "chromatic-lantern",
+   "cards": 57
+  },
+  {
+   "id": "95b9ba0a-6774-47cc-8de8-8eaabb61034f",
+   "slug": "coin-flips-matter",
+   "cards": 9
+  },
+  {
+   "id": "44012cd5-95e4-42f1-b74d-453ca9130f8f",
+   "slug": "color-break",
+   "cards": 121
+  },
+  {
+   "id": "d45a9416-045b-42fe-99ce-4208aff6c1ac",
+   "slug": "combat-ping",
+   "cards": 33
+  },
+  {
+   "id": "cd6d0ff6-88d3-43bd-9451-863d47b962a4",
+   "slug": "conjure-named",
+   "cards": 11
+  },
+  {
+   "id": "16a17045-ea7b-4712-ae3b-401ae73fddd0",
+   "slug": "converge",
+   "cards": 49
+  },
+  {
+   "id": "58f9651d-60e7-4b67-aca3-dffa17ce1cd3",
+   "slug": "copy-ability",
+   "cards": 42
+  },
+  {
+   "id": "e8612d80-6f20-476f-b0ea-4b48aebf5fba",
+   "slug": "copy-aura",
+   "cards": 19
+  },
+  {
+   "id": "534622f1-3350-457e-b20e-bb39e25370d0",
+   "slug": "copy-land",
+   "cards": 26
+  },
+  {
+   "id": "fdd5ff5f-2da1-4267-b564-b975387ed1a5",
+   "slug": "copy-planeswalker",
+   "cards": 26
+  },
+  {
+   "id": "4408af33-624b-4b16-adc3-43d3535ebb7f",
+   "slug": "cost-reducer-artifact",
+   "cards": 22
+  },
+  {
+   "id": "ad55cd22-6a68-4eda-9426-c3144f55afae",
+   "slug": "cost-reducer-colored-mana",
+   "cards": 12
+  },
+  {
+   "id": "c9dd64d9-425c-469b-8765-3544fced7750",
+   "slug": "cost-reducer-noncreature",
+   "cards": 10
+  },
+  {
+   "id": "8fad7151-fa69-4565-9fea-6b9bd60930dd",
+   "slug": "counter-fuel",
+   "cards": 471
+  },
+  {
+   "id": "d6b35fd3-23e0-47db-9c46-dc9e1958d33e",
+   "slug": "counter-fuel-charge",
+   "cards": 60
+  },
+  {
+   "id": "9cbfd4f0-aa13-4d0e-9e57-11d1d482e8a0",
+   "slug": "counters-matter",
+   "cards": 1208
+  },
+  {
+   "id": "aaa12ab3-a0e3-4d09-9ddb-be85e733cbff",
+   "slug": "creature-count-matters",
+   "cards": 312
+  },
+  {
+   "id": "a25d6694-e277-401f-9e22-48517de0416c",
+   "slug": "crewless-vehicle",
+   "cards": 20
+  },
+  {
+   "id": "7dca0cec-0c2f-4079-b945-3059c05125bd",
+   "slug": "curiosity",
+   "cards": 234
+  },
+  {
+   "id": "1adda1a4-e23d-4212-a4da-58303a20e00c",
+   "slug": "cycle",
+   "cards": 7949
+  },
+  {
+   "id": "faa04bc9-6e96-4f97-9b05-8a9fcfa4d568",
+   "slug": "cycle-afr-u-legend",
+   "cards": 10
+  },
+  {
+   "id": "7f92fa02-f972-4920-851b-12e0cf5d5d55",
+   "slug": "cycle-akh-monocolor-aftermath",
+   "cards": 5
+  },
+  {
+   "id": "b03da36f-6754-4526-9774-c2b4de910bdf",
+   "slug": "cycle-ala-c-1-drop",
+   "cards": 5
+  },
+  {
+   "id": "af9f524f-e16b-4373-a167-aa5d64045db3",
+   "slug": "cycle-ala-r-tricolor",
+   "cards": 5
+  },
+  {
+   "id": "0a830a98-a282-4057-9808-3b9505d357c7",
+   "slug": "cycle-ala-shardland",
+   "cards": 5
+  },
+  {
+   "id": "d15a3778-e66e-490a-9517-e58c106451b5",
+   "slug": "cycle-ala-u-tricolor",
+   "cards": 5
+  },
+  {
+   "id": "e1b886aa-6cc4-4898-bcc8-2476059f4a91",
+   "slug": "cycle-apc-disciple",
+   "cards": 5
+  },
+  {
+   "id": "6efabfe9-9e55-4aa4-80d3-ece8990eeb76",
+   "slug": "cycle-apc-painland",
+   "cards": 5
+  },
+  {
+   "id": "f4bb5047-3844-4b9e-b02e-3678e60b8883",
+   "slug": "cycle-apc-r-two-color",
+   "cards": 10
+  },
+  {
+   "id": "32314bac-951f-46a6-a68a-7f6859ae653a",
+   "slug": "cycle-arb-c-enemy",
+   "cards": 5
+  },
+  {
+   "id": "df312548-480b-4849-b4f0-e1860ab0c0e7",
+   "slug": "cycle-arb-u-cascade",
+   "cards": 5
+  },
+  {
+   "id": "e38e6651-8760-447a-b32f-584ae1caf8e5",
+   "slug": "cycle-bbd-legendary-partner",
+   "cards": 10
+  },
+  {
+   "id": "2b078428-5014-42bc-8352-0ba7275dd878",
+   "slug": "cycle-blb-c-offspring",
+   "cards": 5
+  },
+  {
+   "id": "b1851807-a4ba-490a-973a-7b373af687da",
+   "slug": "cycle-blb-r-two-color-legend",
+   "cards": 10
+  },
+  {
+   "id": "e87c392f-f19b-4424-8cad-30e48e84e87e",
+   "slug": "cycle-block-grn-mmnn",
+   "cards": 10
+  },
+  {
+   "id": "172ddae3-0273-4d7b-9a8a-8b610aa1065b",
+   "slug": "cycle-block-rav-guild-champion",
+   "cards": 10
+  },
+  {
+   "id": "93f7f9bb-a19c-47f5-8ff9-f561a73695b3",
+   "slug": "cycle-block-rtr-r-hybrid",
+   "cards": 10
+  },
+  {
+   "id": "ad072a41-ad4e-49b9-bae9-42ce9680b07b",
+   "slug": "cycle-block-rtr-u-guild-kw",
+   "cards": 10
+  },
+  {
+   "id": "050ace43-3356-49fc-abc1-6be3dad970e9",
+   "slug": "cycle-block-rtr-u-hybrid",
+   "cards": 10
+  },
+  {
+   "id": "bfd65956-615f-4ce0-b38f-59cbcb6efb18",
+   "slug": "cycle-block-ths-scry-land",
+   "cards": 10
+  },
+  {
+   "id": "45f16531-2736-4718-9979-2f7639257a74",
+   "slug": "cycle-bng-devotion-x",
+   "cards": 5
+  },
+  {
+   "id": "ebd8b9b9-f8e2-4a89-ac7d-58726becc118",
+   "slug": "cycle-bng-inspired-token",
+   "cards": 5
+  },
+  {
+   "id": "135524fa-9d46-4057-9532-6479860d94af",
+   "slug": "cycle-bng-tapping-aura",
+   "cards": 5
+  },
+  {
+   "id": "0f9e149f-00c9-4d86-a0d9-f310dc8a578f",
+   "slug": "cycle-bng-u-tribute",
+   "cards": 5
+  },
+  {
+   "id": "36d13f4c-5d63-4dc7-97ad-409ed5bca82a",
+   "slug": "cycle-c14-alt-commander",
+   "cards": 5
+  },
+  {
+   "id": "4f3e7a78-5e6c-4060-a030-3097f0b88da7",
+   "slug": "cycle-c15-confluence",
+   "cards": 5
+  },
+  {
+   "id": "929d1f6b-978c-4852-9b83-9871e8a7a1e0",
+   "slug": "cycle-c16-r-partner",
+   "cards": 5
+  },
+  {
+   "id": "092b7ada-e36d-48d7-ac9d-3c970ded11ae",
+   "slug": "cycle-checkland",
+   "cards": 10
+  },
+  {
+   "id": "626a6fee-51e1-4b35-893d-8b1a11d0ca40",
+   "slug": "cycle-chk-honden",
+   "cards": 5
+  },
+  {
+   "id": "bd1d0e24-8c4d-4111-aa61-7a6e9f9f1783",
+   "slug": "cycle-clb-back-enemy-legend",
+   "cards": 5
+  },
+  {
+   "id": "ba461864-b20e-4430-8e21-c72cfa939f11",
+   "slug": "cycle-clb-draft-signpost",
+   "cards": 10
+  },
+  {
+   "id": "9cdbd9f3-6a9a-47ca-b491-ae3117330f45",
+   "slug": "cycle-clb-invoker",
+   "cards": 5
+  },
+  {
+   "id": "55a5c32e-e093-492a-a549-084d408d68c1",
+   "slug": "cycle-clb-r-mono-legend",
+   "cards": 5
+  },
+  {
+   "id": "c1eabfea-1b43-4c74-86f1-4f97a652cf6f",
+   "slug": "cycle-cmd-alt-commander",
+   "cards": 5
+  },
+  {
+   "id": "65d35a99-1dd2-4471-984c-e8fc084188f3",
+   "slug": "cycle-cmd-join-forces",
+   "cards": 5
+  },
+  {
+   "id": "597974e9-02ca-45b9-a556-04381b7c6c0c",
+   "slug": "cycle-cmm-m-mono-legend",
+   "cards": 10
+  },
+  {
+   "id": "de3614d6-bcf6-40aa-a29f-54eaa3410bbd",
+   "slug": "cycle-cmm-r-two-color-legend",
+   "cards": 10
+  },
+  {
+   "id": "ed818eb8-b58f-47d5-bdfc-7241607f1648",
+   "slug": "cycle-cmr-draft-signpost",
+   "cards": 10
+  },
+  {
+   "id": "f293d1b0-5a7e-48b5-8331-0ea369cc29a4",
+   "slug": "cycle-cn2-c-draft",
+   "cards": 5
+  },
+  {
+   "id": "146d416e-2a6b-4dad-bab3-51d5a3f1dc84",
+   "slug": "cycle-csp-r-tricolor",
+   "cards": 5
+  },
+  {
+   "id": "1b2f2c05-ed32-44b6-a4a0-8cf36d0b8e40",
+   "slug": "cycle-dft-gearhulk",
+   "cards": 5
+  },
+  {
+   "id": "d5e15610-bf5e-4cc4-a0f5-ff6a4e0a644b",
+   "slug": "cycle-dft-team-vehicle",
+   "cards": 10
+  },
+  {
+   "id": "b69ae720-1094-4717-b239-7168afca195e",
+   "slug": "cycle-dgm-maze-elemental",
+   "cards": 5
+  },
+  {
+   "id": "7db7a58b-95b4-43f9-9861-752616ce7e17",
+   "slug": "cycle-dgm-maze-runner",
+   "cards": 10
+  },
+  {
+   "id": "425ad300-1bde-4f3d-bf1b-7d87d2083ae1",
+   "slug": "cycle-dka-enemy-utilityland",
+   "cards": 5
+  },
+  {
+   "id": "ed021ebe-044f-4316-b7db-989758297a03",
+   "slug": "cycle-dka-increasing-flashback",
+   "cards": 5
+  },
+  {
+   "id": "129e0d5f-46be-4539-9b59-c117dd67f963",
+   "slug": "cycle-dmu-c-for-ally-kicker",
+   "cards": 5
+  },
+  {
+   "id": "20d8b811-4d67-404b-99dc-1e9ad3a41175",
+   "slug": "cycle-dmu-dual-land",
+   "cards": 10
+  },
+  {
+   "id": "4c3646a1-a49c-4cd7-b76c-c24ab53042db",
+   "slug": "cycle-dmu-r-two-color-legend",
+   "cards": 10
+  },
+  {
+   "id": "bf7e2230-1c7b-4096-96fd-d9d188091d38",
+   "slug": "cycle-dst-affinity-golem",
+   "cards": 5
+  },
+  {
+   "id": "8e307170-fcbf-4fed-a69b-979583a9d58f",
+   "slug": "cycle-dst-lucky-charm",
+   "cards": 6
+  },
+  {
+   "id": "d9d69831-c17f-451c-8d89-8563fdfc5df4",
+   "slug": "cycle-dtk-dragonlord",
+   "cards": 5
+  },
+  {
+   "id": "1a28ecff-e582-4ce7-a986-96188bd44f8f",
+   "slug": "cycle-dtk-monument",
+   "cards": 5
+  },
+  {
+   "id": "b3416bbf-7546-42c6-8f1f-3782e1153710",
+   "slug": "cycle-dual-tapland",
+   "cards": 10
+  },
+  {
+   "id": "1e9e034d-a70b-4aca-b419-c984e59d9e2f",
+   "slug": "cycle-ecl-c-hybrid",
+   "cards": 10
+  },
+  {
+   "id": "4ceea643-b7e1-4401-9d70-330c73ea789b",
+   "slug": "cycle-ecl-champion",
+   "cards": 5
+  },
+  {
+   "id": "286e5448-2394-4bef-a564-97677d791126",
+   "slug": "cycle-ecl-r-dfc",
+   "cards": 5
+  },
+  {
+   "id": "984ea619-054a-4aa4-8b31-3f882d5fee02",
+   "slug": "cycle-eld-c-adamant-spell",
+   "cards": 5
+  },
+  {
+   "id": "5b3a4b03-0130-4185-a6e8-2d8d87e39a0b",
+   "slug": "cycle-eld-hybrid",
+   "cards": 10
+  },
+  {
+   "id": "5e0da730-5642-4123-b918-972eea3b9db9",
+   "slug": "cycle-eld-syr-legend",
+   "cards": 5
+  },
+  {
+   "id": "45f37bf7-2bac-4f6a-9c50-46459da3fdc0",
+   "slug": "cycle-eld-u-two-color",
+   "cards": 10
+  },
+  {
+   "id": "831d9eb4-81f8-4619-bde9-41013d041802",
+   "slug": "cycle-ema-r-two-color",
+   "cards": 10
+  },
+  {
+   "id": "6cc789bf-efd8-488d-b527-1055403264fd",
+   "slug": "cycle-emn-allied-creature",
+   "cards": 5
+  },
+  {
+   "id": "62e2e867-cbe6-4c59-8dea-194f8ddb12d3",
+   "slug": "cycle-emn-draft-signpost",
+   "cards": 5
+  },
+  {
+   "id": "6296c04e-1a4e-4fce-a06e-993d0ec2bbad",
+   "slug": "cycle-eoe-legend-after",
+   "cards": 6
+  },
+  {
+   "id": "d425e74c-40b7-43d9-9097-fba6625f4d67",
+   "slug": "cycle-eoe-legend-before",
+   "cards": 6
+  },
+  {
+   "id": "fa376055-eeac-442f-b964-7adf3a9399da",
+   "slug": "cycle-eoe-r-two-color",
+   "cards": 10
+  },
+  {
+   "id": "adea1332-3dbc-4382-96b8-208e7dde5b13",
+   "slug": "cycle-eve-hedge-mage",
+   "cards": 5
+  },
+  {
+   "id": "e4899024-c9be-4785-b664-9d55c6644415",
+   "slug": "cycle-exo-oath",
+   "cards": 5
+  },
+  {
+   "id": "9414b763-e2dc-49fa-8aa2-a7cbb1dc5363",
+   "slug": "cycle-fastland",
+   "cards": 10
+  },
+  {
+   "id": "7db1e1c6-ad4e-4417-95c5-b98f452cdeb7",
+   "slug": "cycle-fdn-draft-signpost",
+   "cards": 10
+  },
+  {
+   "id": "8c458821-22f5-4c9f-bf39-eb639317dafa",
+   "slug": "cycle-fdn-r-two-color",
+   "cards": 10
+  },
+  {
+   "id": "7ee96234-63a9-47f8-940f-7e8c45ca1dd5",
+   "slug": "cycle-fetchland",
+   "cards": 10
+  },
+  {
+   "id": "14fd57a9-e31d-4564-88c1-4cf7b6c494bb",
+   "slug": "cycle-fin-adventure-land",
+   "cards": 5
+  },
+  {
+   "id": "f8acc00c-28af-4dd8-ba42-3c7ba1298c84",
+   "slug": "cycle-fra-wedge-pair",
+   "cards": 6
+  },
+  {
+   "id": "85e10ad0-0320-48ed-9786-8d37bd47b40d",
+   "slug": "cycle-frf-hybrid-ability",
+   "cards": 5
+  },
+  {
+   "id": "67c5ee0e-9320-464f-8a08-268b5cad4d5c",
+   "slug": "cycle-fut-augur",
+   "cards": 5
+  },
+  {
+   "id": "40798529-0431-4569-8722-d9e75724ed3d",
+   "slug": "cycle-fut-sliver",
+   "cards": 5
+  },
+  {
+   "id": "87f4bb28-b2cd-49d9-a186-aa83d36304ea",
+   "slug": "cycle-gn2-mythic",
+   "cards": 5
+  },
+  {
+   "id": "592dd91f-dd19-437d-88fe-36d1075e9aef",
+   "slug": "cycle-gnt-mythic",
+   "cards": 5
+  },
+  {
+   "id": "58afd5a4-5627-4869-a04c-116c7a833840",
+   "slug": "cycle-gpt-magemark",
+   "cards": 5
+  },
+  {
+   "id": "5a6981df-fa4b-4b43-9df1-276fab6cc780",
+   "slug": "cycle-gpt-nephilim",
+   "cards": 5
+  },
+  {
+   "id": "fec29846-0327-437b-b7a1-82d125cdb33c",
+   "slug": "cycle-grn-hybrid-creature",
+   "cards": 5
+  },
+  {
+   "id": "53397fff-da07-47d0-8021-128e83e74ab5",
+   "slug": "cycle-hob-c-adventurer",
+   "cards": 5
+  },
+  {
+   "id": "87fba99b-b1dc-441e-9ab4-c6ebda51e3c5",
+   "slug": "cycle-hob-draft-signpost",
+   "cards": 10
+  },
+  {
+   "id": "14a46d90-df65-4756-bc43-5c34a9adec75",
+   "slug": "cycle-hob-typal-dual",
+   "cards": 5
+  },
+  {
+   "id": "f43d4f69-5411-4d76-9086-535e8c265903",
+   "slug": "cycle-hou-desert-cycling-land",
+   "cards": 5
+  },
+  {
+   "id": "b103c83c-9c02-498f-930a-2e6156fbc396",
+   "slug": "cycle-hybrid-modal",
+   "cards": 10
+  },
+  {
+   "id": "329ceb1a-47c8-4cdb-80b2-6097bf028344",
+   "slug": "cycle-iko-mutate-x",
+   "cards": 5
+  },
+  {
+   "id": "30cda6c4-c90e-4fff-b1a0-bf7e95ef5d91",
+   "slug": "cycle-inv-backward-ability",
+   "cards": 5
+  },
+  {
+   "id": "8bfe1579-c4e1-4e0b-98e2-4a2061246fdb",
+   "slug": "cycle-inv-domain-spell",
+   "cards": 5
+  },
+  {
+   "id": "d77dea13-0802-4d7a-9299-d9f8419c52c5",
+   "slug": "cycle-inv-dragon-attendant",
+   "cards": 5
+  },
+  {
+   "id": "035875cf-28db-4767-9840-fb92e2bfd0a4",
+   "slug": "cycle-inv-primeval-dragon",
+   "cards": 5
+  },
+  {
+   "id": "5e0c2bb5-a767-43e9-9cec-2378e3bef291",
+   "slug": "cycle-isd-allied-utilityland",
+   "cards": 5
+  },
+  {
+   "id": "493c0701-e3aa-49e4-a28c-ef8ad7c6c43d",
+   "slug": "cycle-isd-r-flashback",
+   "cards": 5
+  },
+  {
+   "id": "d189cf6c-350c-4e3e-b83c-8dba23d6ae74",
+   "slug": "cycle-jou-dictate",
+   "cards": 5
+  },
+  {
+   "id": "f9d93596-ce9d-4114-9528-12fff151b6ea",
+   "slug": "cycle-kld-draft-signpost",
+   "cards": 10
+  },
+  {
+   "id": "f57a967d-bdbc-427a-90b9-4a0a057d503d",
+   "slug": "cycle-ktk-c-3mno-creature",
+   "cards": 5
+  },
+  {
+   "id": "234e5dec-8d4d-4446-9574-af0f8da2fedb",
+   "slug": "cycle-ktk-khan",
+   "cards": 5
+  },
+  {
+   "id": "aa5ec85f-5941-4da8-9364-23ac29dcd82b",
+   "slug": "cycle-ktk-r-2mno-creature",
+   "cards": 5
+  },
+  {
+   "id": "15e46dc6-0993-41a6-8e6f-89f28738fba1",
+   "slug": "cycle-ktk-u-2mno-creature",
+   "cards": 5
+  },
+  {
+   "id": "77efd774-a6d3-4081-ba8c-322485b6ad80",
+   "slug": "cycle-lci-god",
+   "cards": 5
+  },
+  {
+   "id": "e55483ad-342a-4ec1-bac0-009d243081fa",
+   "slug": "cycle-lci-restless-land",
+   "cards": 5
+  },
+  {
+   "id": "fdcd3d2c-70ee-40b8-8588-c4037b68aefc",
+   "slug": "cycle-lea-lace",
+   "cards": 5
+  },
+  {
+   "id": "06686f87-a309-432e-8c86-2b9b26afcc0a",
+   "slug": "cycle-lea-ward",
+   "cards": 5
+  },
+  {
+   "id": "85a72a2b-b15d-45e2-ad5b-d20035985215",
+   "slug": "cycle-lgn-r-sliver",
+   "cards": 5
+  },
+  {
+   "id": "9c8d805e-c6d4-40ac-aa3d-973e1ca0a183",
+   "slug": "cycle-lgn-u-sliver",
+   "cards": 5
+  },
+  {
+   "id": "161fab3a-eb7a-4ba7-a4e3-73bb3c8dce93",
+   "slug": "cycle-lrw-harbinger",
+   "cards": 8
+  },
+  {
+   "id": "af5f2dd1-cfce-4c2a-a415-7679ffd6cc1a",
+   "slug": "cycle-lrw-hideaway-land",
+   "cards": 5
+  },
+  {
+   "id": "45a8394a-1f93-4bec-8448-650cc43f6109",
+   "slug": "cycle-lrw-incarnation",
+   "cards": 5
+  },
+  {
+   "id": "41511b0d-5a9a-4ea7-91e3-391b40e82ebf",
+   "slug": "cycle-lrw-typal-revealer",
+   "cards": 5
+  },
+  {
+   "id": "c20ce8f4-f7df-417a-908c-a84aab523db2",
+   "slug": "cycle-m10-typal-lord",
+   "cards": 5
+  },
+  {
+   "id": "d11e20ac-3e4c-4236-b0c3-0764beb9d7f5",
+   "slug": "cycle-m14-r-sliver",
+   "cards": 5
+  },
+  {
+   "id": "3861a190-9657-46c2-a2de-aa2f8874906f",
+   "slug": "cycle-m15-paragon",
+   "cards": 5
+  },
+  {
+   "id": "33bdc913-5487-4580-aae8-fcc8c1ec3dbb",
+   "slug": "cycle-m15-sliver",
+   "cards": 5
+  },
+  {
+   "id": "4750aa90-8f53-4573-b324-f6309db2292f",
+   "slug": "cycle-m19-precon-planeswalker",
+   "cards": 5
+  },
+  {
+   "id": "239f3277-cbaf-4871-aa48-d3d774b01bd6",
+   "slug": "cycle-m19-typal-lord",
+   "cards": 5
+  },
+  {
+   "id": "61496309-3a84-40c7-b266-acb5a34fb9c3",
+   "slug": "cycle-m20-leyline",
+   "cards": 5
+  },
+  {
+   "id": "454abe7d-e89b-4320-b868-99631637913b",
+   "slug": "cycle-mh1-r-two-color",
+   "cards": 10
+  },
+  {
+   "id": "bb532583-4068-440d-8696-f3cf051fc63b",
+   "slug": "cycle-mh2-draft-signpost",
+   "cards": 20
+  },
+  {
+   "id": "7bb08e97-536a-46e1-ae03-dd8dd30f5de3",
+   "slug": "cycle-mh3-draft-signpost",
+   "cards": 30
+  },
+  {
+   "id": "4622eed7-2853-41c9-852f-35bd6b701003",
+   "slug": "cycle-mh3-flip-walker",
+   "cards": 5
+  },
+  {
+   "id": "032377bc-74b8-418d-822a-5e3fda10c2ae",
+   "slug": "cycle-mh3-r-mono-land",
+   "cards": 5
+  },
+  {
+   "id": "1246ced8-e506-4696-8f96-b72813d5cae0",
+   "slug": "cycle-mic-curse",
+   "cards": 5
+  },
+  {
+   "id": "d1a73d4b-311f-42ef-af93-1a89456584eb",
+   "slug": "cycle-mir-monocolor-enemy-hate",
+   "cards": 5
+  },
+  {
+   "id": "5e99d3e3-da52-4988-89e6-17dcdcd7a006",
+   "slug": "cycle-mkm-hybrid-disguise",
+   "cards": 10
+  },
+  {
+   "id": "ab258f13-8f6d-4020-8273-41d8e9c949c3",
+   "slug": "cycle-mkm-m-two-color",
+   "cards": 10
+  },
+  {
+   "id": "32423bdd-2059-4ad9-a502-9cd179c72956",
+   "slug": "cycle-mkm-u-gold-noncreature",
+   "cards": 10
+  },
+  {
+   "id": "729ed482-77d8-4292-825f-012a774b422e",
+   "slug": "cycle-mm3-r-two-color",
+   "cards": 10
+  },
+  {
+   "id": "4c8c27c9-f891-4706-8749-cd44316fd9ba",
+   "slug": "cycle-mmq-r-spellshaper",
+   "cards": 5
+  },
+  {
+   "id": "6abd6cbb-8a66-4787-ae35-8df1f5d1a6a4",
+   "slug": "cycle-mmq-u-spellshaper",
+   "cards": 5
+  },
+  {
+   "id": "e8d99707-aded-4e9d-90e0-4b40860de5d9",
+   "slug": "cycle-monocolor-gatewatch-oath",
+   "cards": 5
+  },
+  {
+   "id": "f85a3b9e-30a3-4096-8a7f-d3626c3d5251",
+   "slug": "cycle-mor-banneret",
+   "cards": 5
+  },
+  {
+   "id": "0fc6f062-3428-4d5e-98b1-ca6b55dfb1c2",
+   "slug": "cycle-mor-typal-equipment",
+   "cards": 5
+  },
+  {
+   "id": "1a06d681-adc5-4086-9b59-ea2c366483d7",
+   "slug": "cycle-mrd-golem",
+   "cards": 5
+  },
+  {
+   "id": "266b23b5-aab8-400a-990f-45bcb58f81d8",
+   "slug": "cycle-mrd-replica",
+   "cards": 5
+  },
+  {
+   "id": "9c5fcc9d-9a98-46ff-b02a-a106932eb044",
+   "slug": "cycle-msc-origin",
+   "cards": 5
+  },
+  {
+   "id": "02bdcfc0-fc48-4246-b6cf-d7a08239f521",
+   "slug": "cycle-msh-hybrid",
+   "cards": 10
+  },
+  {
+   "id": "1c14bd1d-50d5-461e-bfef-d1b7d1baf5a1",
+   "slug": "cycle-msh-lair-dual",
+   "cards": 5
+  },
+  {
+   "id": "73065207-18f5-4c90-b97f-6a3a9c8eb84c",
+   "slug": "cycle-msh-landcycler",
+   "cards": 5
+  },
+  {
+   "id": "07c8984b-25ff-4a31-b670-69c7079f7677",
+   "slug": "cycle-napland",
+   "cards": 5
+  },
+  {
+   "id": "1a31991f-2073-4c09-addc-7ee5a4634207",
+   "slug": "cycle-ncc-confluence",
+   "cards": 5
+  },
+  {
+   "id": "754d511e-43d3-46db-9bb2-ccadd71b2a3c",
+   "slug": "cycle-ncc-tri-legend-reprint",
+   "cards": 5
+  },
+  {
+   "id": "fb9a59c7-1513-4b35-810f-6441938a9489",
+   "slug": "cycle-nem-fading-creature",
+   "cards": 5
+  },
+  {
+   "id": "7024e91f-0595-4a80-8059-529a92a52dfb",
+   "slug": "cycle-ody-burst",
+   "cards": 5
+  },
+  {
+   "id": "0686b5c8-7ee5-47aa-a65a-dd8f9d75b678",
+   "slug": "cycle-ody-threshold-painland",
+   "cards": 5
+  },
+  {
+   "id": "2fd8eb7b-c33f-4b87-8ae7-817f5c1e13c3",
+   "slug": "cycle-one-skullbomb",
+   "cards": 5
+  },
+  {
+   "id": "425adc59-ba73-4aaf-8253-b4c83a78e985",
+   "slug": "cycle-one-sun-twilight",
+   "cards": 5
+  },
+  {
+   "id": "0d9c0a07-d8c4-4390-b521-5e6cb36738aa",
+   "slug": "cycle-ori-draft-signpost",
+   "cards": 10
+  },
+  {
+   "id": "104d9e65-90e3-4407-82ac-b8ff7f6a4a72",
+   "slug": "cycle-ori-u-spell-mastery",
+   "cards": 5
+  },
+  {
+   "id": "dd733564-83e1-42bd-8894-c7b50799771a",
+   "slug": "cycle-otj-pingland",
+   "cards": 10
+  },
+  {
+   "id": "317c5034-2e29-446a-9f22-386ef93ac20c",
+   "slug": "cycle-pcy-ability-losing-creature",
+   "cards": 5
+  },
+  {
+   "id": "a7c2945f-6cb8-456f-8cee-7d7074d108b8",
+   "slug": "cycle-pcy-pitchspell",
+   "cards": 5
+  },
+  {
+   "id": "a8c72454-a0e5-44f2-9d27-b8db31fab074",
+   "slug": "cycle-pip-enemy-filterland",
+   "cards": 5
+  },
+  {
+   "id": "f884a64b-a8b6-4907-8909-dc6c06a7758e",
+   "slug": "cycle-plc-c-sliver",
+   "cards": 5
+  },
+  {
+   "id": "f02c6747-5bea-49b2-8164-0e93b70a6ecf",
+   "slug": "cycle-pls-familiar",
+   "cards": 5
+  },
+  {
+   "id": "bd2e200a-1d63-48d1-82f9-db9e21185a44",
+   "slug": "cycle-pls-r-two-color",
+   "cards": 9
+  },
+  {
+   "id": "1cf017f3-d05f-4525-befe-5e6cfc5ef9e1",
+   "slug": "cycle-pls-u-gating-creature",
+   "cards": 5
+  },
+  {
+   "id": "07b65271-9c50-4e84-9a99-1b56aedd36d1",
+   "slug": "cycle-rav-forward-boost",
+   "cards": 10
+  },
+  {
+   "id": "e72f8124-8f1e-4424-9906-1ca3035a0b19",
+   "slug": "cycle-rav-guildhall",
+   "cards": 10
+  },
+  {
+   "id": "e9704fb2-9e00-443e-9f49-cfae26a5cdc3",
+   "slug": "cycle-reveal-land",
+   "cards": 10
+  },
+  {
+   "id": "bf3bdec6-0613-4b51-915d-b64591a6845b",
+   "slug": "cycle-rix-draft-signpost",
+   "cards": 10
+  },
+  {
+   "id": "68bddcf8-930b-47d7-a59b-4eec61629791",
+   "slug": "cycle-rix-legendary-transform",
+   "cards": 5
+  },
+  {
+   "id": "9674bc3b-030a-48f6-8ef8-eeaa0a08ae89",
+   "slug": "cycle-rna-hybrid-creature",
+   "cards": 5
+  },
+  {
+   "id": "c5e7ac75-a330-46e8-8854-a161a58572a0",
+   "slug": "cycle-rna-r-split",
+   "cards": 5
+  },
+  {
+   "id": "407d764b-a6e6-4c0a-89b1-3b404739806b",
+   "slug": "cycle-rna-u-split",
+   "cards": 5
+  },
+  {
+   "id": "d8427506-2602-4b86-859c-b120ee0eda57",
+   "slug": "cycle-rtr-uncounterable-spell",
+   "cards": 5
+  },
+  {
+   "id": "75aaa920-c03e-4d66-839a-a4f13f235a9d",
+   "slug": "cycle-rvr-r-two-color-legend",
+   "cards": 10
+  },
+  {
+   "id": "a2a43075-8ccd-4ffe-92db-9a14045078e1",
+   "slug": "cycle-scg-dragon-aura",
+   "cards": 5
+  },
+  {
+   "id": "cc22f839-ba02-44d1-8b28-ecc66c446786",
+   "slug": "cycle-shm-monocolored-conspire",
+   "cards": 5
+  },
+  {
+   "id": "9dad2ca0-c92c-4c27-8bc3-28e3d421cfe4",
+   "slug": "cycle-shm-twobrid-spell",
+   "cards": 5
+  },
+  {
+   "id": "949d239e-6026-40b2-90cd-135a187b7889",
+   "slug": "cycle-shrine",
+   "cards": 22
+  },
+  {
+   "id": "148884d0-c881-49cc-b454-891fd9efaca7",
+   "slug": "cycle-snc-r-tricolor",
+   "cards": 5
+  },
+  {
+   "id": "ca6fc591-dbed-4bd5-9226-085b44d96849",
+   "slug": "cycle-snc-triland",
+   "cards": 5
+  },
+  {
+   "id": "935cf931-9cc3-4e4b-b779-84268dd12ea8",
+   "slug": "cycle-snc-u-signpost-creature",
+   "cards": 5
+  },
+  {
+   "id": "8a116b75-faa5-48b7-b12a-1b6208f11bd7",
+   "slug": "cycle-soi-r-two-color",
+   "cards": 5
+  },
+  {
+   "id": "e9bbecc7-a798-4663-96a6-29742021751e",
+   "slug": "cycle-soi-typal-lord",
+   "cards": 5
+  },
+  {
+   "id": "a81317ed-4f2d-4f3f-aaf4-add2e2cd3297",
+   "slug": "cycle-sok-legendary-kirin",
+   "cards": 5
+  },
+  {
+   "id": "96300ca5-d14a-435b-9147-a379c597e937",
+   "slug": "cycle-som-fastland",
+   "cards": 5
+  },
+  {
+   "id": "76c4f74a-330d-48d7-87eb-91eea69a2f00",
+   "slug": "cycle-sos-surveil-dual",
+   "cards": 5
+  },
+  {
+   "id": "163452f6-8d9e-4bfe-8ec1-30f5613486ed",
+   "slug": "cycle-spm-saga",
+   "cards": 5
+  },
+  {
+   "id": "3245e9c0-80da-47c7-8539-62b289cde959",
+   "slug": "cycle-stx-campus",
+   "cards": 5
+  },
+  {
+   "id": "57fa117d-0b5f-4ab1-8d27-1689e45b3359",
+   "slug": "cycle-stx-draft-signpost",
+   "cards": 15
+  },
+  {
+   "id": "f5858e94-df80-47d9-9c0f-c42040a8fc18",
+   "slug": "cycle-stx-dragon-founder",
+   "cards": 5
+  },
+  {
+   "id": "aabb96eb-4b29-4b04-85bc-a730e4292e74",
+   "slug": "cycle-stx-u-lesson",
+   "cards": 5
+  },
+  {
+   "id": "84f32dcb-f367-41d4-ac1d-e50d08067322",
+   "slug": "cycle-tdm-c-behold",
+   "cards": 5
+  },
+  {
+   "id": "54da8d43-519a-4277-8e58-dc76e562bce0",
+   "slug": "cycle-tdm-c-twobrid",
+   "cards": 5
+  },
+  {
+   "id": "6f110982-1b2a-4eb9-9810-c793e4df6dda",
+   "slug": "cycle-tdm-draft-signpost",
+   "cards": 10
+  },
+  {
+   "id": "47172f1d-debc-4569-a6f2-5256186c7ebf",
+   "slug": "cycle-tdm-saga",
+   "cards": 5
+  },
+  {
+   "id": "c8983db2-bf4f-49d8-947f-2b5d8ebb819e",
+   "slug": "cycle-tdm-u-wedge-nondragon",
+   "cards": 5
+  },
+  {
+   "id": "3e56567e-ea2b-40b2-8e64-10c5314cee84",
+   "slug": "cycle-thb-nymph",
+   "cards": 5
+  },
+  {
+   "id": "f300a600-a3e9-46f8-9c8f-c0fea8fe9451",
+   "slug": "cycle-ths-c-allied-ability",
+   "cards": 5
+  },
+  {
+   "id": "a14bc1dc-8178-4230-ad28-d519b8b62cce",
+   "slug": "cycle-tla-u-hybrid",
+   "cards": 10
+  },
+  {
+   "id": "70b6a0e7-db1b-40f1-a682-a6bac163cd31",
+   "slug": "cycle-tla-u-two-color",
+   "cards": 10
+  },
+  {
+   "id": "76ecb989-696c-4ad7-b935-a455c3b0f959",
+   "slug": "cycle-tla-utility-land",
+   "cards": 5
+  },
+  {
+   "id": "7becea33-4f2d-40c0-ade5-9cca097c3977",
+   "slug": "cycle-tle-bending-master",
+   "cards": 5
+  },
+  {
+   "id": "04c41749-294c-4e18-af2c-d4f94f2126a1",
+   "slug": "cycle-tmp-enemy-forward-hate",
+   "cards": 5
+  },
+  {
+   "id": "fd45a3c0-6981-49e2-8299-193a9846402e",
+   "slug": "cycle-tmt-class",
+   "cards": 5
+  },
+  {
+   "id": "3a5e6966-81b3-4e76-a965-003e0d9bc0f8",
+   "slug": "cycle-tmt-draft-signpost",
+   "cards": 10
+  },
+  {
+   "id": "b587289a-8cb8-4d42-b165-b7f25f3b5dcf",
+   "slug": "cycle-tmt-gainland",
+   "cards": 5
+  },
+  {
+   "id": "bfca13d5-02e4-4ac0-9803-ae36c8be3afb",
+   "slug": "cycle-tsp-m-suspend-creature",
+   "cards": 5
+  },
+  {
+   "id": "848a61af-7a85-4c59-8fc4-e08d5e7ce887",
+   "slug": "cycle-tsp-u-sliver",
+   "cards": 5
+  },
+  {
+   "id": "15b83f6d-167d-42aa-abd2-edaca8ce0a8d",
+   "slug": "cycle-uds-seer",
+   "cards": 5
+  },
+  {
+   "id": "539c1ff4-e8f5-4f10-8f76-cc6c3b77675e",
+   "slug": "cycle-ulg-sleeping-enchantment",
+   "cards": 5
+  },
+  {
+   "id": "9979b52d-ad67-41dd-9aee-55f5b9fb9f4c",
+   "slug": "cycle-usg-enemy-hate",
+   "cards": 10
+  },
+  {
+   "id": "bfd07986-0b1c-4f6b-977f-7e49459525da",
+   "slug": "cycle-usg-r-growing-enchant",
+   "cards": 5
+  },
+  {
+   "id": "c6f0cba1-7e86-4de8-811c-886526e05a9d",
+   "slug": "cycle-vma-r-two-color",
+   "cards": 9
+  },
+  {
+   "id": "6d817834-73f6-4e8b-8d92-855f325493d2",
+   "slug": "cycle-vow-cemetery",
+   "cards": 5
+  },
+  {
+   "id": "77723b43-2c54-4ed9-afbe-9a4a664db544",
+   "slug": "cycle-vow-draft-signpost",
+   "cards": 10
+  },
+  {
+   "id": "d8b86152-07da-481e-bf88-e26e900aceee",
+   "slug": "cycle-vow-m-tdfc",
+   "cards": 5
+  },
+  {
+   "id": "650f317d-6a98-4111-a2a1-b9bdf810a6f9",
+   "slug": "cycle-w17-r-creature",
+   "cards": 5
+  },
+  {
+   "id": "3e789046-c575-4d75-afa7-0845bada5ca5",
+   "slug": "cycle-war-god",
+   "cards": 5
+  },
+  {
+   "id": "92e67087-32ad-420a-9811-94d54299a82d",
+   "slug": "cycle-woe-r-two-color",
+   "cards": 5
+  },
+  {
+   "id": "b5aeb296-d3fa-4e22-9118-8ce7b2f9c18d",
+   "slug": "cycle-woe-u-2c-adventurer",
+   "cards": 10
+  },
+  {
+   "id": "1b4de95c-8024-40fa-87df-0baea063fb84",
+   "slug": "cycle-zen-u-ally",
+   "cards": 5
+  },
+  {
+   "id": "554f8e3d-c709-4c1a-a17e-a8d3b603302b",
+   "slug": "cycle-zendikar-creatureland",
+   "cards": 10
+  },
+  {
+   "id": "0056d01d-bf31-4f8e-9808-5ee1df4e2553",
+   "slug": "cycle-znr-m-mono-creature",
+   "cards": 5
+  },
+  {
+   "id": "36f69cea-4d3a-4400-9784-f2a197b7cb66",
+   "slug": "damage-prevention",
+   "cards": 522
+  },
+  {
+   "id": "f4c6cd52-3b8f-4565-b389-4c6db8a91a22",
+   "slug": "damage-prevention-you",
+   "cards": 137
+  },
+  {
+   "id": "f5053da2-1293-4041-a6c6-444a24a38688",
+   "slug": "day-zero-errata",
+   "cards": 34
+  },
+  {
+   "id": "34e5d619-c04f-439f-a6da-a72cceeb87c7",
+   "slug": "deanimate",
+   "cards": 17
+  },
+  {
+   "id": "3bcd7cdd-61ca-42dd-adc5-1a695eaec2d2",
+   "slug": "death-trigger",
+   "cards": 1503
+  },
+  {
+   "id": "63353a72-d5ba-429d-a70d-ba706a0d74b8",
+   "slug": "death-trigger-self",
+   "cards": 838
+  },
+  {
+   "id": "31763d10-3a04-4e3e-ac46-8373641756cc",
+   "slug": "delve",
+   "cards": 28
+  },
+  {
+   "id": "73899b0d-78eb-4fd4-9ecd-fbe8f9d23bf6",
+   "slug": "deprecated-legend-type",
+   "cards": 131
+  },
+  {
+   "id": "3956e366-f9d6-43bb-beb1-7403e9b4e3ad",
+   "slug": "deprecated-p-t-counter",
+   "cards": 18
+  },
+  {
+   "id": "fbc5aac3-d226-458b-953d-4e724f3b83e4",
+   "slug": "discard-to-library",
+   "cards": 15
+  },
+  {
+   "id": "97e00241-272e-4a67-97e8-193e4ff69b82",
+   "slug": "dual-land",
+   "cards": 416
+  },
+  {
+   "id": "dff7cd67-1f16-44c5-a01a-75fd27c00f68",
+   "slug": "earthbend",
+   "cards": 36
+  },
+  {
+   "id": "2af89059-ea60-4655-8555-c8cad4b8a6f5",
+   "slug": "emblem-lite",
+   "cards": 10
+  },
+  {
+   "id": "e39cc9cf-9388-43ac-bbe6-c4e64faf3e2b",
+   "slug": "empty-library",
+   "cards": 8
+  },
+  {
+   "id": "729b31fd-d563-4985-b40b-f1b0941d9156",
+   "slug": "enchantment-engine",
+   "cards": 20
+  },
+  {
+   "id": "eeee4e98-b0c7-40ed-8d6d-5ebb2958ac15",
+   "slug": "energy-generator",
+   "cards": 135
+  },
+  {
+   "id": "7ca2733e-747f-4471-a8b5-530409d67dcd",
+   "slug": "energy-increaser",
+   "cards": 6
+  },
+  {
+   "id": "24d4542d-ea49-4d59-92fa-fc4bdb91fc17",
+   "slug": "enlarge",
+   "cards": 294
+  },
+  {
+   "id": "bad44322-e38a-4ec9-9d19-dec53d46c76b",
+   "slug": "enters-and-leaves-trigger-self",
+   "cards": 13
+  },
+  {
+   "id": "bb7492ea-251b-45d3-b388-3adb5795ca55",
+   "slug": "exile-on-resolution",
+   "cards": 112
+  },
+  {
+   "id": "b0fb4bcb-d667-4799-9eee-7071c69bcd55",
+   "slug": "extra-combat-phase",
+   "cards": 44
+  },
+  {
+   "id": "8c849750-f171-4c5e-8391-daeb6e8c8679",
+   "slug": "fateseal",
+   "cards": 17
+  },
+  {
+   "id": "e4f2ccba-e715-40cb-8540-5a5d50a5a7bc",
+   "slug": "flicker",
+   "cards": 179
+  },
+  {
+   "id": "17ded9f8-ce62-4609-9fe1-54dfb4d0aa6c",
+   "slug": "flicker-self",
+   "cards": 34
+  },
+  {
+   "id": "f9579474-bf53-4029-a2ae-e3dfe2de1012",
+   "slug": "force-draw",
+   "cards": 312
+  },
+  {
+   "id": "462e6553-40b1-4ad1-8abb-a77440f327ef",
+   "slug": "formidable",
+   "cards": 21
+  },
+  {
+   "id": "01446f06-395c-4e66-87a5-7944b27e7e3d",
+   "slug": "freeze-permanent-any",
+   "cards": 5
+  },
+  {
+   "id": "dd058574-10e2-4358-bb76-01f6a0f55a94",
+   "slug": "french-vanilla-aura",
+   "cards": 101
+  },
+  {
+   "id": "7deb3a80-1a94-485b-b66d-ef400700a616",
+   "slug": "full-refund",
+   "cards": 87
+  },
+  {
+   "id": "0500f9c8-715e-45f4-88a2-1e7f5015c3f2",
+   "slug": "gains-hexproof",
+   "cards": 58
+  },
+  {
+   "id": "eb4a8d84-9daa-4aee-8491-2566673a5749",
+   "slug": "gains-pp-counters",
+   "cards": 1760
+  },
+  {
+   "id": "77c99b14-0709-4fb2-83e7-5c01a41b7865",
+   "slug": "gains-protection",
+   "cards": 37
+  },
+  {
+   "id": "77ab1453-46db-4bc4-a04a-e83b28ff5aa3",
+   "slug": "gifts-ungiven",
+   "cards": 13
+  },
+  {
+   "id": "6798d754-7d85-48fe-b35b-2123e710bb1c",
+   "slug": "gives-castable-from-graveyard",
+   "cards": 139
+  },
+  {
+   "id": "6df5fabf-6d9d-4254-b83f-37476536e111",
+   "slug": "gives-first-strike",
+   "cards": 262
+  },
+  {
+   "id": "55a82c0d-f10d-4faf-8d05-cf0071ab0417",
+   "slug": "gives-flash",
+   "cards": 55
+  },
+  {
+   "id": "c1d8f65d-ae23-43dc-a7f8-9704e5b38d61",
+   "slug": "gives-horsemanship",
+   "cards": 5
+  },
+  {
+   "id": "3e69bfdb-9f3b-4287-af68-bdd9f98add63",
+   "slug": "gives-intimidate",
+   "cards": 18
+  },
+  {
+   "id": "386ad21c-7672-4036-8022-b7bde5ed8d9b",
+   "slug": "gives-lifelink-noncreature",
+   "cards": 9
+  },
+  {
+   "id": "815112ea-5317-40c4-be48-2c202bc2244e",
+   "slug": "gives-melee",
+   "cards": 7
+  },
+  {
+   "id": "ef08c6b9-df6d-4a3c-913f-c647db945555",
+   "slug": "gives-mm-counters",
+   "cards": 209
+  },
+  {
+   "id": "3e1d8902-03a2-4b63-b565-5a7efde40e6b",
+   "slug": "gives-player-ability",
+   "cards": 39
+  },
+  {
+   "id": "1ec05de5-6e58-46f1-a041-40254f1fcf02",
+   "slug": "gives-plot",
+   "cards": 6
+  },
+  {
+   "id": "19ef4a8c-c3ed-4316-bc01-3967da0ef47f",
+   "slug": "gives-rampage",
+   "cards": 5
+  },
+  {
+   "id": "114264c5-d07a-4a60-bd36-59382e392da1",
+   "slug": "gives-reach",
+   "cards": 90
+  },
+  {
+   "id": "9e674705-b093-4beb-a83f-4e282797310f",
+   "slug": "gives-skulk",
+   "cards": 55
+  },
+  {
+   "id": "6a08380f-71ba-4b6e-9178-d3a761189800",
+   "slug": "gives-stalking",
+   "cards": 13
+  },
+  {
+   "id": "3b999eee-5978-4f08-890b-fc3b64edf841",
+   "slug": "gives-tap-ability",
+   "cards": 131
+  },
+  {
+   "id": "a2799aac-0769-4411-a881-78e2d6ef28ae",
+   "slug": "gives-unblockable",
+   "cards": 177
+  },
+  {
+   "id": "b140e9f5-4945-407f-b9c6-729a6817ce51",
+   "slug": "gives-uncounterable",
+   "cards": 32
+  },
+  {
+   "id": "ab036e99-6958-497b-9b83-5eb7249273e0",
+   "slug": "graveyard-fuel-sorcery",
+   "cards": 29
+  },
+  {
+   "id": "5b76080e-21d7-4500-99a2-380a633aa1ba",
+   "slug": "graveyard-order-matters",
+   "cards": 15
+  },
+  {
+   "id": "48f1d055-d516-4c44-bfd7-f288f7c8d27a",
+   "slug": "hate-artifact",
+   "cards": 181
+  },
+  {
+   "id": "0fa51bed-1abf-4b7b-9e98-cabd84e2cc2f",
+   "slug": "hate-artifact-creature",
+   "cards": 18
+  },
+  {
+   "id": "2e4abdae-3c16-4f57-bf2a-f6c7cd7ae213",
+   "slug": "hate-attacker",
+   "cards": 333
+  },
+  {
+   "id": "b30abe6b-f394-451c-ac14-8c205adc4212",
+   "slug": "hate-color-every",
+   "cards": 9
+  },
+  {
+   "id": "60a7db2f-69d9-4daa-b1d2-ff879df1aa8e",
+   "slug": "hate-etb",
+   "cards": 9
+  },
+  {
+   "id": "39289d37-8592-4b6a-a562-f1ffd0b04d9e",
+   "slug": "hate-flash",
+   "cards": 19
+  },
+  {
+   "id": "486b89e1-bd1c-4cbc-8aaf-5e9249478650",
+   "slug": "hate-graveyard",
+   "cards": 408
+  },
+  {
+   "id": "b0267a7a-558e-491a-8d11-d877e0ea6d90",
+   "slug": "hate-green",
+   "cards": 88
+  },
+  {
+   "id": "b97809de-a0a1-4056-8601-9bc3f246189a",
+   "slug": "hate-mountain",
+   "cards": 12
+  },
+  {
+   "id": "90bb3c0b-e08f-48a2-a5d7-8218724db7c9",
+   "slug": "hate-off-turn-cast",
+   "cards": 7
+  },
+  {
+   "id": "4f29f8d4-8c9b-4737-a1a5-6f1acc1622a6",
+   "slug": "hate-planeswalker",
+   "cards": 57
+  },
+  {
+   "id": "752c4285-300d-4d58-aa31-d38e2ea62a82",
+   "slug": "hate-red",
+   "cards": 116
+  },
+  {
+   "id": "5d0d0870-1228-4f62-b5ac-ff2ca2f624c9",
+   "slug": "hate-spacecraft",
+   "cards": 5
+  },
+  {
+   "id": "4ef2d665-b55c-4148-b907-c15e3e7faa89",
+   "slug": "hate-typal-dragon",
+   "cards": 8
+  },
+  {
+   "id": "11689c21-ef73-4546-a669-2dfd67f71c5a",
+   "slug": "hate-typal-goblin",
+   "cards": 12
+  },
+  {
+   "id": "0fa82fb9-485d-49eb-9403-503c179e0fac",
+   "slug": "hate-typal-non-wall",
+   "cards": 19
+  },
+  {
+   "id": "057c02c1-fd2e-44e4-aebd-8f96e0805827",
+   "slug": "hate-typal-wall",
+   "cards": 25
+  },
+  {
+   "id": "d44d0a5a-fe18-4c4d-be48-4ba25fe32656",
+   "slug": "hate-white",
+   "cards": 107
+  },
+  {
+   "id": "d8ab12ff-4810-4d46-af62-bba5b9144028",
+   "slug": "hunger",
+   "cards": 12
+  },
+  {
+   "id": "7581a0eb-3d1c-4b6a-8746-386887c8def2",
+   "slug": "hunger-trigger",
+   "cards": 24
+  },
+  {
+   "id": "d2c8a9fc-96cb-4fdb-9363-e2f94c54d8d5",
+   "slug": "imprint",
+   "cards": 95
+  },
+  {
+   "id": "c05235dd-282d-4799-95a8-44e8b0bd2d30",
+   "slug": "impulse",
+   "cards": 552
+  },
+  {
+   "id": "9bd0e7dd-ca29-4594-ac14-bf29ef2aac84",
+   "slug": "impulse-enchantment-aura",
+   "cards": 7
+  },
+  {
+   "id": "b5de6233-2ae3-417a-8437-2f1bceb7fcb5",
+   "slug": "impulse-enchantment-saga",
+   "cards": 6
+  },
+  {
+   "id": "94115d85-4d3a-4a71-9eca-b3be2a2e13b6",
+   "slug": "inverted-effects",
+   "cards": 495
+  },
+  {
+   "id": "1f008faa-1b5c-49cf-b062-d5bc137e08eb",
+   "slug": "jackal-pup-ability",
+   "cards": 9
+  },
+  {
+   "id": "13599a89-724e-41ca-9b01-7ce502c1e7ba",
+   "slug": "land-conversion",
+   "cards": 72
+  },
+  {
+   "id": "e1285a06-7486-4170-9d97-9d9484cf044b",
+   "slug": "last-chance",
+   "cards": 6
+  },
+  {
+   "id": "09a634e0-56b0-4344-935e-04f5134ad8cf",
+   "slug": "leyline",
+   "cards": 18
+  },
+  {
+   "id": "820a167d-f9f2-4db8-9f55-b1ab0fc6a07d",
+   "slug": "lhurgoyf",
+   "cards": 100
+  },
+  {
+   "id": "bbbc9602-7600-4996-86c9-be2f9a27d35b",
+   "slug": "life-divider",
+   "cards": 34
+  },
+  {
+   "id": "eba659ae-9e2c-442d-8af3-e3bc3daf2f79",
+   "slug": "lifelink-counter",
+   "cards": 25
+  },
+  {
+   "id": "c4cd5193-2983-4362-a6e8-fc4efa008ff6",
+   "slug": "lobotomy",
+   "cards": 35
+  },
+  {
+   "id": "1c2215a5-d782-4f1b-a223-2bbd26c1f532",
+   "slug": "loot",
+   "cards": 397
+  },
+  {
+   "id": "97ac67a7-576c-4edb-97f6-79d7979877fc",
+   "slug": "magecraft",
+   "cards": 30
+  },
+  {
+   "id": "3b5fe564-e6e3-47da-9194-bbafadc5a236",
+   "slug": "mana-increaser",
+   "cards": 51
+  },
+  {
+   "id": "5f1260dd-e1dc-435a-a9ff-ce7172b7a5cd",
+   "slug": "mana-producer",
+   "cards": 891
+  },
+  {
+   "id": "f0e01221-448d-4045-9635-ed7e5183bc32",
+   "slug": "marauder",
+   "cards": 15
+  },
+  {
+   "id": "e9a7af6d-c833-454d-a2fe-7ed2d670e3c4",
+   "slug": "mathy-name",
+   "cards": 19
+  },
+  {
+   "id": "2bd5f2fe-ee4c-4a3c-a10c-bd4aab447216",
+   "slug": "mechanical-foreshadow",
+   "cards": 10
+  },
+  {
+   "id": "0b23af67-d270-4e79-8173-09b9c51d88aa",
+   "slug": "mill-any",
+   "cards": 176
+  },
+  {
+   "id": "bcae5f6a-f68b-4217-8f6c-0b4d31abd045",
+   "slug": "mill-self",
+   "cards": 1017
+  },
+  {
+   "id": "9826a011-f71f-42a1-bfe8-557ed6a24b80",
+   "slug": "mini-refund",
+   "cards": 331
+  },
+  {
+   "id": "ebabc814-5d05-4371-806d-1caefa66cead",
+   "slug": "mm-counter-cost",
+   "cards": 39
+  },
+  {
+   "id": "1f681e54-b6ff-4d84-85f7-5955113eee5d",
+   "slug": "move-counters",
+   "cards": 62
+  },
+  {
+   "id": "f2ed5619-d4f0-4df7-80be-04ea4388ef9e",
+   "slug": "multi-copy",
+   "cards": 90
+  },
+  {
+   "id": "07808167-c4ef-4a2d-bfe9-fa38a5a9d17b",
+   "slug": "multiple-bodies",
+   "cards": 842
+  },
+  {
+   "id": "8c1df27b-4758-4759-b4d2-1651ef6a0c8e",
+   "slug": "name-matters",
+   "cards": 411
+  },
+  {
+   "id": "085d4c3d-2c46-4f86-b294-5780c4936748",
+   "slug": "nightveil-theft",
+   "cards": 99
+  },
+  {
+   "id": "8ece7b94-ed2e-436d-ae81-2981d3ae5eee",
+   "slug": "non-mana-ward",
+   "cards": 50
+  },
+  {
+   "id": "0e056792-4434-40a4-bed5-b55eac93d03a",
+   "slug": "old-damage-deathtouch",
+   "cards": 19
+  },
+  {
+   "id": "95900bb1-bb26-4a52-bc1a-94f4f894d200",
+   "slug": "old-lifelink",
+   "cards": 27
+  },
+  {
+   "id": "03bef700-a1e8-4ea5-b56f-6e2d100cfe9e",
+   "slug": "opponent-chooses",
+   "cards": 134
+  },
+  {
+   "id": "aaa2df6c-7de3-4378-9eed-60e3244d9730",
+   "slug": "opponent-land-count-matters",
+   "cards": 43
+  },
+  {
+   "id": "33aff104-fb99-4b0f-936a-5296bba57701",
+   "slug": "opponent-lifegain",
+   "cards": 54
+  },
+  {
+   "id": "5f7cc6f6-d0f8-412d-8ba1-1d0e9aaceaf8",
+   "slug": "pacifism",
+   "cards": 86
+  },
+  {
+   "id": "242db04a-0d10-453a-b736-cd6807d5baf8",
+   "slug": "parasitic-aura",
+   "cards": 52
+  },
+  {
+   "id": "909043a7-71c1-4226-821a-efe976e1f460",
+   "slug": "permanentfall",
+   "cards": 18
+  },
+  {
+   "id": "2ca496c7-58a3-42d2-8f9b-93a0c046d191",
+   "slug": "persist",
+   "cards": 26
+  },
+  {
+   "id": "1ca1f437-abe0-4464-8ca7-25f1f7a8a16d",
+   "slug": "phoenix-with-set-s-mechanic",
+   "cards": 14
+  },
+  {
+   "id": "d118a44c-20a8-4816-aca2-ee79dc90334d",
+   "slug": "planechase-mechanic",
+   "cards": 12
+  },
+  {
+   "id": "1f75f46a-034f-4a02-b3ec-5131a86d788d",
+   "slug": "prevent-activation",
+   "cards": 80
+  },
+  {
+   "id": "d2b11e95-5d59-40d7-9196-4535accc8218",
+   "slug": "prevent-sacrifice",
+   "cards": 14
+  },
+  {
+   "id": "6b3cfe43-44cb-472b-b50c-9fc43b98762c",
+   "slug": "prevent-trigger",
+   "cards": 7
+  },
+  {
+   "id": "7d4c079e-5fb5-487c-bb38-769d06ce1e2b",
+   "slug": "protects-creature",
+   "cards": 911
+  },
+  {
+   "id": "fce8ec5a-0879-4038-85e8-3e6486815897",
+   "slug": "provoke-lite",
+   "cards": 24
+  },
+  {
+   "id": "b2035df0-7654-41cb-8dee-0feb076b9d99",
+   "slug": "pseudo-cycling",
+   "cards": 10
+  },
+  {
+   "id": "45ae9f00-85ba-47ee-b07f-fa5f2e838124",
+   "slug": "pure-draw",
+   "cards": 3111
+  },
+  {
+   "id": "c6b4d855-398f-4671-b18d-2437e0792c1a",
+   "slug": "ramp-with-set-s-mechanic",
+   "cards": 68
+  },
+  {
+   "id": "b38407c6-be4b-499d-bd2a-76aab98e767a",
+   "slug": "reanimate-cast",
+   "cards": 134
+  },
+  {
+   "id": "5913fa4c-019f-4302-99ce-86bba148f2ea",
+   "slug": "reanimate-enchantment",
+   "cards": 33
+  },
+  {
+   "id": "8b905237-a56b-4088-9baa-7a2e931b242a",
+   "slug": "recurring-suspend",
+   "cards": 10
+  },
+  {
+   "id": "e6126b51-e098-4550-a004-b4d215c6a79f",
+   "slug": "recursion-permanent",
+   "cards": 112
+  },
+  {
+   "id": "04292839-74fb-47f0-8d60-a98e0551de70",
+   "slug": "regenerates-other",
+   "cards": 86
+  },
+  {
+   "id": "89389ebb-3df0-4b39-8fc1-c152497344d1",
+   "slug": "regrowth-any",
+   "cards": 43
+  },
+  {
+   "id": "b7d0fcbf-cbde-494b-b571-bb9261d5dac6",
+   "slug": "regrowth-enchantment",
+   "cards": 42
+  },
+  {
+   "id": "e8aefad7-dea9-4c48-80a2-8a4ef5996dea",
+   "slug": "removal-aura",
+   "cards": 568
+  },
+  {
+   "id": "4dbace62-9708-4c6e-975a-c09fae7bb7e7",
+   "slug": "removal-exile",
+   "cards": 553
+  },
+  {
+   "id": "f79b019e-fdf5-48e0-a3af-bc0e4c8d8c95",
+   "slug": "removal-spacecraft",
+   "cards": 550
+  },
+  {
+   "id": "1daf122d-49e8-46f5-921c-34af0589aeda",
+   "slug": "remove-counters-other",
+   "cards": 42
+  },
+  {
+   "id": "75eb0d23-19c1-4482-8845-9656d3f07037",
+   "slug": "removes-defender",
+   "cards": 13
+  },
+  {
+   "id": "1e46bd5a-41b1-4064-83c7-ac6998a41996",
+   "slug": "removes-mm-counters-self",
+   "cards": 23
+  },
+  {
+   "id": "77f8c103-b6fb-4f74-9048-51ca6f6ccfc0",
+   "slug": "repeatable-clues",
+   "cards": 78
+  },
+  {
+   "id": "b7cfc923-3a15-4168-876b-525ce37850c5",
+   "slug": "repeatable-proliferate",
+   "cards": 40
+  },
+  {
+   "id": "524845ed-ea82-4a60-8b54-8a38ab06a503",
+   "slug": "repeatable-pure-draw",
+   "cards": 1305
+  },
+  {
+   "id": "135a100d-60aa-4c07-8ffd-24fafd620c9c",
+   "slug": "repeated-effect",
+   "cards": 91
+  },
+  {
+   "id": "e34d5ca7-cb43-4eb1-b968-57112a5ca5bf",
+   "slug": "rescue-artifact",
+   "cards": 81
+  },
+  {
+   "id": "32165ee6-fc12-4e25-9515-abb8311400a1",
+   "slug": "restock-instant",
+   "cards": 10
+  },
+  {
+   "id": "bc974524-4a64-4826-85fc-1770e1b06baa",
+   "slug": "restock-self",
+   "cards": 54
+  },
+  {
+   "id": "f1033799-ecfd-412a-8f26-677fcfaea46f",
+   "slug": "restock-to-top",
+   "cards": 58
+  },
+  {
+   "id": "a4559287-116d-45d1-ae5d-b718e5dbaf7a",
+   "slug": "restores-old-rule",
+   "cards": 5
+  },
+  {
+   "id": "e5b6b06a-9d5b-404e-914b-c18c221c565c",
+   "slug": "rhystic",
+   "cards": 232
+  },
+  {
+   "id": "dd8b138e-0261-4f35-bac0-e2a931abd96f",
+   "slug": "rummage",
+   "cards": 271
+  },
+  {
+   "id": "5f6908e7-75ed-4d12-b32f-ee50b2f4617b",
+   "slug": "scales-with-damage-dealt",
+   "cards": 143
+  },
+  {
+   "id": "9c30f011-97e4-457e-ba5c-94238d346cdc",
+   "slug": "scry",
+   "cards": 449
+  },
+  {
+   "id": "2c4d2415-c2b9-45b8-9117-aa0fd26f6a9e",
+   "slug": "secretly-choose",
+   "cards": 19
+  },
+  {
+   "id": "ca94dc16-c08b-4ef1-b6e0-fdba56f8f093",
+   "slug": "show-and-tell",
+   "cards": 7
+  },
+  {
+   "id": "6c637845-6e19-4b56-a2dd-60e84b76ab90",
+   "slug": "single-minded-typal-hate",
+   "cards": 13
+  },
+  {
+   "id": "4d334e01-9cb2-403a-a665-2ebb74b9b8c6",
+   "slug": "skip-turn",
+   "cards": 10
+  },
+  {
+   "id": "1fe5ff6b-0c83-419c-afcf-0d7c4f458929",
+   "slug": "sneak-self",
+   "cards": 42
+  },
+  {
+   "id": "b8edb280-0f5d-47e2-855c-d03946f44d82",
+   "slug": "specific-power-matters",
+   "cards": 20
+  },
+  {
+   "id": "8a7328cb-d21a-436a-a311-f05dc09c2190",
+   "slug": "staple-with-set-s-mechanic",
+   "cards": 1548
+  },
+  {
+   "id": "f4706c44-17ad-4fd0-892a-a53ceb069808",
+   "slug": "stasis",
+   "cards": 29
+  },
+  {
+   "id": "5764309d-65a8-499b-9ffd-1074402950e4",
+   "slug": "state-trigger",
+   "cards": 46
+  },
+  {
+   "id": "d417c3ae-592a-4a13-9bad-9740188a1b4b",
+   "slug": "storage-land",
+   "cards": 19
+  },
+  {
+   "id": "d5fa9443-ff74-40fd-a055-ac308346ff43",
+   "slug": "stronger-in-singleton-formats",
+   "cards": 5
+  },
+  {
+   "id": "2a747f8b-ab1a-428c-99dc-3ec9547b9f32",
+   "slug": "sunburst",
+   "cards": 27
+  },
+  {
+   "id": "fae61399-d346-4d5b-b304-b2ef0ddf37a0",
+   "slug": "symmetrical",
+   "cards": 777
+  },
+  {
+   "id": "1c91b6cd-8952-48a1-bc1b-d527323adac2",
+   "slug": "synergy-blue",
+   "cards": 150
+  },
+  {
+   "id": "a019602c-7853-4f01-a0c6-18a2526b336e",
+   "slug": "synergy-clue",
+   "cards": 30
+  },
+  {
+   "id": "66bb00c9-7409-4571-ad92-d03f716a64db",
+   "slug": "synergy-color-share",
+   "cards": 151
+  },
+  {
+   "id": "b0a937d3-b81b-47f3-9dbe-4a95ee3615e2",
+   "slug": "synergy-commander",
+   "cards": 167
+  },
+  {
+   "id": "04ecf518-f422-4129-a697-199308bb2c78",
+   "slug": "synergy-flying",
+   "cards": 98
+  },
+  {
+   "id": "31418f64-3db6-4739-83a2-1820f39feb94",
+   "slug": "synergy-forest",
+   "cards": 113
+  },
+  {
+   "id": "a400170f-0a3f-4187-8507-2224cc3d68c3",
+   "slug": "synergy-incubator",
+   "cards": 7
+  },
+  {
+   "id": "c02be281-626d-45f9-98c0-fc010ae158f9",
+   "slug": "synergy-initiative",
+   "cards": 9
+  },
+  {
+   "id": "9d898c8a-97d2-4b83-a5bf-62dfec2feacf",
+   "slug": "synergy-lesson",
+   "cards": 29
+  },
+  {
+   "id": "084f2ef0-0b47-4260-8dc2-f29625ebadec",
+   "slug": "synergy-multicolor-pair",
+   "cards": 6
+  },
+  {
+   "id": "c277a428-0d56-45b4-bc6f-d70d58927a93",
+   "slug": "synergy-no-flying",
+   "cards": 15
+  },
+  {
+   "id": "9729e007-5786-4f0f-90ba-f50df3da410c",
+   "slug": "synergy-poison",
+   "cards": 35
+  },
+  {
+   "id": "c7f36c83-e658-4be2-b0ef-08ac4b55fb0e",
+   "slug": "synergy-saga",
+   "cards": 81
+  },
+  {
+   "id": "7d99c7c9-23db-4202-af92-f7defb1fb5f6",
+   "slug": "synergy-suspect",
+   "cards": 8
+  },
+  {
+   "id": "43f0abc3-51ce-468b-8c29-b4deba9f24bc",
+   "slug": "synergy-trample",
+   "cards": 27
+  },
+  {
+   "id": "2c1b031c-4759-4529-92fd-9ab6e8a5be2c",
+   "slug": "tap-fuel-creature",
+   "cards": 694
+  },
+  {
+   "id": "73a27d8b-e267-47dc-887c-8f9a2a2f3e1e",
+   "slug": "tapper-land",
+   "cards": 96
+  },
+  {
+   "id": "ae36a8d1-0870-4d45-bafa-3d9dfdf2f047",
+   "slug": "tapper-permanent",
+   "cards": 48
+  },
+  {
+   "id": "6db55341-db41-4fba-ae91-516fcac4087c",
+   "slug": "tapper-planeswalker",
+   "cards": 5
+  },
+  {
+   "id": "10a3c00a-3163-440c-8dfb-785bae73ad1f",
+   "slug": "tax-block",
+   "cards": 7
+  },
+  {
+   "id": "2694a616-7361-41cf-8ec9-bc0e7236c664",
+   "slug": "temporary-reanimation",
+   "cards": 91
+  },
+  {
+   "id": "d1bd9028-e5d5-42e2-9409-7e59dec6d739",
+   "slug": "theft-creature",
+   "cards": 205
+  },
+  {
+   "id": "40e0c55d-dba6-4b8c-80eb-b86065b16884",
+   "slug": "theft-mass",
+   "cards": 48
+  },
+  {
+   "id": "0905c1e7-eecf-42e3-b5ac-344a5a481faa",
+   "slug": "third-draw-matters",
+   "cards": 8
+  },
+  {
+   "id": "f44d142d-4301-4ecb-95b4-7a4d9b5099a6",
+   "slug": "token-increaser",
+   "cards": 32
+  },
+  {
+   "id": "b4ad8849-14ec-48a9-9e69-085c85a32776",
+   "slug": "toll",
+   "cards": 198
+  },
+  {
+   "id": "86a7481b-5686-4ec0-b8c4-023c73bb8dc4",
+   "slug": "toughness-matters",
+   "cards": 186
+  },
+  {
+   "id": "779417f5-7220-4bae-a46b-3eb9e21940ac",
+   "slug": "tuck",
+   "cards": 205
+  },
+  {
+   "id": "ca539ec8-083a-4b46-ac88-73343fb337d4",
+   "slug": "tutor-land-basic-plains",
+   "cards": 33
+  },
+  {
+   "id": "92e2b83e-cae0-4cdc-ad0e-9170d53a1a04",
+   "slug": "tutor-land-mountain",
+   "cards": 32
+  },
+  {
+   "id": "a827b76e-e8fa-4bd5-b81e-b3b853e35197",
+   "slug": "tutor-legendary",
+   "cards": 6
+  },
+  {
+   "id": "eac6df14-7164-4693-a4a6-1a0d292167fa",
+   "slug": "tutor-nonland",
+   "cards": 6
+  },
+  {
+   "id": "f5148059-a7ca-4ffd-9936-b6094af9308c",
+   "slug": "tutor-to-battlefield",
+   "cards": 471
+  },
+  {
+   "id": "a27921ca-77c9-4997-b5b7-aa93ea40e4cd",
+   "slug": "typal-bird",
+   "cards": 35
+  },
+  {
+   "id": "34c1fdfc-ebcb-4c89-8ed9-ad44bc551454",
+   "slug": "typal-cat",
+   "cards": 22
+  },
+  {
+   "id": "bd72fb06-f130-4f9b-90e2-27bd54a1fa6d",
+   "slug": "typal-coupling-distinct",
+   "cards": 20
+  },
+  {
+   "id": "db0b31d8-a6bc-4521-96ab-0a8f345eb0b8",
+   "slug": "typal-demon",
+   "cards": 29
+  },
+  {
+   "id": "6a09c5c5-2817-4f39-9833-5a0e2e1345ec",
+   "slug": "typal-elemental",
+   "cards": 45
+  },
+  {
+   "id": "2d509f4e-e37c-47c0-aa22-7d3a1923b8a7",
+   "slug": "typal-elf",
+   "cards": 122
+  },
+  {
+   "id": "e67bad6a-eb62-4d19-acaf-1fc3677f94d2",
+   "slug": "typal-giant",
+   "cards": 31
+  },
+  {
+   "id": "4b776323-90f8-4290-8a4f-dfa5c6592e42",
+   "slug": "typal-mouse",
+   "cards": 10
+  },
+  {
+   "id": "d7457994-3c5d-4fd3-bcba-9f725d62ca3d",
+   "slug": "typal-neo-solo-attack",
+   "cards": 10
+  },
+  {
+   "id": "da64a621-3067-4a8f-a59e-139f85434e18",
+   "slug": "typal-nightmare",
+   "cards": 5
+  },
+  {
+   "id": "f76a5a12-71aa-4067-ba7c-b51dc23159f5",
+   "slug": "typal-octopus",
+   "cards": 11
+  },
+  {
+   "id": "98df8f26-1208-4940-9512-07f6db2b8e1c",
+   "slug": "typal-ooze",
+   "cards": 7
+  },
+  {
+   "id": "833af3e5-8621-4683-89d6-64ed1281ceb3",
+   "slug": "typal-phyrexian",
+   "cards": 18
+  },
+  {
+   "id": "c9adae21-de02-4efe-a4bb-a6893212e51f",
+   "slug": "typal-rabbit",
+   "cards": 9
+  },
+  {
+   "id": "4bf98b96-59d1-44a8-b80b-80016ee9b22d",
+   "slug": "typal-werewolf",
+   "cards": 29
+  },
+  {
+   "id": "e805b38d-1e59-498d-9e68-6d06e48c973b",
+   "slug": "type-errata-egg",
+   "cards": 5
+  },
+  {
+   "id": "4dcfb5c5-1fa7-4fd6-b81e-ba85af5269e5",
+   "slug": "type-errata-genericise",
+   "cards": 185
+  },
+  {
+   "id": "939b3164-41eb-462f-9789-73678698846e",
+   "slug": "type-errata-specific-fish",
+   "cards": 5
+  },
+  {
+   "id": "30f16020-bf85-4def-94e3-9459e9e77c27",
+   "slug": "unblocked-trigger",
+   "cards": 36
+  },
+  {
+   "id": "eac22bf8-c36b-4177-809f-79ce34dd8a08",
+   "slug": "unheroic",
+   "cards": 55
+  },
+  {
+   "id": "6f8e67dc-676e-4f33-a1b9-e5b2ee155027",
+   "slug": "unique-creature-type",
+   "cards": 19
+  },
+  {
+   "id": "8ca9289f-34cf-4b96-966a-eb7cb95e9293",
+   "slug": "unique-evasion",
+   "cards": 37
+  },
+  {
+   "id": "cf872a5c-d7bb-432b-acec-6ecd04589989",
+   "slug": "unprinted-token",
+   "cards": 72
+  },
+  {
+   "id": "e2ff8b66-4eb5-4c7a-a54f-0e9af53286cc",
+   "slug": "untapped-matters-self",
+   "cards": 28
+  },
+  {
+   "id": "0eefdf84-6f37-4166-86db-d4670e5b899f",
+   "slug": "untapper-artifact",
+   "cards": 110
+  },
+  {
+   "id": "57a29af7-2ed3-4be8-9786-8087cdead435",
+   "slug": "untapper-nonland",
+   "cards": 75
+  },
+  {
+   "id": "edc6bdfc-9e57-432a-aacb-c096998206e1",
+   "slug": "untracked-indefinite-effect",
+   "cards": 404
+  },
+  {
+   "id": "4f7c07de-5bef-4dff-a9f8-64e9afa5add6",
+   "slug": "virtual-french-vanilla",
+   "cards": 1189
+  },
+  {
+   "id": "b183e98e-2ca9-4fba-9669-17e263938c45",
+   "slug": "wannabe-dark-confidant",
+   "cards": 13
+  },
+  {
+   "id": "e8c4f423-7fdd-4929-8da6-8750d4afbf7c",
+   "slug": "white-effect",
+   "cards": 61
+  }
+ ],
+ "train_pairs": 207062,
+ "holdout_pairs": 33862,
+ "train_pairs_by_anchor_kind": {
+  "alias": 34926,
+  "label": 107642,
+  "description": 64494
+ },
+ "train_cards": 29355
+}

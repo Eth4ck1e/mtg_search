@@ -1,6 +1,6 @@
 # 2026-09-18 — Fine-tuning pivot: oracle tags landed, source review, training recipe
 
-**Status:** decision + data + literature. Tag pipeline built and run. Training code not started.
+**Status:** decision + data + literature + control measurements. Tag pipeline built and run; `src/search.py` landed and the four base-embedder grid rows are logged (`experiment_runs` 11–14, §5a); training pairs built (§7 item 3). Trainer script not started.
 **Follows:** `2026-09-18-hyde-prompt-v1-design-notes.md` (the 10-query test series and the 8B-vs-27B comparison that motivated this).
 **Supersedes:** the "scrape Scryfall tags slowly under rate limits" plan discussed during the test series. No scrape is needed.
 
@@ -151,6 +151,36 @@ Fine-tuning before the cascade has run on the eval set leaves no before-number. 
 
 Fix: draft `src/search.py` (Stage 2+3 orchestration), run the eval set once with the base embedder, log the row. That row is the control every fine-tuning claim rests on, and the same module runs every cell of the §4 grid. It is a day of work and nothing in §4a waits on it — the training-pair builder can be written in parallel.
 
+## 5a. Stage 2+3 orchestration landed (`src/search.py`) — first dry-run numbers
+
+Built the same day, after Mitchell confirmed the ordering. `src/search.py` compiles rewriter filters to a parameterised WHERE clause, embeds the query-side text with the Nomic query prefix, and runs pgvector cosine search inside the filtered set, deduped by `oracle_id`. `scripts/evaluate.py` now runs every config through it and logs Stage 1 output, the WHERE clause, candidate count, and per-stage timings per query. Four configs cover the base-embedder cells of the §4 grid; the old `baseline.yaml` and `scripts/test_search.py` are gone.
+
+**Filter semantics encoded (each was a test-series decision):**
+- Colour ops: `contains_any` (default) admits colourless cards; `exactly` is the only op that excludes them. Identity mirrors the colour op.
+- `types` are ORed ("instants or sorceries"); `subtypes` are ANDed ("elf warriors"). The first smoke test ANDed types and matched zero cards — regression test added.
+- `keywords` filter is **off by default** (selective strictness, the Prowess/Trample over-narrowing). `FilterPolicy(keywords=True)` turns it on for the ablation.
+- Power/toughness compare only when the text column parses as an integer (`*`, `X` are skipped).
+- Every value is a bound parameter; only whitelisted operators reach SQL text. Out-of-contract values raise `FilterError`, which the searcher logs as a warning and drops the filters rather than returning zero silently.
+- The embedding column is pinned to `settings.embedding_version`, so a tuned checkpoint (new `EMBEDDING_MODEL`, re-embed) is searched in isolation from the base vectors.
+
+**Logged results, 26-query eval set (v1-draft), base Nomic v1.5, 8B rewriter, v1 prompt, keywords filter off.** Mitchell approved logging with the current policy; precision@10 was added to `src/eval/metrics.py` first because recall@10 is capped by relevant-set size (q_018 has 34 relevant cards, so a perfect top-10 scores 0.29).
+
+| `experiment_runs.id` | Config | P@10 | R@10 | MRR | p50 latency |
+|---|---|---|---|---|---|
+| 14 | `raw_dense` (no rewriter, no filter) | 0.031 | 0.017 | 0.067 | 83 ms |
+| 13 | `cascade_passthrough` (HyDE filters, raw query embedded) | 0.050 | 0.028 | 0.130 | 985 ms |
+| 12 | `cascade_hyde_v1_nosql` (–SQL ablation) | 0.085 | 0.036 | 0.269 | 967 ms |
+| 11 | `cascade_hyde_v1` — **control** | 0.112 | 0.050 | 0.294 | 978 ms |
+
+Each stage adds, monotonically. On the base embedder the hypothetical text contributes more than the filter (–0.062 vs –0.027 P@10 when removed) — expected before fine-tuning, since the untuned encoder depends on Stage 1 to translate jargon. Per-category table and reading are in the paper draft §5.3.
+
+**Note on ids:** the `experiment_runs` table was rebuilt on 2026-09-11, so `id=13` now refers to a real row (`cascade_passthrough`), not the fabricated May baseline. The paper cites rows by config name + date, never by bare id.
+
+**What the per-query trace shows:**
+- Six queries got no `hypothetical_card` and fell back to embedding the raw query (q_001 flying, q_005 haste, q_016 mana dorks, q_020 red creatures <3, q_021 1-mana instants, q_023 spell-triggered growth). Two of those (flying, haste) are *user-explicit* keywords that the off-by-default keywords policy then ignored → R@10 = 0. This is the selective-strictness case made concrete: a keyword the user typed should be strict. Cheapest rule to test: apply the keywords filter when the rewriter returned filters but no hypothetical text (it judged the query purely structural). **[decide]**
+- Two zero-candidate queries, both Stage 1 jargon failures, not search bugs: "mana dorks" → invented subtype `Dork` + P/T = 1/1; "red pingers" → `types: [Instant, Sorcery]` plus P/T filters (pingers are creatures). Exactly the jargon-gap family the pivot targets.
+- Stage 1 is ~1 s of the ~1.04 s p50; Stage 2+3 together are under 100 ms at this corpus size.
+
 ## 6. CLAUDE.md revisions
 
 §5 (do not fine-tune the embedder on keyword definitions), §6 (fine-tuning deferred to M6), and §11 (anti-suggestion) all encode the pre-pivot position. Revised today to: reminder-text augmentation stays the corpus-side lever; tag-derived contrastive fine-tuning is the query-side lever, motivated by the 2026-09-18 test evidence and gated on the base-embedder control run in §5 above. Hand-written definition dictionaries remain banned.
@@ -158,8 +188,8 @@ Fix: draft `src/search.py` (Stage 2+3 orchestration), run the eval set once with
 ## 7. Next actions
 
 1. ~~Confirm anchors and full-vs-LoRA~~ — both confirmed 2026-09-18 (§4, §4a). **[Mitchell]** ordering in §5 still open.
-2. `src/search.py` + base-embedder eval run (control row).
-3. `scripts/build_training_pairs.py` — tag label/alias + description + synthetic-query anchors, tag-aware batching, held-out tag split, written to `data/training/` with a version string.
+2. ~~`src/search.py` + base-embedder eval run (control row)~~ — done, rows 11–14 (§5a).
+3. ~~`scripts/build_training_pairs.py`~~ — done for tag label/alias/description anchors: 207,062 train pairs over 2,729 tags, 482 held-out tags (33,862 probe pairs), `data/training/pairs_v1.jsonl` + `manifest_v1.json`. Synthetic-query anchors are a separate script (needs the LLM server; hours). Note: the random stratified hold-out withheld `burn` — so q_004 ("burn spell that deals 3 damage") becomes a genuine generalisation test rather than in-distribution; keep the seed and disclose.
 4. `scripts/finetune_embedder.py` — Sentence Transformers trainer, writes `experiment_runs` rows for (a)–(c).
 5. Re-embed corpus with the tuned checkpoint under a new `embedding_version`; run (d) and (e).
 6. `prompts/hyde_v2.yaml` — concepts field, optional `hypothetical_card`, few-shot rebuilt around filters + tag normalisation. Count rules/examples vs v1 for the paper.

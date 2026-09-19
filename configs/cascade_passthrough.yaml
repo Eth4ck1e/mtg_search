@@ -1,0 +1,29 @@
+# Pass-through cascade — the post-pivot pipeline shape.
+#
+# Stage 1: HyDE supplies FILTERS ONLY; the user's own words are embedded.
+# Stage 2: SQL pre-filter as in the control.
+# Stage 3: search inside the filtered set.
+#
+# With the BASE embedder this row shows how much the hypothetical text was
+# doing (compare to cascade_hyde_v1). With the TUNED embedder it is the main
+# result of the fine-tuning hypothesis: the embedder understands the jargon
+# directly, so the rewriter no longer needs to translate it.
+
+name: "cascade_passthrough"
+
+description: >
+  HyDE v1 prompt (8B) for filters only → SQL pre-filter (keywords off) →
+  Nomic Embed search on the raw user query inside the candidate set.
+
+eval_set: "data/eval/queries_v1_draft.yaml"
+
+retrieval:
+  type: cascade
+  stage1: passthrough
+  sql: true
+  keywords_filter: false
+  k: 10
+
+notes: >
+  Grid cell (raw query pass-through). Run once per embedder checkpoint;
+  EMBEDDING_MODEL selects which (the embedding_version pin follows it).

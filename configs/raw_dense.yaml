@@ -1,0 +1,24 @@
+# Pure dense retrieval — no rewriter, no pre-filter.
+#
+# Raw query → Nomic Embed v1.5 → cosine search over the full corpus. Not a
+# paper baseline (the paper is anchored on the Scryfall comparator, not a
+# naive-baseline diff) but a useful floor and the cheapest run: needs no MLX
+# server. Replaces the abandoned Phase 3 "baseline" config (2026-09-11).
+
+name: "raw_dense"
+
+description: >
+  Raw user query embedded with Nomic Embed v1.5, cosine search across all
+  face rows, dedupe by oracle_id, top-K. No HyDE, no SQL pre-filter.
+
+eval_set: "data/eval/queries_v1_draft.yaml"
+
+retrieval:
+  type: cascade
+  stage1: raw
+  sql: false
+  k: 10
+
+notes: >
+  Grid cell (raw, no filters). Pure-structural queries (q_019–q_021) score
+  ~0 by design; that is the asymmetry problem, not a bug.

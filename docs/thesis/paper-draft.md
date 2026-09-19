@@ -30,6 +30,10 @@ Magic: The Gathering (MTG), the world's most popular and established trading car
 
 Attempts to bridge this gap with off-the-shelf dense retrieval fail for a specific reason: **the query-document asymmetry problem**. Short informal player queries embed too far in vector space from the formal, prose-heavy card text they should match. A query like *"cheap red removal"* does not lexically overlap with Lightning Bolt's actual text *"Lightning Bolt deals 3 damage to any target,"* and general-purpose sentence encoders have no domain knowledge to bridge that gap. Naive dense retrieval on this corpus fails on the majority of evaluation queries.
 
+*[YOUR PROSE — 2026-09-18, the accessibility framing]*
+
+Scryfall already offers an easy method for much of this: its community-maintained oracle tags (`otag:`) let a power user retrieve cards by function. Both approaches may end up performing the same on a results measure. However, the benefit of this system over Scryfall then becomes ease of use. The pre-filter stage removes the complexity of Scryfall power-user querying, and with plain language the user gets objectively the same results a structured-query power user can get, lowering the bar for novice users searching for cards. So even if it performs no better by a results measure, it is still a win from a user perspective. Parity with an expert-crafted Scryfall query is the accessibility claim proven, not a tie.
+
 ### 1.2 Contributions
 
 *[DRAFTED — REVIEW]*
@@ -38,7 +42,7 @@ This work makes four contributions:
 
 1. **Architectural.** A three-stage retrieval cascade combining HyDE-style query rewriting, structured SQL pre-filtering, and dense vector search inside the pre-filtered candidate set — designed to address query-document asymmetry without domain-specific fine-tuning as a starting point.
 2. **Methodological.** An evaluation methodology anchored on real-world outcome comparison against the domain-standard tool (Scryfall) with LLM-crafted expert queries, rather than diff against an internal baseline. Per-component contribution is quantified through a targeted ablation of the SQL pre-filter stage.
-3. **Empirical.** Documentation of specific failure modes observed with an off-the-shelf small (8B parameter) instruction-tuned LLM as the HyDE model, including jargon knowledge gaps, over-narrowing on keyword filters, and compositional attention drift. Comparison against a larger (27B parameter) model shows that most of these failures resolve with more parameters, informing the case for domain fine-tuning.
+3. **Empirical.** Documentation of specific failure modes observed with an off-the-shelf small (8B parameter) instruction-tuned LLM as the HyDE model, including jargon knowledge gaps, over-narrowing on keyword filters, and compositional attention drift. Comparison against a larger (27B parameter) model shows that most of these failures resolve with more parameters, informing the case for domain fine-tuning of the embedder on Scryfall oracle tags as distant supervision, and a measurement of whether that fine-tune simplifies the query-rewriting stage.
 4. **Design.** A framework for interactive user-refinable filters and a taxonomy of jargon-query shapes (structural, ability-text, compound) that maps to distinct HyDE output shapes.
 
 ### 1.3 Paper organization
@@ -79,7 +83,15 @@ The cascade architecture itself follows the multi-stage retrieval tradition esta
 
 The generalization argument in Section 1.1 draws directly on Amazon's semantic product search work (Nigam et al., 2020), which addresses the same query-document asymmetry problem in an e-commerce catalog. Their approach — combining structured product attributes with semantic retrieval — is architecturally similar to the cascade proposed here, providing a published precedent for the generalization claim.
 
-### 2.5 IR evaluation methodology
+### 2.5 Domain adaptation of dense retrievers
+
+*[DRAFTED — REVIEW, cite from docs/sources "Embedder fine-tuning" section]*
+
+In-domain fine-tuning of a bi-encoder follows a well-established recipe: contrastive training with in-batch negatives (Karpukhin et al., 2020; Nussbaum et al., 2024), one epoch at a small learning rate, with task prefixes preserved. Positives need not be human-labelled — distant supervision from document structure (Reimers and Gurevych, 2019, §4.4), click logs (Choi et al., 2020), or community taxonomies (Lan et al., 2026) costs roughly one point against gold labels (Karpukhin et al., 2020, Appendix A). When no labels exist, LLM-synthesised queries per document (the Promptagator / InPars lineage; Gwon et al., 2025) are competitive with human queries at equal count (Tamber et al., 2025).
+
+Two cautions from recent work shape the approach here. First, naive contrastive fine-tuning of a strong small encoder can score *below* the untouched base (Tamber et al., 2025; Pande et al., 2025), and out-of-domain ability can drop sharply without a regulariser or a forgetting probe (Murtaza et al., 2026). Second, mined hard negatives help in general (Moreira et al., 2024) but hurt on at least one jargon-heavy corpus (ChEmbed, 2025), because near-duplicate documents make many mined "negatives" actually relevant — CustomIR (Paull, 2025) measured 20–32% false negatives before verification. Finally, CoHyDE (Senthil et al., 2026) shows that query rewriting and an in-domain encoder are complementary: the rewriter helps on vague queries, the encoder on well-formed ones. This work's fine-tuning stage follows that evidence: full fine-tune, one epoch, tag-aware batching against false negatives, hard negatives as an ablation, and a general-retrieval probe run alongside every checkpoint.
+
+### 2.6 IR evaluation methodology
 
 *[DRAFTED — REVIEW]*
 
@@ -96,6 +108,8 @@ The evaluation methodology's use of tri-state graded relevance judgments is grou
 The task is: given a user's natural-language query, return the top-K most semantically relevant MTG cards from a corpus of ~30,000 unique cards.
 
 **Corpus.** The Scryfall `oracle-cards` bulk dataset (2026-09-11 snapshot) contains 38,740 raw entries. Filtering rules exclude non-card layouts (tokens, emblems, art series, vanguard, planar, scheme), digital-only printings (Arena/MTGO exclusive), silver-bordered cards, memorabilia set-types, novelty Un-set (`set_type=funny`) products, and token-only booster products (`set_type=token`). The resulting corpus contains 31,972 face rows across 31,124 unique `oracle_id`s (80.3% retention rate). Multi-face cards (transform, modal-DFC, split, adventure) are stored as separate rows keyed on `(oracle_id, face_index)`; results deduplicate by `oracle_id` at display time.
+
+**Oracle tags (training signal).** *[DRAFTED — REVIEW]* Scryfall publishes the community-maintained Tagger oracle tags as an official daily bulk file (2026-09-18 snapshot: 4,551 functional tags, 236,170 tag-to-card assignments, a multi-parent hierarchy of depth ≤6). Tags name what a card *does* in player vocabulary — `sweeper`, `cantrip`, `ramp`, `sacrifice-outlet-creature` — independent of how its rules text phrases it. Joined on `oracle_id`, 99.4% of corpus cards carry at least one tag and 205,262 assignments fall inside the corpus; 3,022 tags cover five or more corpus cards. Tags are used only as distant supervision for embedder fine-tuning (Section 6.3). They are not embedded and are not used by the SQL pre-filter, so that the system's results never depend on a card having been tagged. Scryfall's data policy names research as a permitted use; the exact bulk-file date is cited for reproducibility.
 
 ### 3.2 Three-stage retrieval cascade
 
@@ -117,6 +131,8 @@ The base model handles general cases fairly well but struggles on more complex m
 
 - `filters` — a structured object with optional fields for colors, color identity, types, keywords, converted mana value, power, toughness, and format legality. Populated when the query specifies structural constraints; null otherwise.
 - `hypothetical_card` — canonical Wizards-authored MTG rules text describing what a card matching the query would do. Populated when the query has an ability-text component; null when the query is purely structural.
+
+**Planned v2 contract.** *[DRAFTED — REVIEW; lands with the fine-tuned embedder, Section 6.3]* After the embedder is fine-tuned on oracle tags, the rewriter's job narrows to filter extraction plus concept normalisation: a `concepts` field carries the query's functional intent in tag vocabulary where a tag fits ("board wipe" → "sweeper"), the user's own phrasing passes through where none does, and `hypothetical_card` becomes a fallback rather than the default. The v1 and v2 prompts are compared by rule count, example count, and output tokens as a direct measure of the simplification hypothesis.
 
 #### 3.2.2 Stage 2 — SQL pre-filter
 
@@ -146,11 +162,19 @@ Only the Oracle text of each card is embedded — not the type line, mana cost, 
 
 The evaluation set is a hand-curated collection of 26 queries with tri-state relevance judgments (relevant / partially relevant / not relevant). Queries span six categories established during eval-set construction: natural language, jargon, fragmented, hybrid, constrained, and mechanical. Metrics are recall@10 and MRR, following standard IR conventions.
 
-Three configurations are compared:
+Configurations form a grid over the Stage 1 mode and the embedder, plus two ablations and the external comparator. Every cell is a retrieval run over the same 26 queries, logged as one `experiment_runs` row.
 
-1. **Full cascade** (HyDE + SQL pre-filter + Nomic Embed) — the main result.
-2. **–SQL ablation** (HyDE + Nomic Embed, no pre-filter) — isolates the SQL pre-filter's contribution.
-3. **Scryfall comparator** — LLM-crafted expert-level Scryfall queries evaluated against the same eval set. This serves as a "best-case SQL-heavy retrieval" reference: what Scryfall can do when operated by an expert-adjacent LLM constructing its queries.
+| | Base Nomic Embed v1.5 | Tag-fine-tuned embedder |
+|---|---|---|
+| Stage 1: hypothetical card text (v1 prompt) | control — the pre-fine-tuning number | |
+| Stage 1: tag-normalised concepts (v2 prompt) | | main result |
+| Stage 1: raw query pass-through (no rewrite) | | |
+
+- **–SQL ablation** — the main configuration with the pre-filter removed; isolates Stage 2's contribution.
+- **Direct-tag lookup ablation** — HyDE's concept mapped straight to `card_tags` membership, no embedder. Bounds what the tuned embedder adds over a tag lookup; a system that only matched this row would be Scryfall's `otag:` search rebuilt locally.
+- **Scryfall comparator** — LLM-crafted expert-level Scryfall queries evaluated against the same eval set: what Scryfall can do when operated by an expert-adjacent LLM constructing its queries. Two measures are reported per query: *result parity* (overlap between the cascade's top-K and the expert query's result set, alongside the tri-state judgments) and *query complexity* (operator count and operator types in the expert Scryfall query versus the plain-language query the user typed) as a proxy for ease of use in the absence of a user study.
+
+The base-embedder rows are run and logged before any fine-tuned checkpoint is evaluated; the frozen base remains a permanent row in every results table.
 
 ---
 
@@ -208,9 +232,43 @@ Gemma 3 27B also resolved the compositional attention drift (correctly producing
 
 The finding is that a ~3× parameter jump within the same non-reasoning architecture class closes the jargon knowledge gap. The failures observed at 8B are not architectural — they reflect the domain-knowledge ceiling of a smaller model. Larger models know more MTG.
 
-### 5.3 Full cascade evaluation
+### 5.3 Full cascade evaluation — base embedder (pre-fine-tuning)
 
-*[TODO — populate after M5 measurements land. Table shape: config × recall@10 × MRR × per-category breakdown. Comparison against Scryfall LLM-crafted expert queries. Ablation delta for –SQL pre-filter.]*
+*[DRAFTED — REVIEW. Rows logged to `experiment_runs` 2026-09-18 (ids 11–14, eval set v1-draft). These are the base-embedder cells of the Section 3.4 grid: the control every fine-tuning claim is measured against. Tuned-embedder rows and the Scryfall comparator are pending.]*
+
+All four base-embedder configurations were run over the 26-query evaluation set with the untuned Nomic Embed v1.5 encoder, the Llama 3.1 8B rewriter, and the v1 prompt. The keywords filter was off (selective strictness, Section 6.2). Precision@10 is reported alongside recall@10 because recall is capped by relevant-set size on this evaluation set — a query with 34 relevant cards can score at most 0.29 at K=10 with a perfect top ten — which makes recall unreadable as a headline number.
+
+**Table 1 — Aggregate results, base embedder (n = 26 queries, macro-averaged).**
+
+| Configuration | Stage 1 | Stage 2 | P@10 | R@10 | MRR | p50 latency |
+|---|---|---|---|---|---|---|
+| Raw dense (floor) | none | none | 0.031 | 0.017 | 0.067 | 83 ms |
+| Pass-through | filters only | SQL | 0.050 | 0.028 | 0.130 | 985 ms |
+| –SQL ablation | filters + hypothetical | none | 0.085 | 0.036 | 0.269 | 967 ms |
+| **Full cascade (control)** | filters + hypothetical | SQL | **0.112** | **0.050** | **0.294** | 978 ms |
+
+Each stage adds, and the ordering is monotone. Removing the SQL pre-filter from the full cascade costs 0.027 P@10 and 0.025 MRR; removing the hypothetical text (pass-through) costs 0.062 P@10 and 0.164 MRR. On the base embedder the rewriter's hypothetical text is doing more work than the filter — which is the expected picture before fine-tuning, since the untuned encoder cannot bridge jargon on its own and depends on Stage 1 to translate it. Stage 1 accounts for roughly 0.9 s of the ~1 s median latency; Stages 2 and 3 together run under 100 ms at this corpus size.
+
+**Table 2 — Precision@10 by query category, base embedder.**
+
+| Category (n) | Raw dense | Pass-through | –SQL | Full cascade |
+|---|---|---|---|---|
+| natural (4) | 0.000 | 0.000 | 0.075 | 0.100 |
+| jargon (13) | 0.054 | 0.062 | 0.123 | 0.146 |
+| fragmented (3) | 0.000 | 0.000 | 0.000 | 0.000 |
+| hybrid (2) | 0.000 | 0.000 | 0.100 | 0.050 |
+| constrained (3) | 0.000 | 0.133 | 0.000 | 0.133 |
+| mechanical (1) | 0.100 | 0.100 | 0.100 | 0.100 |
+
+Three patterns in the per-category breakdown carry into the fine-tuning design:
+
+- **Constrained queries depend entirely on Stage 2.** The three purely structural queries ("instants that cost 1 mana", "red creatures under 3 mana", "free counterspell") score zero in both no-filter configurations and 0.133 in both filtered ones, regardless of what text is embedded. This is the pre-filter's contribution in isolation.
+- **Jargon is where the hypothetical text earns its place — and where it still fails.** The 13 jargon queries move from 0.054 (raw) to 0.146 (full cascade), but 8 of the 13 still score zero, including *flicker effects*, *ramp spells*, *tutor*, *wheels*, *ETB triggers*, and *mana dorks*. Two jargon queries hit zero candidates from rewriter hallucinations: "mana dorks" produced an invented subtype `Dork` with power/toughness 1/1, and "red pingers" placed power/toughness filters on instants and sorceries. These are the jargon-gap family from Section 5.1 reproduced at the retrieval level.
+- **Fragmented queries fail everywhere.** All three ("card draw engines", "graveyard recursion", "a card that lets me look at my deck and put a creature…") score zero in every configuration. The rewriter does not recover the intent, and the raw encoder does not either.
+
+Six queries returned filters but no hypothetical text, so the full cascade embedded the raw query for them. Two of those — "creatures with flying" and "haste creatures" — name a canonical keyword explicitly; with the keywords filter off they scored zero, which is the user-explicit case selective strictness is meant to keep strict (Section 6.2). A rule that applies the keywords filter only when the rewriter judged the query purely structural (filters present, no hypothetical text) is the cheapest candidate and is queued as an ablation row.
+
+*[TODO — tuned-embedder rows of the grid after M6 training; Scryfall comparator with result-parity and query-complexity measures; direct-tag-lookup ablation.]*
 
 ---
 
@@ -242,21 +300,29 @@ Selective strictness offers the best tradeoff for this cascade. It preserves the
 
 ### 6.3 The path toward fine-tuning
 
-*[YOUR PROSE + drafted synthesis, REVIEW]*
+*[YOUR PROSE, lightly edited — 2026-09-18. Facts corrected: Scryfall now ships tags as an official bulk file, no scraping.]*
 
-Given the observed limits of prompt engineering and off-the-shelf models, we begin planning a second version of the three-stage retrieval system focused on fine-tuning. The approach starts by scraping Scryfall for tag-to-card data — Scryfall assigns tags to cards through its Cardtags project (tags like `ramp`, `removal`, `tutor`, `card-draw`, `combo-piece`), and these tags provide a canonical mapping from player-language jargon to card-level anchors. Scryfall's API supports tag-based search directly, and their rate-limit guidelines are respectful (50-100ms between requests), making sanctioned ingestion straightforward.
+The more tests we ran, the more fine-tuning looked like the best option. Given the observed limits of prompt engineering and off-the-shelf models, we begin a second version of the three-stage retrieval system focused on fine-tuning. Scryfall is a great resource for this: through its community Tagger project it assigns functional tags to cards (`sweeper`, `cantrip`, `ramp`, `sacrifice-outlet-creature`, `flicker-creature`), and these tags provide a canonical mapping from player-language jargon to card-level anchors. The original plan was to slowly collect these tags through the search API within Scryfall's rate limits. That turned out to be unnecessary — Scryfall publishes the full tag set, including the tag hierarchy, as an official daily bulk file — so the tag-to-card data was loaded into the project database in one step (Section 3.1).
 
-The tag-to-card data is integrated into the project database and used as training signal. Two distinct fine-tuning interventions become available:
+**Jargon is a broad category and will have different outputs for different words.** Ramp is jargon, not a keyword; it is a direct reference to ability text, so it would have a hypothetical rules text rather than a filter. Cantrip is a direct reference to a cheap instant or sorcery that draws a card, so it is mostly structural. To fix them all through the prompt would require a rule and an example per jargon shape. To fix them all at once requires specialized training on MTG keywords and jargon using the Scryfall tags.
 
-**Fine-tune the embedder.** Contrastive training on (query, positive_card) pairs derived from Scryfall tags, using `MultipleNegativesRankingLoss` on top of Nomic Embed v1.5. This teaches the encoder to embed "ramp" close to ramp cards, "flicker" close to flicker cards, and so on — directly, without an intermediate rewriting stage.
+**The hypothesis.** Fine-tuning the embedding model on the jargon, mechanics, and keywords using tags is what should simplify the HyDE pipeline. HyDE should not need to work as hard to rewrite and can instead focus primarily on filters. If the embedding model is trained to understand the jargon, the rewrite portion of HyDE is less demanding, so the prompt instructions and examples become simpler and focus on filter extraction. HyDE may even be guided to move toward tag vocabulary wherever possible — if the query matches an existing tag context, emit that concept — instead of expanding the query to match the large variance of rules text those tags represent. HyDE does not disappear; its workflow changes, and the rewriting and prompt-engineering examples get far simpler as a result.
 
-**Fine-tune HyDE.** Supervised training or LoRA (Low-Rank Adaptation, per Hu et al. 2021) on (query, correct JSON output) pairs. This teaches the HyDE model MTG-specific translations without requiring a large increase in model size.
+Two fine-tuning methods are available, and the question was which to use for which stage:
 
-The interventions are complementary but not redundant. A fine-tuned embedder shortens the pipeline for pure-jargon queries: if the encoder already understands "flicker" ↔ "exile then return" natively, HyDE no longer needs to canonicalize that mapping and can be reduced to its filter-extraction role. HyDE remains valuable for compositional queries (where multiple constraints must be extracted and combined) and for natural-language queries whose intent needs canonicalization before the encoder sees it.
+**Fine-tune the embedder (direct).** Full contrastive fine-tuning of Nomic Embed v1.5 on (anchor, card) pairs derived from the tags — the anchor is the tag label, an alias, its description, or a synthetic player query — using in-batch negatives with tag-aware batching so that two cards sharing a tag never serve as each other's negatives. This teaches the encoder to embed "sweeper" close to sweeper cards and "flicker" close to flicker cards directly, without an intermediate rewriting stage. At 137M parameters the literature fine-tunes the whole model (Section 2.5); adapter methods are the fallback if the general-retrieval probe drops.
 
-The order of operations is: Scryfall tag ingestion first (prerequisite for both interventions); embedder fine-tuning second (smaller model, cheaper, higher leverage per unit effort, well-established SBERT recipe); HyDE fine-tuning only if measurements after the encoder fine-tune show HyDE quality remaining as the bottleneck.
+**Fine-tune HyDE (LoRA).** Low-Rank Adaptation (Hu et al., 2021) adds small trainable matrices beside the frozen 8B weights, so the model learns MTG-specific query-to-JSON behaviour without touching the base model or requiring a larger one. This is the second step, taken only if the rewriter's *structural* failures — filter over-narrowing, compositional attention drift — persist after the embedder is tuned.
 
-### 6.4 Interactive filter refinement (future work)
+The order of operations is: tag ingestion first (done); the base-embedder control run through the full cascade second, so every fine-tuning claim has a before-number; embedder fine-tuning third; the v2 prompt fourth; HyDE LoRA only if measurements demand it.
+
+### 6.4 What the tuned embedder adds over a tag lookup
+
+*[DRAFTED — REVIEW; pairs with the accessibility prose in Section 1.1]*
+
+Once HyDE can name a tag, the obvious shortcut is to look the tag up in `card_tags` and return those cards. That path is Scryfall's `otag:` search rebuilt locally, and it fails in two ways: it only knows concepts the community has tagged, and it only finds cards the community has tagged. Routing the concept through the tuned embedder is what generalises to untagged cards and to phrasings no tag covers. The direct-tag lookup is kept as an ablation row precisely so this can be measured: the held-out-tag probe (tags withheld entirely from training, queried by their label after training) shows whether the model learned that jargon names a *function* or merely memorised a vocabulary list. The accessibility claim (Section 1.1) and the generalisation claim reinforce each other — parity with expert Scryfall on tagged concepts, plus coverage beyond them.
+
+### 6.5 Interactive filter refinement (future work)
 
 *[DRAFTED — REVIEW]*
 
@@ -264,12 +330,14 @@ An observation from testing suggests a natural production extension: HyDE's stru
 
 This is out of scope for the current work (no production frontend planned this term), but the cascade architecture supports it naturally: a `HyDEResult` object's `filters` field can be modified in place before being passed to the search orchestrator without any pipeline change. The pattern reinforces the accessibility framing — non-experts get LLM-driven filter proposals, experts can override and refine.
 
-### 6.5 Limitations
+### 6.6 Limitations
 
 *[DRAFTED — REVIEW]*
 
 Several limitations of the current work are worth explicit acknowledgement:
 
+- **Fine-tuning is in-distribution by design.** Training on the tag `cantrip` and evaluating on the query *"cantrips that dig"* is the intended intervention, not leakage, but it is disclosed as such. The held-out-tag probe (Section 6.4) is the honest complement.
+- **No user study.** The ease-of-use claim rests on a query-complexity proxy (Section 3.4), not on measured user behaviour.
 - **No naive dense retrieval baseline is reported.** The paper is anchored on outcome comparison against Scryfall rather than diff against an internal reference; the naive-baseline number would not carry methodological weight in this framing. Qualitative failure-mode observations from naive dense retrieval are documented via ad-hoc CLI test tools.
 - **No dedicated –HyDE ablation.** Evidence for HyDE's contribution comes from (i) the Scryfall comparator, which represents SQL-heavy retrieval without HyDE, and (ii) the published HyDE literature on standard benchmarks. A dedicated within-corpus –HyDE ablation is future work.
 - **Single-curator evaluation set.** Voorhees (2000) provides the methodological defense for single-curator retrieval evaluation, but the constraint remains a real one.
@@ -291,11 +359,12 @@ This work presents a three-stage retrieval cascade for natural-language semantic
 
 *[DRAFTED — REVIEW]*
 
-The primary future-work direction is fine-tuning, as discussed in Section 6.3. Scryfall tag ingestion is the prerequisite; embedder contrastive fine-tuning is the next step; HyDE LoRA fine-tuning follows if measurements justify it. Beyond fine-tuning:
+Embedder fine-tuning on oracle tags is now in scope (Section 6.3); HyDE LoRA fine-tuning remains future work unless measurements after the embedder fine-tune justify it. Beyond that:
 
 - **Multi-encoder comparison.** Evaluating the cascade against SOTA embeddings (E5-Mistral, BGE, Qwen3-Embedding) at the encoder position.
-- **Interactive filter refinement.** Implementing the user-editable filter pattern described in Section 6.4 and measuring its effect on user satisfaction.
-- **NL-to-SQL alternative architecture.** A parallel investigation of whether direct natural-language-to-SQL generation, leveraging Scryfall tags as a queryable filter attribute, offers an alternative or complementary path to the semantic search stage.
+- **Interactive filter refinement.** Implementing the user-editable filter pattern described in Section 6.5 and measuring its effect on user satisfaction.
+- **User study.** Replacing the query-complexity proxy with measured novice task success and time-to-result against Scryfall.
+- **Co-training rewriter and encoder.** Following CoHyDE (Senthil et al., 2026), iteratively training the HyDE model on the tuned encoder's retrieval scores and vice versa.
 - **Cross-domain generalization test.** Applying the cascade to a non-MTG consumer catalog (e-commerce, media library, technical documentation) to test the generalization claim empirically.
 
 ---

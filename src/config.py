@@ -162,6 +162,11 @@ class Settings(BaseSettings):
         return self.data_dir / "keywords"
 
     @property
+    def training_dir(self) -> Path:
+        """Fine-tuning pair sets + manifests (M6). JSONL is gitignored; manifests are committed."""
+        return self.data_dir / "training"
+
+    @property
     def logs_dir(self) -> Path:
         return self.repo_root / "logs"
 

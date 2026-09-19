@@ -45,3 +45,8 @@ Thumbs.db
 
 # Claude Code per-user settings
 .claude/settings.local.json
+
+# Training pairs (regenerable from the DB; manifest is committed)
+data/training/*.jsonl
+data/training/*.jsonl.gz
+data/training/card_tags_*.json

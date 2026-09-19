@@ -28,6 +28,7 @@ class QueryMetrics:
     reciprocal_rank: float
     hit_rank: int | None
     relevant_in_top_k: dict[int, int]
+    precision_at_10: float = 0.0
 
 
 def compute_query_metrics(
@@ -36,7 +37,12 @@ def compute_query_metrics(
     borderline_ids: set[str],
     k_levels: tuple[int, ...] = (1, 5, 10),
 ) -> QueryMetrics:
-    """Compute recall@K and MRR for one query.
+    """Compute recall@K, precision@10, and MRR for one query.
+
+    precision@10 = relevant hits in the top 10 / 10. Added 2026-09-18 because
+    recall@K is capped by relevant-set size on this eval set (a query with 34
+    relevant cards can score at most 10/34 at K=10), which makes recall
+    unreadable as a headline number; precision@10 is not capped that way.
 
     Args:
         top_k_oracle_ids: System's retrieved oracle_ids in rank order
@@ -78,6 +84,7 @@ def compute_query_metrics(
         reciprocal_rank=rr,
         hit_rank=hit_rank,
         relevant_in_top_k=relevant_in_top_k,
+        precision_at_10=relevant_in_top_k.get(10, 0) / 10,
     )
 
 
@@ -98,6 +105,7 @@ def aggregate_metrics(
             "recall_at_1": 0.0,
             "recall_at_5": 0.0,
             "recall_at_10": 0.0,
+            "precision_at_10": 0.0,
             "mrr": 0.0,
             "latency_p50": 0.0,
             "latency_p95": 0.0,
@@ -111,6 +119,7 @@ def aggregate_metrics(
         "recall_at_1": sum(qm.recall_at_1 for qm in query_metrics) / n,
         "recall_at_5": sum(qm.recall_at_5 for qm in query_metrics) / n,
         "recall_at_10": sum(qm.recall_at_10 for qm in query_metrics) / n,
+        "precision_at_10": sum(qm.precision_at_10 for qm in query_metrics) / n,
         "mrr": sum(qm.reciprocal_rank for qm in query_metrics) / n,
         "latency_p50": _percentile(sorted_latencies, 50),
         "latency_p95": _percentile(sorted_latencies, 95),

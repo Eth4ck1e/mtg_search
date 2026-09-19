@@ -34,6 +34,7 @@ The full architecture spec, working conventions, and anti-patterns live in [`CLA
 │   ├── raw/                     # Scryfall bulk dumps (gitignored)
 │   ├── processed/               # Corpus survey outputs (gitignored, regenerable)
 │   ├── eval/                    # 26-query evaluation set + methodology notes
+│   ├── training/                # Fine-tuning pairs (gitignored) + manifests
 │   └── keywords/                # Reminder-text dictionary + manual overrides
 ├── docs/
 │   ├── archive/                 # Original proposal + historical planning
@@ -47,6 +48,7 @@ The full architecture spec, working conventions, and anti-patterns live in [`CLA
 │   ├── survey_corpus.py         # Corpus characterization
 │   ├── ingest.py                # Bulk file → cards table UPSERT
 │   ├── ingest_tags.py           # Scryfall oracle-tags bulk → oracle_tags + card_tags
+│   ├── build_training_pairs.py  # Tag-derived contrastive pairs for embedder fine-tuning
 │   ├── build_keyword_dict.py    # Reminder-text extraction from corpus
 │   ├── embed.py                 # Encode cards → pgvector
 │   ├── migrate.py               # SQL migration runner
@@ -57,6 +59,8 @@ The full architecture spec, working conventions, and anti-patterns live in [`CLA
 │   ├── config.py                # Pydantic settings (single source of truth)
 │   ├── logging_utils.py         # PipelineRun JSONL context manager
 │   ├── preprocess_text.py       # build_embedding_text + reminder-text loader
+│   ├── query_rewriter.py        # Stage 1 HyDE client
+│   ├── search.py                # Stage 2+3: SQL pre-filter + vector search orchestration
 │   ├── data_processing/         # scryfall_classify, ingest_transform, keyword_extract
 │   ├── db/                      # experiment_log writer + SQL migrations
 │   ├── eval/                    # Pure-Python metric calculation (recall@K, MRR)
@@ -114,7 +118,7 @@ PYTHONPATH="$PWD" .venv/bin/python -m mlx_lm server \
   --port 8080 --log-level WARNING
 
 # 11. Run a retrieval configuration and log the results
-PYTHONPATH="$PWD" .venv/bin/python scripts/evaluate.py --config configs/baseline.yaml
+PYTHONPATH="$PWD" .venv/bin/python scripts/evaluate.py --config configs/cascade_hyde_v1.yaml
 ```
 
 > **Note on `PYTHONPATH`:** Python 3.13.0 has a `.pth` file processing bug that breaks editable-install imports. Prefixing `PYTHONPATH="$PWD"` works around it. Upgrading to a patched Python 3.13.x (via `brew upgrade python@3.13`) removes the need for the prefix.

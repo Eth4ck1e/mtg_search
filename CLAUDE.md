@@ -103,10 +103,14 @@ mtg_search/
 ├── archive/poc_v1/                      # POC snapshot, preserved
 ├── _planning-archive/                   # Pre-repo local planning docs (historical)
 ├── configs/
-│   └── baseline.yaml                    # Retrieval-run configuration
+│   ├── cascade_hyde_v1.yaml             # Full cascade, base-embedder control row
+│   ├── cascade_hyde_v1_nosql.yaml       # Minus-SQL ablation
+│   ├── cascade_passthrough.yaml         # Filters from HyDE, raw query embedded
+│   └── raw_dense.yaml                   # No rewriter, no filter (pure dense floor)
 ├── data/
 │   ├── raw/                             # Scryfall bulk .jsonl.gz (gitignored, large)
 │   ├── processed/                       # Corpus survey JSON (gitignored, regenerable)
+│   ├── training/                        # Fine-tuning pair sets (JSONL gitignored) + committed manifests
 │   ├── eval/                            # Hand-curated eval set + tooling outputs
 │   │   ├── queries_v1_draft.yaml        # 26 queries with tri-state relevance
 │   │   ├── methodology_references.md    # IR-eval papers backing tri-state
@@ -125,16 +129,18 @@ mtg_search/
 │   ├── survey_corpus.py                 # Corpus characterisation
 │   ├── ingest.py                        # Bulk → cards table UPSERT
 │   ├── ingest_tags.py                   # Oracle-tags bulk → oracle_tags + card_tags (M6)
+│   ├── build_training_pairs.py          # Tag-anchored contrastive pairs + held-out tag split (M6)
 │   ├── build_keyword_dict.py            # Reminder-text extraction
 │   ├── embed.py                         # Corpus embedding pipeline (Nomic Embed v1.5)
 │   ├── eval_lookup.py                   # Scryfall candidate finder
 │   ├── render_review.py                 # Eval-set HTML reviewer
-│   ├── evaluate.py                      # Run a config, write experiment_runs row
-│   └── test_search.py                   # Ad-hoc naive-dense-retrieval CLI
+│   └── evaluate.py                      # Run a config through src/search.py, write experiment_runs row
 ├── src/
 │   ├── config.py                        # Pydantic Settings (single source of truth)
 │   ├── logging_utils.py                 # PipelineRun JSONL context manager
 │   ├── preprocess_text.py               # build_embedding_text + Nomic prefix helpers
+│   ├── query_rewriter.py                # Stage 1 — HyDE HTTP client (MLX server)
+│   ├── search.py                        # Stage 2 + 3 — filter compiler + pgvector search inside the filtered set
 │   ├── data_processing/                 # scryfall_classify, ingest_transform, keyword_extract
 │   ├── db/                              # experiment_log writer + SQL migrations
 │   ├── eval/                            # Pure-Python metric calculation
@@ -208,6 +214,7 @@ PYTHONPATH="$PWD" .venv/bin/python scripts/embed.py               # missing/stal
 # Scryfall oracle tags (M6 training signal; official bulk file, no scraping)
 PYTHONPATH="$PWD" .venv/bin/python scripts/download_scryfall.py --dataset oracle-tags
 PYTHONPATH="$PWD" .venv/bin/python scripts/ingest_tags.py          # full replace of oracle_tags + card_tags
+PYTHONPATH="$PWD" .venv/bin/python scripts/build_training_pairs.py # → data/training/pairs_v1.jsonl + manifest
 
 # Start MLX HyDE server (Apple Silicon; leave running in a separate shell)
 lsof -iTCP:8080 -sTCP:LISTEN                            # confirm port 8080 free
@@ -221,11 +228,12 @@ PYTHONPATH="$PWD" .venv/bin/python -m mlx_lm server \
 # Ad-hoc HyDE query rewrite (requires MLX server running above)
 PYTHONPATH="$PWD" .venv/bin/python -m src.query_rewriter "cheap red removal"
 
-# Ad-hoc query testing (naive dense retrieval only; no HyDE, no SQL pre-filter)
-PYTHONPATH="$PWD" .venv/bin/python scripts/test_search.py --dedupe "cheap red removal"
-
 # Evaluation (writes to experiment_runs)
-PYTHONPATH="$PWD" .venv/bin/python scripts/evaluate.py --config configs/baseline.yaml
+PYTHONPATH="$PWD" .venv/bin/python scripts/evaluate.py --config configs/cascade_hyde_v1.yaml   # control row (needs MLX server)
+PYTHONPATH="$PWD" .venv/bin/python scripts/evaluate.py --config configs/raw_dense.yaml --dry-run  # no server needed
+
+# Ad-hoc full-cascade search (Stage 1 → 2 → 3; --mode raw needs no server)
+PYTHONPATH="$PWD" .venv/bin/python -m src.search "cheap red removal" --show-sql
 
 # Reporting (M5+)
 PYTHONPATH="$PWD" .venv/bin/python scripts/generate_report.py --since 2026-09-01 --out docs/reports/

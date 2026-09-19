@@ -1,0 +1,24 @@
+# Minus-SQL ablation of cascade_hyde_v1.
+#
+# Stage 1 still runs (so the hypothetical card text is identical to the
+# control), but its filters are discarded and Stage 3 searches the whole
+# corpus. The delta against cascade_hyde_v1 is Stage 2's contribution.
+
+name: "cascade_hyde_v1_nosql"
+
+description: >
+  HyDE v1 prompt (8B) → NO pre-filter → Nomic Embed v1.5 search over the
+  full corpus. Isolates the SQL pre-filter's contribution.
+
+eval_set: "data/eval/queries_v1_draft.yaml"
+
+retrieval:
+  type: cascade
+  stage1: hyde
+  sql: false
+  keywords_filter: false
+  k: 10
+
+notes: >
+  Ablation row. Pure-structural queries (q_019–q_021) are expected to
+  collapse here — that collapse is the pre-filter's measured value.
