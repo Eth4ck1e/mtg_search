@@ -49,6 +49,7 @@ The full architecture spec, working conventions, and anti-patterns live in [`CLA
 │   ├── ingest.py                # Bulk file → cards table UPSERT
 │   ├── ingest_tags.py           # Scryfall oracle-tags bulk → oracle_tags + card_tags
 │   ├── build_training_pairs.py  # Tag-derived contrastive pairs for embedder fine-tuning
+│   ├── finetune_embedder.py     # Contrastive fine-tune of Nomic Embed on those pairs
 │   ├── build_keyword_dict.py    # Reminder-text extraction from corpus
 │   ├── embed.py                 # Encode cards → pgvector
 │   ├── migrate.py               # SQL migration runner

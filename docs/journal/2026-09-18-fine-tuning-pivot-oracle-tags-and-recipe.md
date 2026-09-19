@@ -1,6 +1,6 @@
 # 2026-09-18 — Fine-tuning pivot: oracle tags landed, source review, training recipe
 
-**Status:** decision + data + literature + control measurements. Tag pipeline built and run; `src/search.py` landed and the four base-embedder grid rows are logged (`experiment_runs` 11–14, §5a); training pairs built (§7 item 3). Trainer script not started.
+**Status:** decision + data + literature + control measurements. Tag pipeline built and run; `src/search.py` landed and the four base-embedder grid rows are logged (`experiment_runs` 11–14, §5a); training pairs built (§7 item 3); trainer drafted and smoke-tested, full run pending (§7 item 4).
 **Follows:** `2026-09-18-hyde-prompt-v1-design-notes.md` (the 10-query test series and the 8B-vs-27B comparison that motivated this).
 **Supersedes:** the "scrape Scryfall tags slowly under rate limits" plan discussed during the test series. No scrape is needed.
 
@@ -190,6 +190,6 @@ Each stage adds, monotonically. On the base embedder the hypothetical text contr
 1. ~~Confirm anchors and full-vs-LoRA~~ — both confirmed 2026-09-18 (§4, §4a). **[Mitchell]** ordering in §5 still open.
 2. ~~`src/search.py` + base-embedder eval run (control row)~~ — done, rows 11–14 (§5a).
 3. ~~`scripts/build_training_pairs.py`~~ — done for tag label/alias/description anchors: 207,062 train pairs over 2,729 tags, 482 held-out tags (33,862 probe pairs), `data/training/pairs_v1.jsonl` + `manifest_v1.json`. Synthetic-query anchors are a separate script (needs the LLM server; hours). Note: the random stratified hold-out withheld `burn` — so q_004 ("burn spell that deals 3 damage") becomes a genuine generalisation test rather than in-distribution; keep the seed and disclose.
-4. `scripts/finetune_embedder.py` — Sentence Transformers trainer, writes `experiment_runs` rows for (a)–(c).
+4. ~~`scripts/finetune_embedder.py`~~ — drafted and smoke-tested on MPS (5 steps, batch 64, 2k pairs, ~32 s): full fine-tune, `CachedMultipleNegativesRankingLoss` (scale 20, mini-batch 32), prompts on, lr 2e-5, 5 % warmup, wd 0.01, one epoch, grad clip 1.0, `max_seq_length` 256. Tag-disjoint batch sampler (no shared anchor tag; no positive carrying another pair's anchor tag; constraint-starved tail packed loosely and counted). Probes: in-training dev on train tags; post-training held-out-tag probe over the full corpus, base vs tuned; optional NanoBEIR (`--nanobeir`). One `experiment_runs` row per run. **Measured throughput ~10 pairs/s on the M3 → the 207k-pair epoch is ~6 h.** Not yet run in full. Requires ST ≥ 5.7 (have 6.0), `datasets`, `accelerate` (added to pyproject).
 5. Re-embed corpus with the tuned checkpoint under a new `embedding_version`; run (d) and (e).
 6. `prompts/hyde_v2.yaml` — concepts field, optional `hypothetical_card`, few-shot rebuilt around filters + tag normalisation. Count rules/examples vs v1 for the paper.

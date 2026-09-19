@@ -130,6 +130,7 @@ mtg_search/
 │   ├── ingest.py                        # Bulk → cards table UPSERT
 │   ├── ingest_tags.py                   # Oracle-tags bulk → oracle_tags + card_tags (M6)
 │   ├── build_training_pairs.py          # Tag-anchored contrastive pairs + held-out tag split (M6)
+│   ├── finetune_embedder.py             # Full fine-tune, CachedMNRL, tag-aware batching, probes (M6)
 │   ├── build_keyword_dict.py            # Reminder-text extraction
 │   ├── embed.py                         # Corpus embedding pipeline (Nomic Embed v1.5)
 │   ├── eval_lookup.py                   # Scryfall candidate finder
@@ -215,6 +216,9 @@ PYTHONPATH="$PWD" .venv/bin/python scripts/embed.py               # missing/stal
 PYTHONPATH="$PWD" .venv/bin/python scripts/download_scryfall.py --dataset oracle-tags
 PYTHONPATH="$PWD" .venv/bin/python scripts/ingest_tags.py          # full replace of oracle_tags + card_tags
 PYTHONPATH="$PWD" .venv/bin/python scripts/build_training_pairs.py # → data/training/pairs_v1.jsonl + manifest
+PYTHONPATH="$PWD" .venv/bin/python scripts/finetune_embedder.py --smoke   # 5-step MPS sanity run (~1 min)
+PYTHONPATH="$PWD" .venv/bin/python scripts/finetune_embedder.py           # full run → models/<run>/ (~6 h on M3; stop the MLX server first)
+# Then: EMBEDDING_MODEL=models/<run> in .env → scripts/embed.py → evaluate.py on each config
 
 # Start MLX HyDE server (Apple Silicon; leave running in a separate shell)
 lsof -iTCP:8080 -sTCP:LISTEN                            # confirm port 8080 free

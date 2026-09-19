@@ -24,7 +24,9 @@ dependencies = [
     "pgvector>=0.3",
 
     # Embeddings
-    "sentence-transformers>=3.0",
+    "sentence-transformers>=5.7",  # >=5.7: cached-loss gradient fix (needed for CachedMNRL training)
+    "datasets>=3.0",               # SentenceTransformerTrainer input
+    "accelerate>=1.0",             # HF Trainer backend
     "torch>=2.2",                  # CPU build by default; override per-platform if GPU
     "einops>=0.8",                 # required by Nomic Embed custom pooling code
 
