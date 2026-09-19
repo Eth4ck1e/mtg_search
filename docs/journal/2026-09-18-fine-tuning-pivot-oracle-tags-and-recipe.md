@@ -310,6 +310,37 @@ With the tuned embedder the label retrieves genuine category members almost ever
 3. `pairs_v2` with doc-like anchors still stands (the hypothetical-text regression is real on either metric: control in-pool 0.56 is on the *base* embedder).
 4. Add a within-category ranking signal (Scryfall `edhrec_rank` is already in `raw`) as a cheap ablation.
 
+### 5f. Reframing the target: complete set retrieval, not top-10 relevance (Mitchell, 2026-09-19)
+
+**Mitchell's position.** Relevance ranking was never the thing being solved. Scryfall's tag + attribute search returns a *set* — every card that matches, good or bad — and orders it by a separate sort (EDHREC popularity being the practical relevance proxy, since the most-played cards are the ones people are looking for). The goal here is the same contract reached from plain language: **every card that could be a match, in descending order of match, paged m × n**. Ordering by popularity is then a sort option available to both systems and out of scope as a research claim. The baseline is Scryfall's result set, not a hand-picked list of archetypes.
+
+**Consequence for measurement.** P@10 against ~30 judged archetypes is the wrong instrument for that goal. The right ones are set-retrieval measures against the full target set: **R-precision** (precision at depth = size of the target set; 1.0 means the first |pool| results are exactly the pool), **P@100**, and **depth to 90 % of the pool** (how far a user must page to have seen nearly everything). `scripts/probes/set_retrieval_probe.py`, no filters, 21 mapped queries, target = the tag's closure pool:
+
+| Query-side text / embedder | P@100 | R-precision | R@500 | median depth to 90 % of pool |
+|---|---|---|---|---|
+| tag label / **tuned** | **0.82** | **0.73** | 0.55 | **1.8 × pool** |
+| raw user query / **tuned** | 0.74 | 0.60 | 0.47 | 3.4 × |
+| hypothetical text / tuned | 0.57 | 0.46 | 0.36 | 3.8 × |
+| hypothetical text / base (the v1 control) | 0.47 | 0.27 | 0.25 | 13.2 × |
+| raw user query / base | 0.31 | 0.21 | 0.18 | 13.5 × |
+| tag label / base | 0.29 | 0.19 | 0.17 | 16.4 × |
+
+Under the goal as Mitchell states it, the ordering of systems **inverts** relative to §5c/§5d: the tuned embedder with a tag label is best, the tuned embedder with the *user's own words* is second, and the v1 control is fourth. Per tag, label/tuned R-precision: tutor 0.96, extra-turn 0.94, burn 0.92 (**held-out tag**), counterspell 0.92, fetchland 0.91, draw 0.89, recursion 0.86, removal 0.84 (5,968 cards), ramp 0.70, sweeper 0.65; weak spots mana-dork 0.42, cast-trigger-you 0.30, counterspell-free 0.23 (13 cards). To see 90 % of all tutors a user pages 1,030 results with label/tuned versus 12,156 with the control.
+
+**This rehabilitates the original hypothesis.** Raw user phrasing on the tuned embedder (0.60) already beats hypothetical text on either embedder, and tag vocabulary (0.73) beats both. HyDE's rewrite job genuinely can shrink to filters plus concept normalisation. The concepts field is in for v2.
+
+**Caveats to carry into the paper.**
+1. 20 of 21 targets are tags seen in training; the target *is* the training signal. `burn` (held out, 0.92) and the 482-tag held-out probe (§5b) are the generalisation evidence. The Scryfall comparator with expert queries that are *not* bare `otag:` lookups is the independent check.
+2. **A ranking is not a set.** Scryfall's result ends; ours is all 31k cards in order. "Every card that could match" needs a stopping rule — a similarity threshold, a score-gap heuristic, or simply paging with the score shown. Depth-to-90 % at 1.8 × pool says a naive cutoff would either truncate the set or pad it ~45 % with non-members. Choosing and evaluating that cutoff is now a real design item.
+3. Tag membership is community-curated and incomplete; some "non-members" in the top ranks are untagged true matches (the generalisation benefit), which set metrics against the pool under-credit. The dashboard judgments measure that.
+
+**Revised plan.**
+- Primary metrics become R-precision / P@100 / depth-to-90 % against (a) tag pools and (b) expert Scryfall query result sets; P@10-on-archetypes stays as a secondary "famous cards first" measure, reported with the EDHREC-sort caveat.
+- `evaluate.py` gets a deep-retrieval mode (k = target-set size) and these metrics, so grid rows are logged under the new instrument.
+- Build `hyde_v2` with the concepts field; measure prompt size, output tokens, Stage 1 latency, and the set metrics with filters on.
+- Add the EDHREC sort as a display option in the dashboard (data already in `raw`).
+- `pairs_v2` doc-like anchors drop in priority: hypothetical text is no longer the mode we are optimising for.
+
 ## 6. CLAUDE.md revisions
 
 §5 (do not fine-tune the embedder on keyword definitions), §6 (fine-tuning deferred to M6), and §11 (anti-suggestion) all encode the pre-pivot position. Revised today to: reminder-text augmentation stays the corpus-side lever; tag-derived contrastive fine-tuning is the query-side lever, motivated by the 2026-09-18 test evidence and gated on the base-embedder control run in §5 above. Hand-written definition dictionaries remain banned.

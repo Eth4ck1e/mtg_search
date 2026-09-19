@@ -306,6 +306,29 @@ The explanation is that a tag names a *category* while relevance judgments name 
 
 **Correction: the oracle's misses are annotation holes.** *[DRAFTED — REVIEW; journal §5e]* Scoring the same oracle runs against tag membership rather than the relevance judgments reverses the reading above. With the tuned embedder, 95% of the oracle's top-10 results are members of the intended tag's pool, against 35% for the base embedder and 56% for the v1 control; `ramp`, `recursion`, `flicker`, and `tutor` each go from 0-1 of 10 to 10 of 10, and `burn`, a tag withheld from training, also scores 10 of 10. The encoder learned the categories. The evaluation set judges roughly thirty archetypes per query out of pools of one to six thousand legitimate members and counts every unjudged member as a miss, the annotation-hole effect Thakur et al. (2021, §6) document for dense retrievers. Because the judgments were assembled from lexical Scryfall lookups, they favour cards that the hypothetical-text mode also favours. Neither metric alone settles the comparison: judged precision favours the control by construction and pool membership favours the oracle by construction (20 of 21 mapped tags were seen in training). The defensible claims are that the tuned embedder retrieves category members far more reliably than the base, that a bare label returns arbitrary rather than best-known members (a within-category ranking problem), and that the evaluation set needs its holes judged before the v2 comparison can be decided.
 
+### 5.5 Set retrieval: the measure that matches the goal
+
+*[YOUR PROSE, lightly edited — 2026-09-19]*
+
+Relevance ranking is not actually the problem this system is trying to solve, and it is solvable separately. Scryfall gives the ability to sort results by EDHREC rank, which is a relevance marker based on popularity: cards that show up high in EDHREC sorting are the cards used most commonly and will naturally be the cards people are looking for. Scryfall filtering by tag with other basic attribute filtering does not give relevance-ranked results; it gives the set of results, good or bad. The metric that matters is therefore measured against that baseline. To restate the stance: we are not trying to produce a system that outperforms Scryfall's own capabilities. A stack that both produces the matching results and surfaces the most relevant automatically would be great, but it is beyond this scope. The goal is a system that provides every single card that could be a match, in descending order. Results are limited to a top *n* for evaluation, but in real use it would be all results split into *m* pages of *n* cards. Sorting by relevance then becomes no different from Scryfall's, assuming popularity sorting is a function available to both systems.
+
+*[DRAFTED — REVIEW; journal §5f, `scripts/probes/set_retrieval_probe.py`]*
+
+Under that goal the appropriate measures are set-retrieval measures against the full target set rather than precision over ten hand-picked archetypes: R-precision (precision at a depth equal to the size of the target set), P@100, and the depth a user must page to in order to have seen 90% of the set. Table 5 reports them for the 21 evaluation queries with a functional tag, using the tag's full pool as the target and no filters.
+
+**Table 5 — Set retrieval against tag pools (mean over 21 queries; depth as a multiple of pool size, median).**
+
+| Query-side text | Embedder | P@100 | R-precision | Depth to 90% |
+|---|---|---|---|---|
+| Tag label | tuned | **0.82** | **0.73** | **1.8×** |
+| User's raw query | tuned | 0.74 | 0.60 | 3.4× |
+| Hypothetical text (v1 prompt) | tuned | 0.57 | 0.46 | 3.8× |
+| Hypothetical text (v1 prompt) | base | 0.47 | 0.27 | 13.2× |
+| User's raw query | base | 0.31 | 0.21 | 13.5× |
+| Tag label | base | 0.29 | 0.19 | 16.4× |
+
+The ordering of systems inverts relative to Table 4. The tuned embedder given the user's own words (0.60) outperforms hypothetical rules text on either embedder, and given tag vocabulary (0.73) it outperforms both; to see 90% of all tutor effects a user pages about 1,000 results instead of 12,000. `burn`, a tag withheld from training, reaches 0.92. This supports the Section 6.3 hypothesis in its original form: once the encoder understands the domain's functional vocabulary, the rewriter's job reduces to filter extraction and concept normalisation. Three caveats apply. Twenty of the 21 targets are tags seen in training, so the held-out results (Table 3, and `burn` here) carry the generalisation claim, and the expert-query Scryfall comparator remains the independent check. A ranking is not a set: Scryfall's results end, whereas a dense ranking continues through the whole corpus, so a stopping rule (similarity threshold, score gap, or plain paging with the score shown) is a required design element, and at 1.8× pool depth a naive cutoff either truncates the set or pads it. Finally, tag pools are community-curated and incomplete, so untagged true matches in the top ranks are counted as errors here; the human review in the results dashboard measures that directly.
+
 *[TODO — eval v2: pool top-10 across all logged rows, judge the holes, freeze; pairs_v2 with doc-like anchors and synthetic queries, retrain, re-run grid; hyde_v2 with a one-sentence hypothetical and trimmed rules (measure tokens/latency); Scryfall comparator; direct-tag-lookup ablation (expected to fail on broad tags for the same reason — the argument for embedding over lookup).]*
 
 ---
