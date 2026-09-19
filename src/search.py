@@ -385,6 +385,41 @@ class Searcher:
         ]
         return where, candidate_count, hits
 
+    def search_prepared(
+        self,
+        embed_text: str,
+        filters: HyDEFilters | None,
+        *,
+        k: int = 10,
+        policy: FilterPolicy | None = None,
+    ) -> SearchResult:
+        """Stage 2 + 3 only, from already-decided inputs (no rewriter call).
+
+        The dashboard uses this: the user edits the embedded text and the
+        filter JSON by hand and resubmits. Raises :class:`FilterError` on
+        out-of-contract filter values so the UI can show the problem.
+        """
+        timings: dict[str, float] = {}
+        where_clauses, params = build_where(filters, policy or self.policy)
+        t0 = time.perf_counter()
+        vec = self.embed_query(embed_text)
+        timings["embed_ms"] = (time.perf_counter() - t0) * 1000
+        t0 = time.perf_counter()
+        where, candidate_count, hits = self._run_sql(where_clauses, params, vec, k)
+        timings["sql_ms"] = (time.perf_counter() - t0) * 1000
+        return SearchResult(
+            query=embed_text,
+            mode="prepared",
+            use_sql=bool(where_clauses),
+            query_text=embed_text,
+            hyde=None,
+            where_sql=where,
+            candidate_count=candidate_count,
+            hits=hits,
+            timings_ms={k_: round(v, 2) for k_, v in timings.items()},
+            warnings=["filters matched zero cards"] if candidate_count == 0 else [],
+        )
+
     # -- entry point --
 
     def search(

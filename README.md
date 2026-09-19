@@ -55,7 +55,8 @@ The full architecture spec, working conventions, and anti-patterns live in [`CLA
 │   ├── migrate.py               # SQL migration runner
 │   ├── eval_lookup.py           # Scryfall candidate finder for eval curation
 │   ├── render_review.py         # HTML review UI for eval set
-│   └── evaluate.py              # Run a config, write experiment_runs row
+│   ├── evaluate.py              # Run a config, write experiment_runs row
+│   └── dashboard.py             # Local web UI for reviewing and judging results
 ├── src/                         # Library code (importable modules)
 │   ├── config.py                # Pydantic settings (single source of truth)
 │   ├── logging_utils.py         # PipelineRun JSONL context manager

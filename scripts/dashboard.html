@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MTG search — results review</title>
+<style>
+  :root {
+    --bg:#f6f5f2; --panel:#fff; --ink:#1d1c1a; --muted:#6b675f; --line:#dedad2;
+    --accent:#3a5a8c; --good:#2f7a4b; --warn:#a9741a; --bad:#a23b3b; --chip:#eceae4;
+  }
+  @media (prefers-color-scheme: dark) { :root {
+    --bg:#16171a; --panel:#1f2125; --ink:#e9e7e2; --muted:#9a968d; --line:#33363c;
+    --accent:#8fb0e6; --good:#6cc08c; --warn:#e0b060; --bad:#e08080; --chip:#2a2d33;
+  } }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif }
+  header { padding:14px 20px; border-bottom:1px solid var(--line); display:flex; gap:16px; align-items:baseline; flex-wrap:wrap }
+  header h1 { font-size:16px; margin:0 }
+  header .meta { color:var(--muted); font-size:12px; font-family:ui-monospace,Menlo,monospace }
+  main { padding:16px 20px 60px; max-width:1500px; margin:0 auto }
+  .controls { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px; display:grid; gap:12px }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:end }
+  label { display:grid; gap:4px; font-size:12px; color:var(--muted); flex:1 1 220px }
+  label.narrow { flex:0 0 110px } label.mid { flex:0 1 260px }
+  input, select, textarea { font:inherit; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:7px 9px; width:100% }
+  textarea { font-family:ui-monospace,Menlo,monospace; font-size:12.5px; resize:vertical }
+  button { font:inherit; border:1px solid var(--line); background:var(--chip); color:var(--ink); border-radius:6px; padding:7px 14px; cursor:pointer }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff }
+  @media (prefers-color-scheme: dark) { button.primary { color:#10131a } }
+  button:disabled { opacity:.5; cursor:wait }
+  .check { flex:0 0 auto; display:flex; gap:6px; align-items:center; color:var(--ink); font-size:13px }
+  .check input { width:auto }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:12px } @media (max-width:800px){ .two{grid-template-columns:1fr} }
+  #status { margin:12px 2px; color:var(--muted); font-size:13px; min-height:20px }
+  #status.err { color:var(--bad) }
+  #status code { font-size:11.5px; word-break:break-all }
+  .summary { display:flex; gap:8px; flex-wrap:wrap; margin:0 2px 12px }
+  .pill { background:var(--chip); border-radius:99px; padding:3px 10px; font-size:12px }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; display:flex; flex-direction:column }
+  .card.rel { border-color:var(--good) } .card.bord { border-color:var(--warn) }
+  .imgwrap { position:relative; aspect-ratio:488/680; background:var(--chip) }
+  .imgwrap img { width:100%; height:100%; object-fit:cover; display:block; border-radius:9px 9px 0 0 }
+  .score { position:absolute; top:8px; right:8px; background:rgba(0,0,0,.78); color:#fff; font-weight:600; font-size:12.5px; padding:3px 8px; border-radius:99px }
+  .rank { position:absolute; top:8px; left:8px; background:rgba(0,0,0,.78); color:#fff; font-size:12px; padding:3px 8px; border-radius:99px }
+  .noimg { display:grid; place-items:center; height:100%; padding:12px; text-align:center; color:var(--muted); font-size:12px }
+  .body { padding:8px 10px 10px; display:grid; gap:6px }
+  .name { font-weight:600; font-size:13px } .name a { color:inherit; text-decoration:none } .name a:hover { text-decoration:underline }
+  .sub { color:var(--muted); font-size:11.5px }
+  .badges { display:flex; gap:5px; flex-wrap:wrap }
+  .b { font-size:11px; padding:2px 7px; border-radius:99px; background:var(--chip) }
+  .b.good { color:var(--good) } .b.warn { color:var(--warn) } .b.bad { color:var(--bad) } .b.mute { color:var(--muted) }
+  details { font-size:12px } details summary { cursor:pointer; color:var(--muted) } details p { margin:6px 0 0; white-space:pre-wrap }
+  .judge { display:grid; grid-template-columns:repeat(3,1fr); gap:4px }
+  .judge button { padding:4px 0; font-size:11.5px }
+  .judge button.on[data-l=relevant] { background:var(--good); border-color:var(--good); color:#fff }
+  .judge button.on[data-l=borderline] { background:var(--warn); border-color:var(--warn); color:#fff }
+  .judge button.on[data-l=not_relevant] { background:var(--bad); border-color:var(--bad); color:#fff }
+</style>
+</head>
+<body>
+<header>
+  <h1>MTG search — results review</h1>
+  <span class="meta" id="meta">loading…</span>
+</header>
+<main>
+  <section class="controls">
+    <div class="row">
+      <label class="mid">Eval query (optional)
+        <select id="evalSel"><option value="">— free search —</option></select>
+      </label>
+      <label>Query
+        <input id="query" placeholder="cheap red removal" autocomplete="off">
+      </label>
+      <button id="rewriteBtn" title="Run the Stage 1 rewriter (needs mlx_lm.server)">Rewrite → fill boxes</button>
+    </div>
+    <div class="two">
+      <label>Text to embed (Stage 3) — hypothetical text, a tag label, or the raw query
+        <textarea id="embedText" rows="4"></textarea>
+      </label>
+      <label>Filters JSON (Stage 2) — edit and re-search
+        <textarea id="filters" rows="4">{}</textarea>
+      </label>
+    </div>
+    <div class="row">
+      <label class="mid">Tag slug for pool check (optional)
+        <input id="tagSlug" placeholder="sweeper" autocomplete="off">
+      </label>
+      <label class="narrow">Top N
+        <input id="k" type="number" min="1" max="100" value="20">
+      </label>
+      <span class="check"><input id="kw" type="checkbox"><label for="kw" style="display:inline;color:inherit;font-size:13px">apply keywords filter</label></span>
+      <button id="useQuery">Embed raw query</button>
+      <button id="useTag">Embed tag label</button>
+      <button id="searchBtn" class="primary">Search</button>
+    </div>
+  </section>
+  <div id="status"></div>
+  <div class="summary" id="summary"></div>
+  <section class="grid" id="grid"></section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let META = null, LAST = null;
+
+async function api(path, body) {
+  const r = await fetch(path, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : undefined);
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+function status(msg, err) { const s=$('status'); s.className = err?'err':''; s.innerHTML = msg; }
+function esc(s){ return (s??'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+async function init() {
+  META = await api('/api/meta');
+  $('meta').textContent = `embedder: ${META.embedding_version}  ·  rewriter: ${META.hyde_model.split('/').pop()}  ·  prompt: ${META.prompt}  ·  eval: ${META.eval_version}`;
+  for (const q of META.eval_queries) {
+    const o = document.createElement('option');
+    o.value = q.id; o.textContent = `${q.id} · ${q.query} [${q.category}, ${q.relevant_count} rel]`;
+    $('evalSel').appendChild(o);
+  }
+}
+$('evalSel').onchange = () => {
+  const q = META.eval_queries.find(x => x.id === $('evalSel').value);
+  if (!q) return;
+  $('query').value = q.query; $('tagSlug').value = q.tag || '';
+  $('embedText').value = q.query; $('filters').value = '{}';
+};
+$('useQuery').onclick = () => { $('embedText').value = $('query').value; };
+$('useTag').onclick = () => { $('embedText').value = $('tagSlug').value.replace(/-/g,' '); };
+
+$('rewriteBtn').onclick = async () => {
+  const query = $('query').value.trim(); if (!query) return status('Type a query first.', true);
+  $('rewriteBtn').disabled = true; status('Rewriting…');
+  try {
+    const r = await api('/api/rewrite', {query});
+    $('filters').value = JSON.stringify(r.filters, null, 2);
+    $('embedText').value = r.hypothetical_card || query;
+    status(r.hypothetical_card ? 'Rewriter filled both boxes. Edit if you like, then Search.' : 'Rewriter returned filters only — embedding the raw query.');
+  } catch (e) { status(esc(e.message), true); }
+  $('rewriteBtn').disabled = false;
+};
+
+async function search() {
+  let filters;
+  try { filters = JSON.parse($('filters').value || '{}'); } catch (e) { return status('Filters box is not valid JSON: ' + esc(e.message), true); }
+  if (!$('embedText').value.trim()) $('embedText').value = $('query').value;
+  const body = { embed_text:$('embedText').value, filters, k:+$('k').value, keywords_filter:$('kw').checked,
+                 eval_id:$('evalSel').value, tag_slug:$('tagSlug').value };
+  $('searchBtn').disabled = true; status('Searching…');
+  try {
+    const r = await api('/api/search', body); LAST = body; render(r);
+    const t = r.timings_ms;
+    status(`${r.candidate_count.toLocaleString()} candidates after filters · embed ${t.embed_ms} ms · search ${t.sql_ms} ms` +
+           (r.warnings.length ? ` · <b>${esc(r.warnings.join('; '))}</b>` : '') + `<br><code>${esc(r.where_sql)}</code>`);
+  } catch (e) { status(esc(e.message), true); $('grid').innerHTML=''; $('summary').innerHTML=''; }
+  $('searchBtn').disabled = false;
+}
+$('searchBtn').onclick = search;
+$('query').onkeydown = e => { if (e.key === 'Enter') { $('embedText').value = $('embedText').value || $('query').value; search(); } };
+
+function render(r) {
+  const n = r.hits.length, s = r.summary, pills = [];
+  if ('judged_relevant' in s) pills.push(`eval-judged relevant: <b>${s.judged_relevant}/${n}</b>`, `unjudged: <b>${s.unjudged}/${n}</b>`);
+  if ('in_tag_pool' in s) pills.push(`in tag pool: <b>${s.in_tag_pool}/${n}</b>`);
+  $('summary').innerHTML = pills.map(p => `<span class="pill">${p}</span>`).join('');
+  $('grid').innerHTML = r.hits.map(h => {
+    const cls = h.eval_judgment === 'relevant' ? 'rel' : h.eval_judgment === 'borderline' ? 'bord' : '';
+    const badges = [];
+    if (h.eval_judgment === 'relevant') badges.push('<span class="b good">eval: relevant</span>');
+    if (h.eval_judgment === 'borderline') badges.push('<span class="b warn">eval: borderline</span>');
+    if (h.eval_judgment === 'unjudged') badges.push('<span class="b mute">eval: unjudged</span>');
+    if (h.in_tag_pool === true) badges.push('<span class="b good">in tag pool</span>');
+    if (h.in_tag_pool === false) badges.push('<span class="b bad">not in tag pool</span>');
+    if (h.edhrec_rank) badges.push(`<span class="b mute">EDHREC #${h.edhrec_rank.toLocaleString()}</span>`);
+    const img = h.image ? `<img loading="lazy" src="${esc(h.image)}" alt="${esc(h.name)}">` : `<div class="noimg">${esc(h.name)}<br>(no image)</div>`;
+    const j = l => `<button data-l="${l}" class="${h.my_judgment===l?'on':''}">${l==='not_relevant'?'not rel.':l}</button>`;
+    return `<article class="card ${cls}" data-id="${h.oracle_id}" data-name="${esc(h.name)}" data-rank="${h.rank}" data-score="${h.score}">
+      <div class="imgwrap">${img}<span class="rank">#${h.rank}</span><span class="score">${h.score}% match</span></div>
+      <div class="body">
+        <div class="name"><a href="${esc(h.scryfall_uri||'#')}" target="_blank" rel="noopener">${esc(h.name)}</a></div>
+        <div class="sub">${esc(h.type_line)} ${esc(h.mana_cost||'')}</div>
+        <div class="badges">${badges.join('')}</div>
+        <details><summary>rules text</summary><p>${esc(h.oracle_text)}</p></details>
+        <div class="judge">${j('relevant')}${j('borderline')}${j('not_relevant')}</div>
+      </div></article>`;
+  }).join('');
+}
+
+$('grid').onclick = async e => {
+  const btn = e.target.closest('.judge button'); if (!btn) return;
+  const card = btn.closest('.card');
+  try {
+    await api('/api/judge', { label:btn.dataset.l, oracle_id:card.dataset.id, name:card.dataset.name, rank:+card.dataset.rank,
+      score:+card.dataset.score, eval_id:LAST.eval_id, query:$('query').value, embed_text:LAST.embed_text });
+    card.querySelectorAll('.judge button').forEach(b => b.classList.toggle('on', b === btn));
+  } catch (err) { status(esc(err.message), true); }
+};
+init().catch(e => status(esc(e.message), true));
+</script>
+</body>
+</html>
