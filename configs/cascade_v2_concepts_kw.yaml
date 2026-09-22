@@ -1,0 +1,13 @@
+# v2 prompt + keywords filter ON (v2 emits only user-typed keywords, so the selective-strictness objection to v1 no longer applies)
+name: "cascade_v2_concepts_kw"
+description: >
+  v2 prompt: concept phrases embedded, explicit-only filters (keywords filter off, matching the v1 rows)
+eval_set: "data/eval/queries_v1_draft.yaml"
+retrieval:
+  type: cascade
+  stage1: concepts
+  prompt: prompts/hyde_v2.yaml
+  sql: true
+  keywords_filter: true
+  k: 10
+  set_metrics: true

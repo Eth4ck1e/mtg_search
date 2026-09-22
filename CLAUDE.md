@@ -137,7 +137,8 @@ mtg_search/
 │   ├── eval_lookup.py                   # Scryfall candidate finder
 │   ├── render_review.py                 # Eval-set HTML reviewer
 │   ├── evaluate.py                      # Run a config through src/search.py, write experiment_runs row
-│   └── dashboard.py (+ dashboard.html)  # Local results-review UI: editable text/filters, card grid, judgments
+│   ├── dashboard.py (+ dashboard.html)  # Local results-review UI: editable text/filters, card grid, judgments
+│   └── scryfall_comparator.py           # Expert-query result parity + query-complexity proxy (paper's primary comparator)
 ├── src/
 │   ├── config.py                        # Pydantic Settings (single source of truth)
 │   ├── logging_utils.py                 # PipelineRun JSONL context manager
@@ -244,6 +245,10 @@ PYTHONPATH="$PWD" .venv/bin/python -m src.search "cheap red removal" --show-sql
 # Results-review dashboard (http://localhost:8765; Rewrite button needs the MLX server, Search does not)
 PYTHONPATH="$PWD" .venv/bin/python scripts/dashboard.py
 # Judgments append to data/eval/judgments_pending.jsonl (raw material for eval v2)
+
+# Scryfall comparator (expert queries: data/eval/scryfall_expert_queries_v1.yaml; sets cached in data/eval/scryfall_results_v1.json)
+PYTHONPATH="$PWD" .venv/bin/python scripts/scryfall_comparator.py fetch            # 1 req/s, only re-fetches changed queries
+PYTHONPATH="$PWD" .venv/bin/python scripts/scryfall_comparator.py compare --row <experiment_runs id with set_metrics>
 
 # Reporting (M5+)
 PYTHONPATH="$PWD" .venv/bin/python scripts/generate_report.py --since 2026-09-01 --out docs/reports/

@@ -368,6 +368,35 @@ Explicit-only filtering raised coverage from 68% to 81% of each target set — "
 
 *[DRAFTED — REVIEW; journal §5i]* The two interventions are not independent. On the base encoder the lighter v2 rewriter is *worse* than v1: a bare concept phrase such as "ramp" carries no signal for an encoder that never learned the domain's vocabulary, whereas a paragraph of hypothetical rules text at least overlaps lexically with card text. On the tuned encoder the same rewriter is the strongest configuration measured. Fine-tuning the encoder is what makes the simpler, cheaper rewriter viable; neither half delivers the result alone. With a final output rule that omits unset fields, the v2 rewriter produces about 28 output tokens per query and runs in 0.77 s on the same 8B model, against 1.19 s for v1 — the simplification claim now holds in wall-clock terms as well as in request size, at a cost of a few queries whose filters shifted under the changed prompt (R-precision 0.558 → 0.510 on the tuned encoder across that change).
 
+### 5.7 Comparison against expert Scryfall queries
+
+*[DRAFTED — REVIEW; journal §5j, rows 72–79. Expert queries in `data/eval/scryfall_expert_queries_v1.yaml` are LLM-drafted and reviewed by the author; result sets fetched 2026-09-22.]*
+
+For each evaluation query an expert Scryfall search was written in two forms: with the community oracle tags (`otag:`) an expert would use today, and without them, from Oracle text and attributes alone. Each was run through Scryfall's search API (all pages, one request per second) and the result set restricted to the corpus. The cascade's full ranking was then scored against that set: R-precision (the fraction of the first |S| results that are in S), Jaccard overlap at depth |S|, and the depth needed to see 90% of S.
+
+**Table 9 — Result parity with the expert's Scryfall result set (n = 26).**
+
+| Cascade configuration | vs expert (tags) R-prec | Jaccard | Depth to 90% | vs expert (no tags) R-prec |
+|---|---|---|---|---|
+| v1 rewriter, base encoder (control) | 0.343 | 0.273 | 1.32× | 0.351 |
+| v2 rewriter, tuned encoder | 0.523 | 0.446 | 0.98× | 0.391 |
+| v2 rewriter, tuned encoder, keyword filter on | **0.565** | **0.492** | **0.95×** | — |
+
+A depth below 1.0× means the user sees 90% of the expert's set before scrolling past as many cards as the set contains. Per query, the best configuration reaches parity of 0.85 or higher on ten of the 26 queries (instants that cost 1 mana 1.00, haste creatures 1.00, tutor 0.96, cheap blue counterspells 0.95, extra turns 0.94, counterspells 0.92, fetch lands 0.91, instants that draw cards 0.86, red creatures under 3 mana 0.85) and fails on the rewriter's known knowledge-gap cases. One "failure" is instructive: for *a card that destroys all creatures* the expert wrote `o:"destroy all creatures"` (84 cards) while the cascade retrieved the whole sweeper category (870 cards) — broader than the expert, not wrong.
+
+The comparator is itself imperfect. Against the hand-curated judgments, the tagged expert sets have 11% precision and 90% recall; the untagged sets 17% and 72%. This is the annotation-hole effect of Section 5.4 seen from the other side, and it is why parity with the expert set rather than precision against thirty judged archetypes is the number reported.
+
+**Table 10 — What the user had to type (mean over 26 queries).**
+
+| | Plain language (this work) | Scryfall, tags allowed | Scryfall, no tags |
+|---|---|---|---|
+| Length | 3.8 words | 20 characters | 59 characters |
+| Operators | 0 | 1.5 | 3.3 |
+| Requires `otag:` | — | every jargon query | — |
+| Boolean grouping or negation | 0 | rare | common |
+
+The expert path is short only because community tags exist, and using them requires knowing the tag's exact slug: `sweeper`, not "board wipe"; `counterspell-free`; `mana-dork`. Without tags the same intent takes three operators, quoted Oracle phrases, and boolean grouping, and still reaches only 72% recall of the judged cards. The cascade takes the 3.8-word query with no syntax and reaches 0.57 R-precision against the tagged expert's result set. That is the accessibility claim of Section 1.1 with a measurement attached: not that the system beats Scryfall, but that it reaches most of what an expert reaches without the user learning the grammar.
+
 *[TODO — eval v2: pool top-10 across all logged rows, judge the holes, freeze; pairs_v2 with doc-like anchors and synthetic queries, retrain, re-run grid; hyde_v2 with a one-sentence hypothetical and trimmed rules (measure tokens/latency); Scryfall comparator; direct-tag-lookup ablation (expected to fail on broad tags for the same reason — the argument for embedding over lookup).]*
 
 ---

@@ -415,6 +415,37 @@ DB state: `cards.embedding` holds **tuned** vectors (left in place so the dashbo
 
 Committed rows: 56 (v2 tuned, omit-nulls, pre-fix), 57–58 (v2 base), 61 (v2 tuned, fixed).
 
+### 5j. Scryfall comparator — result parity and query complexity (2026-09-22, rows 68–79)
+
+**What was built.** `data/eval/scryfall_expert_queries_v1.yaml`: for each of the 26 eval queries, the Scryfall search an expert would write, in two variants — `expert` (community `otag:` allowed) and `no_tag` (Oracle text + attributes only, the pre-Tagger baseline). Drafted by Claude (a different model family from the Llama rewriter; `scripts/craft_scryfall_queries.py` will regenerate via the API once a key is set); **Mitchell reviews every query**. `scripts/scryfall_comparator.py fetch` pulled all 52 result sets through `/cards/search` at 1 req/s (Scryfall's hard limit is 2/s) with the required headers — 52 queries, ~300 pages, cached in `data/eval/scryfall_results_v1.json` (committed; oracle_ids only, ~230 KB). `compare --row N` scores a logged cascade row's stored ranking (`ranking_top`, now saved for every query when `set_metrics` is on) against each Scryfall set restricted to our corpus.
+
+**Result parity — cascade ranking vs the expert's result set (n = 26):**
+
+| Cascade row | vs `expert` (otag) R-prec | Jaccard@\|S\| | depth90 | vs `no_tag` R-prec | Jaccard |
+|---|---|---|---|---|---|
+| v1 prompt, base embedder (control, row 73) | 0.343 | 0.273 | 1.32× | 0.351 | 0.280 |
+| v2 prompt, tuned embedder (row 72) | 0.523 | 0.446 | 0.98× | 0.391 | 0.310 |
+| **v2 + tuned + keywords filter on (row 78)** | **0.565** | **0.492** | **0.95×** | — | — |
+
+Per query (v2 tuned, expert sets): instants that cost 1 mana 1.00, haste creatures 1.00 (with keywords on), tutor 0.96, cheap blue counterspells 0.95, extra turns 0.94, counterspells 0.92, fetch lands 0.91, instants that draw cards 0.86, red creatures under 3 mana 0.85, recursion 0.74, wheels 0.74, flicker 0.73, ramp 0.68, board wipes 0.61. **Depth-to-90 % below 1.0×** means a user paging the cascade's results sees 90 % of the expert's set before having scrolled past as many cards as the set contains.
+
+Failures are the known ones: "destroy target artifact" 0.09 (inferred Instant filter), "a card that destroys all creatures" 0.08 (the concept "sweeper" retrieves the whole 870-card sweeper pool, but the expert's `o:"destroy all creatures"` set is 84 cards — the cascade is *broader* than the expert here, which is not obviously wrong), "burn spell that deals 3 damage" 0.03, the tutor-a-creature query 0.00, and the prowess-style query 0.00 (Scryfall's own set for that one has 6 % recall against the judgments — the expert query is bad too).
+
+**The comparator is itself imperfect, and that matters.** Scryfall's expert `otag:` sets have **11 % precision and 90 % recall** against our eval judgments; the `no_tag` sets 17 % / 72 %. Tags are categories; judgments are archetypes (§5e) — the same annotation-hole effect from the other side. Parity with the expert set, not precision against the 30 judged archetypes, is the paper's number.
+
+**Query complexity — what the user would have had to type (mean over 26):**
+
+| | plain language (ours) | Scryfall `expert` | Scryfall `no_tag` |
+|---|---|---|---|
+| length | 3.8 words | 20 chars | 59 chars |
+| operators | 0 | 1.5 | 3.3 |
+| needs `otag:` | — | 100 % of jargon queries | 0 % |
+| boolean / grouping / negation | 0 | rare | common (`(o:… or o:…) -t:land`) |
+
+The expert path is short *only because* `otag:` exists — every jargon query needs it, and a user has to know the tag's exact slug (`sweeper`, not `board wipe`; `mana-dork`; `counterspell-free`). Without tags, the same intent takes three operators, quoted Oracle phrases, and boolean grouping, and still lands at 72 % recall. The cascade takes the 3.8-word query and reaches 0.57 R-precision against the tagged expert's set with no syntax at all. That is the accessibility claim (§4, paper §1.1) with a number on it.
+
+**Caveats.** The expert queries are drafted, not collected from real experts — Mitchell's review is the check; a small expert-user sample is future work. 20 of 21 tag-mapped targets were seen in training (the `no_tag` column is the independent check: 0.39 vs 0.35 for the control). Rows 74–79 in `experiment_runs` (kind `scryfall_comparator`).
+
 ## 6. CLAUDE.md revisions
 
 §5 (do not fine-tune the embedder on keyword definitions), §6 (fine-tuning deferred to M6), and §11 (anti-suggestion) all encode the pre-pivot position. Revised today to: reminder-text augmentation stays the corpus-side lever; tag-derived contrastive fine-tuning is the query-side lever, motivated by the 2026-09-18 test evidence and gated on the base-embedder control run in §5 above. Hand-written definition dictionaries remain banned.

@@ -1,0 +1,99 @@
+# Expert Scryfall queries — v1 (2026-09-22)
+#
+# For each eval query, the Scryfall search an expert user would write to get
+# the same results the plain-language query asks for. Two variants:
+#   expert  — best query, community oracle tags (otag:) allowed
+#   no_tag  — best query WITHOUT otag:, i.e. what an expert had to write from
+#             Oracle text and attributes alone (the pre-Tagger baseline)
+#
+# The comparator (scripts/scryfall_comparator.py) runs both through
+# api.scryfall.com/cards/search, restricts results to our corpus, and scores
+# the cascade's ranking against each set (result parity) alongside the
+# syntactic complexity of the query a user would have had to type.
+#
+# DRAFTED by Claude (interactive session, Claude Fable 5.1) — a different
+# model family from the Llama 3.1 rewriter, so the comparator is not the
+# rewriter grading itself. `scripts/craft_scryfall_queries.py` regenerates
+# this file via the Claude API when ANTHROPIC_API_KEY is set. Mitchell reviews
+# every query for realism before the numbers go in the paper.
+
+version: v1
+queries:
+  q_001:
+    expert: 't:creature kw:flying'
+    no_tag: 't:creature kw:flying'
+  q_002:
+    expert: 'otag:removal-artifact o:destroy'
+    no_tag: 'o:"destroy target artifact"'
+  q_003:
+    expert: 't:instant otag:draw'
+    no_tag: 't:instant o:"draw"'
+  q_004:
+    expert: 'otag:burn-any o:"3 damage"'
+    no_tag: 'o:"deals 3 damage to any target"'
+  q_005:
+    expert: 't:creature kw:haste'
+    no_tag: 't:creature kw:haste'
+  q_006:
+    expert: 'otag:ramp'
+    no_tag: '(o:"search your library for" o:"land card" o:"onto the battlefield") or (o:"add" o:"mana" -t:land -o:"{T}: Add")'
+  q_007:
+    expert: 'otag:counterspell'
+    no_tag: 'o:"counter target" (t:instant or t:creature or t:enchantment)'
+  q_008:
+    expert: 'otag:sweeper'
+    no_tag: 'o:"destroy all creatures" or o:"exile all creatures" or (o:"all creatures get -" o:"until end of turn") or o:"destroy all nonland permanents"'
+  q_009:
+    expert: 'otag:removal'
+    no_tag: '(o:"destroy target" or o:"exile target") (o:creature or o:permanent or o:"nonland permanent")'
+  q_010:
+    expert: 'otag:draw-engine'
+    no_tag: '-t:instant -t:sorcery (o:"whenever" or o:"at the beginning") o:"draw a card"'
+  q_011:
+    expert: 'otag:tutor'
+    no_tag: 'o:"search your library for a" -o:"basic land card" -t:land'
+  q_012:
+    expert: 'otag:recursion'
+    no_tag: 'o:"from your graveyard" (o:"return target" or o:"return up to" or o:"put target")'
+  q_013:
+    expert: 'otag:fetchland'
+    no_tag: 't:land o:"search your library for" o:"land card" o:"sacrifice"'
+  q_014:
+    expert: 'otag:flicker'
+    no_tag: 'o:"exile" o:"return" o:"to the battlefield under" (o:"target creature" or o:"target permanent" or o:"another target")'
+  q_015:
+    expert: 't:creature o:"when" o:"enters"'
+    no_tag: 't:creature o:"when" o:"enters"'
+  q_016:
+    expert: 'otag:mana-dork'
+    no_tag: 't:creature o:"{T}: Add"'
+  q_017:
+    expert: 'otag:wheel'
+    no_tag: 'o:"discards" o:"hand" o:"draws seven cards"'
+  q_018:
+    expert: 'otag:extra-turn'
+    no_tag: 'o:"take an extra turn"'
+  q_019:
+    expert: 'otag:counterspell-free'
+    no_tag: 'o:"counter target spell" (o:"rather than pay" or o:"without paying" or mv=0)'
+  q_020:
+    expert: 't:creature c:r mv<3'
+    no_tag: 't:creature c:r mv<3'
+  q_021:
+    expert: 't:instant mv=1'
+    no_tag: 't:instant mv=1'
+  q_022:
+    expert: 'otag:tutor-creature o:"onto the battlefield"'
+    no_tag: 'o:"search your library for a creature card" o:"onto the battlefield"'
+  q_023:
+    expert: 't:creature otag:cast-trigger-you o:"+1/+1"'
+    no_tag: 't:creature o:"whenever you cast" o:"+1/+1"'
+  q_024:
+    expert: 'otag:sweeper o:"destroy all creatures"'
+    no_tag: 'o:"destroy all creatures"'
+  q_025:
+    expert: 'otag:pinger c:r mv<3'
+    no_tag: 'c:r mv<3 o:"{T}:" o:"deals 1 damage"'
+  q_026:
+    expert: 'otag:counterspell c:u mv<=2'
+    no_tag: 'c:u mv<=2 o:"counter target"'

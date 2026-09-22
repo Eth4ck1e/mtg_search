@@ -56,6 +56,8 @@ from src.eval.metrics import (
 from src.logging_utils import PipelineRun
 from src.search import FilterPolicy, Searcher, SearchResult, Stage1Mode
 
+RANKING_KEEP = 2000  # oracle_ids of the full ranking stored per query (set_metrics rows)
+
 
 def _build_per_query_record(
     query: dict[str, Any],
@@ -264,13 +266,17 @@ def main() -> int:
                 record = _build_per_query_record(
                     q, result, metrics, latency_ms, relevant_ids, borderline_ids
                 )
-                if want_set and q["id"] in tag_pools:
-                    slug, pool = tag_pools[q["id"]]
+                if want_set:
                     filters = result.hyde.filters if (use_sql and result.hyde) else None
                     ranking = searcher.rank_prepared(result.query_text, filters)
-                    sm = compute_set_metrics(ranking, pool)
-                    set_metrics_list.append(sm)
-                    record["set_metrics"] = {"tag": slug, **sm.__dict__}
+                    # Top of the full ranking for EVERY query, so comparators
+                    # (Scryfall) can score this row later without re-running.
+                    record["ranking_top"] = ranking[:RANKING_KEEP]
+                    if q["id"] in tag_pools:
+                        slug, pool = tag_pools[q["id"]]
+                        sm = compute_set_metrics(ranking, pool)
+                        set_metrics_list.append(sm)
+                        record["set_metrics"] = {"tag": slug, **sm.__dict__}
                 per_query.append(record)
                 run.processed()
 
