@@ -138,3 +138,68 @@ def _percentile(sorted_values: list[float], p: float) -> float:
     if f == c:
         return sorted_values[f]
     return sorted_values[f] + (sorted_values[c] - sorted_values[f]) * (k - f)
+
+
+@dataclass(frozen=True)
+class SetMetrics:
+    """Set-retrieval measures for one query against a full target set.
+
+    Used when the goal is "every card that could match, in descending order"
+    (journal 2026-09-18 §5f) rather than top-K precision over archetypes.
+    ``ranked_ids`` is the complete ranking inside the Stage 2 candidate set.
+    """
+
+    target_size: int
+    ranked_size: int
+    r_precision: float  # precision at depth == target_size
+    precision_at_100: float
+    recall_at_500: float
+    depth_to_90: int | None  # rank at which 90% of the reachable target is seen
+    reachable: int  # target members present in the ranking (inside the candidate set)
+    r_precision_reachable: float = 0.0  # precision at depth == reachable: Stage 3 quality
+    # given what Stage 2 admitted. r_precision charges Stage 2's exclusions
+    # to the whole cascade; this one does not.
+
+
+def compute_set_metrics(ranked_ids: list[str], target_ids: set[str]) -> SetMetrics:
+    """R-precision, P@100, R@500, depth-to-90% of ``ranked_ids`` against ``target_ids``.
+
+    Target members outside the ranking (filtered out by Stage 2) count against
+    recall but cannot be "found" — ``reachable`` reports how many were inside.
+    """
+    n = len(target_ids)
+    hits = [oid in target_ids for oid in ranked_ids]
+    reachable = sum(hits)
+    if n == 0:
+        return SetMetrics(0, len(ranked_ids), 0.0, 0.0, 0.0, None, 0)
+    r_prec = sum(hits[:n]) / n
+    r_prec_reach = (sum(hits[:reachable]) / reachable) if reachable else 0.0
+    p100 = sum(hits[:100]) / min(100, max(len(hits), 1))
+    r500 = sum(hits[:500]) / n
+    depth: int | None = None
+    if reachable:
+        need = -(-9 * reachable // 10)  # ceil(0.9 * reachable)
+        seen = 0
+        for rank, h in enumerate(hits, 1):
+            seen += h
+            if seen >= need:
+                depth = rank
+                break
+    return SetMetrics(n, len(ranked_ids), r_prec, p100, r500, depth, reachable, r_prec_reach)
+
+
+def aggregate_set_metrics(set_metrics: list[SetMetrics]) -> dict[str, float]:
+    """Macro-average over queries; depth reported as median multiple of target size."""
+    if not set_metrics:
+        return {"set_n_queries": 0}
+    n = len(set_metrics)
+    depths = sorted(sm.depth_to_90 / sm.target_size for sm in set_metrics if sm.depth_to_90)
+    return {
+        "set_n_queries": n,
+        "set_r_precision": sum(sm.r_precision for sm in set_metrics) / n,
+        "set_r_precision_reachable": sum(sm.r_precision_reachable for sm in set_metrics) / n,
+        "set_precision_at_100": sum(sm.precision_at_100 for sm in set_metrics) / n,
+        "set_recall_at_500": sum(sm.recall_at_500 for sm in set_metrics) / n,
+        "set_depth90_x_target_median": _percentile(depths, 50) if depths else 0.0,
+        "set_reachable_frac": sum(sm.reachable / sm.target_size for sm in set_metrics) / n,
+    }

@@ -15,6 +15,9 @@ Config contract (``retrieval`` block)::
       keywords_filter: false   # FilterPolicy.keywords
       k: 10
       label_oracle: data/eval/tag_label_oracle_v1.yaml   # optional: embed tag LABELS instead of query text
+      set_metrics: true        # also rank the WHOLE candidate set and score it against
+                               # each query's tag pool (R-precision, P@100, depth-to-90%);
+                               # target mapping comes from data/eval/tag_label_oracle_v1.yaml
 
 Every run logs the Stage 1 output, the compiled WHERE clause, the candidate
 count, and per-stage timings for each query, so the grid in the 2026-09-18
@@ -43,8 +46,11 @@ from src.config import settings
 from src.db.experiment_log import log_experiment
 from src.eval.metrics import (
     QueryMetrics,
+    SetMetrics,
     aggregate_metrics,
+    aggregate_set_metrics,
     compute_query_metrics,
+    compute_set_metrics,
 )
 from src.logging_utils import PipelineRun
 from src.search import FilterPolicy, Searcher, SearchResult, Stage1Mode
@@ -117,6 +123,30 @@ def _load_label_oracle(path: Path) -> dict[str, str]:
     return {qid: ", ".join(label_by_slug[s] for s in tags) for qid, tags in wanted.items() if tags}
 
 
+def _load_tag_pools(path: Path) -> dict[str, tuple[str, set[str]]]:
+    """query_id -> (tag slug, closure pool of in-corpus oracle_ids) for mapped queries."""
+    spec = yaml.safe_load(path.read_text(encoding="utf-8"))["queries"]
+    out: dict[str, tuple[str, set[str]]] = {}
+    with psycopg.connect(settings.database_url) as conn, conn.cursor() as cur:
+        for qid, entry in spec.items():
+            tags = entry.get("tags") or []
+            if not tags:
+                continue
+            cur.execute(
+                """
+                SELECT DISTINCT ct.oracle_id::text
+                FROM oracle_tags t
+                JOIN oracle_tag_closure cl ON cl.ancestor_id = t.id
+                JOIN card_tags ct ON ct.tag_id = cl.descendant_id
+                JOIN (SELECT DISTINCT oracle_id FROM cards) c ON c.oracle_id = ct.oracle_id
+                WHERE t.slug = %s
+                """,
+                (tags[0],),
+            )
+            out[qid] = (tags[0], {r[0] for r in cur.fetchall()})
+    return out
+
+
 def _parse_retrieval(cfg: dict[str, Any]) -> tuple[Stage1Mode, bool, FilterPolicy, int]:
     retrieval = cfg.get("retrieval", {})
     rtype = retrieval.get("type", "cascade")
@@ -168,6 +198,8 @@ def main() -> int:
     config_name = cfg.get("name", args.config.stem)
     oracle_path = cfg.get("retrieval", {}).get("label_oracle")
     label_oracle = _load_label_oracle(Path(oracle_path)) if oracle_path else {}
+    want_set = bool(cfg.get("retrieval", {}).get("set_metrics", False))
+    tag_pools = _load_tag_pools(Path("data/eval/tag_label_oracle_v1.yaml")) if want_set else {}
 
     with PipelineRun(
         "evaluate",
@@ -181,6 +213,7 @@ def main() -> int:
             "keywords_filter": policy.keywords,
             "k": k,
             "label_oracle": oracle_path,
+            "set_metrics": want_set,
             "dry_run": args.dry_run,
         },
     ) as run:
@@ -197,6 +230,7 @@ def main() -> int:
 
         per_query: list[dict[str, Any]] = []
         per_query_metrics: list[QueryMetrics] = []
+        set_metrics_list: list[SetMetrics] = []
         latencies_ms: list[float] = []
 
         with Searcher(policy=policy) as searcher:
@@ -220,14 +254,22 @@ def main() -> int:
 
                 latencies_ms.append(latency_ms)
                 per_query_metrics.append(metrics)
-                per_query.append(
-                    _build_per_query_record(
-                        q, result, metrics, latency_ms, relevant_ids, borderline_ids
-                    )
+                record = _build_per_query_record(
+                    q, result, metrics, latency_ms, relevant_ids, borderline_ids
                 )
+                if want_set and q["id"] in tag_pools:
+                    slug, pool = tag_pools[q["id"]]
+                    filters = result.hyde.filters if (use_sql and result.hyde) else None
+                    ranking = searcher.rank_prepared(result.query_text, filters)
+                    sm = compute_set_metrics(ranking, pool)
+                    set_metrics_list.append(sm)
+                    record["set_metrics"] = {"tag": slug, **sm.__dict__}
+                per_query.append(record)
                 run.processed()
 
         aggregate = aggregate_metrics(per_query_metrics, latencies_ms)
+        if want_set:
+            aggregate.update(aggregate_set_metrics(set_metrics_list))
         run.note(**{f"agg_{key}": val for key, val in aggregate.items()})
 
         # ----- Stdout summary -----
@@ -244,6 +286,20 @@ def main() -> int:
             ("latency mean (ms)", aggregate["latency_mean"]),
         ]:
             print(f"    {label:20s} {value:.4f}")
+        if want_set:
+            print()
+            print(
+                f"  === Set retrieval vs tag pools (n={aggregate['set_n_queries']}, inside Stage 2 set) ==="
+            )
+            for label, key in [
+                ("R-precision", "set_r_precision"),
+                ("R-prec (reachable)", "set_r_precision_reachable"),
+                ("P@100", "set_precision_at_100"),
+                ("R@500", "set_recall_at_500"),
+                ("reachable frac", "set_reachable_frac"),
+                ("depth90 / target", "set_depth90_x_target_median"),
+            ]:
+                print(f"    {label:20s} {aggregate[key]:.4f}")
 
         print()
         print("  === Per-query (sorted by precision@10) ===")

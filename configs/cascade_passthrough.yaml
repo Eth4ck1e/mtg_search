@@ -23,6 +23,7 @@ retrieval:
   sql: true
   keywords_filter: false
   k: 10
+  set_metrics: true
 
 notes: >
   Grid cell (raw query pass-through). Run once per embedder checkpoint;

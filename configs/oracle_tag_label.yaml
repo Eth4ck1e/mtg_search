@@ -23,6 +23,7 @@ retrieval:
   sql: true
   keywords_filter: false
   k: 10
+  set_metrics: true
   label_oracle: data/eval/tag_label_oracle_v1.yaml
 
 notes: >

@@ -18,6 +18,7 @@ retrieval:
   sql: false
   keywords_filter: false
   k: 10
+  set_metrics: true
 
 notes: >
   Ablation row. Pure-structural queries (q_019–q_021) are expected to

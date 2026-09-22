@@ -345,6 +345,31 @@ Under the goal as Mitchell states it, the ordering of systems **inverts** relati
 - Add the EDHREC sort as a display option in the dashboard (data already in `raw`).
 - `pairs_v2` doc-like anchors drop in priority: hypothetical text is no longer the mode we are optimising for.
 
+### 5g. Set metrics logged inside the cascade — rows 38–39 (base) and 42–46 (tuned), 2026-09-22
+
+`scripts/evaluate.py` now ranks the **entire Stage 2 candidate set** (`Searcher.rank_prepared`, no LIMIT — pgvector scores every candidate regardless) and scores it against the query's tag pool. Two R-precisions are reported: against the full pool (charges Stage 2's exclusions to the cascade) and against the *reachable* pool (Stage 3's ranking quality given what Stage 2 admitted). `reachable frac` is Stage 2 on its own.
+
+| Row | Config | Embedder | R-prec | R-prec (reachable) | P@100 | reachable | depth90 / target |
+|---|---|---|---|---|---|---|---|
+| 38 | hyde v1 + SQL (control) | base | 0.215 | — | 0.444 | 0.68 | 8.4× |
+| 39 | passthrough + SQL | base | 0.185 | — | 0.343 | 0.68 | 8.4× |
+| 42 | hyde v1 + SQL | tuned | 0.326 | 0.517 | 0.572 | 0.68 | 3.0× |
+| 44 | hyde v1, no SQL | tuned | 0.459 | 0.459 | 0.566 | 1.00 | 3.8× |
+| 45 | raw query, no SQL | tuned | 0.598 | 0.598 | 0.736 | 1.00 | 3.4× |
+| 43 | **passthrough + SQL** | tuned | 0.456 | **0.641** | 0.713 | 0.68 | **1.2×** |
+| 46 | tag-label oracle + SQL | tuned | 0.536 | **0.728** | 0.765 | 0.68 | **1.1×** |
+
+(Rows 38–39 predate the reachable column; re-run when the base vectors are back.)
+
+**Three readings.**
+1. **Stage 2 over-narrows on jargon queries, and it costs a third of the set.** `reachable = 0.68` on every filtered row. Split by cause: user-explicit narrowing is correct and the tag pool is simply the wrong target ("instants that draw cards" → draw ∩ instants; "cheap blue counterspells"); model-inferred narrowing is the loss — "ramp spells" gets `types: [Instant, Sorcery]` and drops 1,784 ramp permanents; "burn spell that deals 3 damage" gets `cmc = 1` (hallucinated); "mana dorks" and "pingers" filter to zero. This is the selective-strictness problem (prompt design notes §2) measured at the set level.
+2. **Given what Stage 2 admits, Stage 3 on the tuned embedder ranks well.** R-prec(reachable) 0.64 for the user's own words, 0.73 for tag labels; depth-to-90 % drops to 1.1–1.2× target. Compared with raw/no-SQL (0.60, 3.4×), the filter *helps* ranking inside the admitted set even as it hurts coverage — the two effects the ablation table has to show separately.
+3. **Hypothetical text loses on the tuned embedder either way** (0.52 reachable with SQL, 0.46 without) — consistent with §5c/§5f: the v1 prompt's paragraph-length rewrite is the wrong query-side shape once the encoder knows the vocabulary.
+
+**Fix order.** (a) Fix the target: for filtered queries, intersect the tag pool with the *user-explicit* constraint so the metric stops charging correct narrowing — add an optional `target_filter` per query to `tag_label_oracle_v1.yaml`. (b) Fix Stage 2: the v2 prompt must stop inferring `types`/`cmc`/`power` from jargon (rule: filters come only from words the user typed), and the keywords-off policy should extend to inferred types. Both are prompt work, which is the next task.
+
+DB state: `cards.embedding` holds **tuned** vectors (left in place so the dashboard reviews the tuned model).
+
 ## 6. CLAUDE.md revisions
 
 §5 (do not fine-tune the embedder on keyword definitions), §6 (fine-tuning deferred to M6), and §11 (anti-suggestion) all encode the pre-pivot position. Revised today to: reminder-text augmentation stays the corpus-side lever; tag-derived contrastive fine-tuning is the query-side lever, motivated by the 2026-09-18 test evidence and gated on the base-embedder control run in §5 above. Hand-written definition dictionaries remain banned.

@@ -18,6 +18,7 @@ retrieval:
   stage1: raw
   sql: false
   k: 10
+  set_metrics: true
 
 notes: >
   Grid cell (raw, no filters). Pure-structural queries (q_019–q_021) score

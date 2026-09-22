@@ -157,3 +157,35 @@ def test_percentile_interpolates_correctly() -> None:
     assert _percentile(values, 50) == 30.0
     # 95th percentile of 5 values: interp between index 3 (40) and 4 (50)
     assert _percentile(values, 95) == 48.0
+
+
+def test_set_metrics_perfect_ranking() -> None:
+    from src.eval.metrics import compute_set_metrics
+
+    target = {"a", "b", "c"}
+    sm = compute_set_metrics(["a", "b", "c", "x", "y"], target)
+    assert sm.r_precision == 1.0
+    assert sm.reachable == 3
+    assert sm.depth_to_90 == 3  # ceil(0.9*3)=3 hits seen at rank 3
+    assert sm.recall_at_500 == 1.0
+
+
+def test_set_metrics_filtered_out_targets_reduce_reachable() -> None:
+    from src.eval.metrics import aggregate_set_metrics, compute_set_metrics
+
+    target = {"a", "b", "c", "d"}
+    sm = compute_set_metrics(["x", "a", "y", "b"], target)  # c, d outside the candidate set
+    assert sm.reachable == 2
+    assert sm.r_precision == 0.5  # top-4 holds 2 of the 4 target members
+    assert sm.r_precision_reachable == 0.5  # top-2 (reachable=2) holds 1 member: "a"
+    assert sm.depth_to_90 == 4  # need ceil(0.9*2)=2 hits -> rank 4
+    agg = aggregate_set_metrics([sm])
+    assert agg["set_reachable_frac"] == 0.5
+    assert agg["set_depth90_x_target_median"] == 1.0
+
+
+def test_set_metrics_empty_target() -> None:
+    from src.eval.metrics import compute_set_metrics
+
+    sm = compute_set_metrics(["a"], set())
+    assert sm.target_size == 0 and sm.depth_to_90 is None

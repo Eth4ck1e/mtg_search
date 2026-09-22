@@ -24,6 +24,7 @@ retrieval:
   sql: true
   keywords_filter: false
   k: 10
+  set_metrics: true
 
 notes: >
   Grid cell (hypothetical text, base embedder). Requires mlx_lm.server on

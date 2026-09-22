@@ -282,6 +282,17 @@ _SEARCH_SQL = """
 
 _COUNT_SQL = "SELECT COUNT(DISTINCT oracle_id) FROM cards WHERE {where}"
 
+# Full ranking of the candidate set (ids only, best face per card). No LIMIT:
+# pgvector scores every candidate regardless, so this costs the same as a
+# top-K search plus the transfer of ~1 row per candidate card.
+_RANK_SQL = """
+    SELECT oracle_id::text, MIN(embedding <=> %(vec)s) AS distance
+    FROM cards
+    WHERE {where}
+    GROUP BY oracle_id
+    ORDER BY distance
+"""
+
 
 @dataclass
 class SearchHit:
@@ -384,6 +395,28 @@ class Searcher:
             for r in rows
         ]
         return where, candidate_count, hits
+
+    def rank_prepared(
+        self,
+        embed_text: str,
+        filters: HyDEFilters | None,
+        *,
+        policy: FilterPolicy | None = None,
+    ) -> list[str]:
+        """The complete ranking (oracle_ids, best first) inside the Stage 2 set.
+
+        For set-retrieval metrics (journal §5f): everything Stage 2 admits,
+        ordered by Stage 3. Same filter compilation as :meth:`search_prepared`.
+        """
+        where_clauses, params = build_where(filters, policy or self.policy)
+        vec = self.embed_query(embed_text)
+        where = " AND ".join(
+            ["embedding IS NOT NULL", "embedding_version = %(ver)s", *where_clauses]
+        )
+        params = {**params, "ver": self.embedding_version, "vec": vec}
+        with self.conn.cursor() as cur:
+            cur.execute(_RANK_SQL.format(where=where), params)
+            return [r[0] for r in cur.fetchall()]
 
     def search_prepared(
         self,
