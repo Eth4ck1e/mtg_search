@@ -334,6 +334,10 @@ Under the goal as Mitchell states it, the ordering of systems **inverts** relati
 2. **A ranking is not a set.** Scryfall's result ends; ours is all 31k cards in order. "Every card that could match" needs a stopping rule — a similarity threshold, a score-gap heuristic, or simply paging with the score shown. Depth-to-90 % at 1.8 × pool says a naive cutoff would either truncate the set or pad it ~45 % with non-members. Choosing and evaluating that cutoff is now a real design item.
 3. Tag membership is community-curated and incomplete; some "non-members" in the top ranks are untagged true matches (the generalisation benefit), which set metrics against the pool under-credit. The dashboard judgments measure that.
 
+**Mitchell's corrections (2026-09-22).**
+1. Only queries with no SQL component rank the full 31k corpus. In the control run 15 of 26 eval queries carried filters, with candidate sets of 3 to 17,428 cards; on constrained queries Stage 2 already leaves a set close to the target size. So the unbounded-ranking concern applies to the 11 pure-jargon queries, and Table 5 (run with no filters) is pessimistic for the filtered majority. The set-retrieval probe should run **with filters on**, measuring R-precision inside the Stage 2 candidate set — that is the cascade's number, not the embedder's.
+2. **No stopping rule.** Restricting the returned set has no computational value: pgvector scores every candidate in the WHERE set regardless of LIMIT, so a threshold saves nothing. Results are the full ranked candidate set; the interface soft-caps with "load more" purely to bound payload and rendering; the match score is shown so users decide how far into the tail to dig. Depth-to-90 % remains a *ranking-quality* measure, not a cutoff. Caveat 2 above is withdrawn.
+
 **Revised plan.**
 - Primary metrics become R-precision / P@100 / depth-to-90 % against (a) tag pools and (b) expert Scryfall query result sets; P@10-on-archetypes stays as a secondary "famous cards first" measure, reported with the EDHREC-sort caveat.
 - `evaluate.py` gets a deep-retrieval mode (k = target-set size) and these metrics, so grid rows are logged under the new instrument.
