@@ -23,9 +23,9 @@ Flow:
 Images are hot-linked from ``cards.scryfall.io`` (Scryfall's image file origin,
 which is exempt from API rate limits); nothing is fetched from the Scryfall API.
 
-The dashboard searches whatever vectors are in ``cards.embedding`` for
-``settings.embedding_version`` (shown in the header). To view a fine-tuned
-checkpoint, set ``EMBEDDING_MODEL`` in ``.env`` and re-run ``scripts/embed.py``.
+Every embedder with vectors in ``card_embeddings`` is loaded at startup and
+selectable per search, so the same query can be compared across checkpoints
+without re-embedding anything (migration 0004).
 
 Usage::
 
@@ -72,11 +72,26 @@ _POOL_SQL = """
 """
 
 
+_VERSIONS_SQL = "SELECT DISTINCT embedding_version FROM card_embeddings ORDER BY 1"
+
+
 class App:
-    """Holds the searcher and the eval set; one instance per process."""
+    """Holds one searcher per available embedder and the eval set."""
 
     def __init__(self) -> None:
-        self.searcher = Searcher()
+        import psycopg
+
+        with psycopg.connect(settings.database_url) as conn, conn.cursor() as cur:
+            cur.execute(_VERSIONS_SQL)
+            versions = [r[0] for r in cur.fetchall()]
+        self.searchers: dict[str, Searcher] = {}
+        for v in versions:
+            model = v.split("|preproc=")[0]
+            print(f"  Loading embedder {model} ...", flush=True)
+            self.searchers[v] = Searcher(embedding_model=model)
+        default = settings.embedding_version
+        self.default_version = default if default in self.searchers else versions[0]
+        self.searcher = self.searchers[self.default_version]
         ev = yaml.safe_load(EVAL_SET.read_text(encoding="utf-8"))
         oracle = (
             yaml.safe_load(ORACLE.read_text(encoding="utf-8"))["queries"] if ORACLE.exists() else {}
@@ -95,9 +110,16 @@ class App:
 
     # ---- endpoints ----
 
+    def _pick(self, body: dict[str, Any]) -> Searcher:
+        v = body.get("embedding_version") or self.default_version
+        if v not in self.searchers:
+            raise ValueError(f"unknown embedder {v!r}; available: {sorted(self.searchers)}")
+        return self.searchers[v]
+
     def meta(self) -> dict[str, Any]:
         return {
-            "embedding_version": self.searcher.embedding_version,
+            "embedding_version": self.default_version,
+            "embedding_versions": sorted(self.searchers),
             "hyde_model": settings.hyde_model,
             "prompt": self.searcher.prompt_version,
             "eval_version": self.eval_version,
@@ -122,13 +144,14 @@ class App:
         raw_filters = body.get("filters") or {}
         filters = HyDEFilters.model_validate(raw_filters) if raw_filters else None
         policy = FilterPolicy(keywords=bool(body.get("keywords_filter")))
-        k = max(1, min(int(body.get("k") or 20), 100))
-        res = self.searcher.search_prepared(text, filters, k=k, policy=policy)
+        k = max(1, min(int(body.get("k") or 20), 200))
+        searcher = self._pick(body)
+        res = searcher.search_prepared(text, filters, k=k, policy=policy)
 
         ids = [h.oracle_id for h in res.hits]
         ev = self.eval.get(body.get("eval_id") or "")
         tag = (body.get("tag_slug") or "").strip()
-        with self.searcher.conn.cursor() as cur:
+        with searcher.conn.cursor() as cur:
             cur.execute(_CARD_META_SQL, (ids,))
             meta = {r[0]: r[1:] for r in cur.fetchall()}
             pool: set[str] = set()
@@ -179,6 +202,7 @@ class App:
             "timings_ms": res.timings_ms,
             "warnings": res.warnings,
             "summary": summary,
+            "embedding_version": searcher.embedding_version,
         }
 
     def judge(self, body: dict[str, Any]) -> dict[str, Any]:
@@ -195,7 +219,7 @@ class App:
             "label": label,
             "rank": body.get("rank"),
             "score": body.get("score"),
-            "embedding_version": self.searcher.embedding_version,
+            "embedding_version": body.get("embedding_version") or self.default_version,
         }
         with JUDGMENTS.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(record, ensure_ascii=False) + "\n")
@@ -255,7 +279,8 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
             except (FilterError, ValueError, KeyError) as exc:
                 self._json(400, {"error": str(exc)})
             except Exception as exc:
-                app.searcher.conn.rollback()
+                for s_ in app.searchers.values():
+                    s_.conn.rollback()
                 self._json(500, {"error": f"{type(exc).__name__}: {exc}"})
 
         def log_message(self, fmt: str, *args: Any) -> None:
@@ -274,14 +299,15 @@ def main() -> int:
     app = App()
     # Single-threaded on purpose: one model, one DB connection, one reviewer.
     server = HTTPServer(("127.0.0.1", args.port), make_handler(app))
-    print(f"  Embedder:  {app.searcher.embedding_version}")
+    print(f"  Embedders: {', '.join(sorted(app.searchers))}  (default {app.default_version})")
     print(f"  Dashboard: http://localhost:{args.port}   (Ctrl-C to stop)", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         print("\n  Stopped.")
     finally:
-        app.searcher.close()
+        for s_ in app.searchers.values():
+            s_.close()
     return 0
 
 

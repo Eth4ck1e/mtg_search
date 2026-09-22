@@ -359,7 +359,16 @@ The second prompt version implements the Section 6.3 hypothesis directly. The re
 
 Explicit-only filtering raised coverage from 68% to 81% of each target set — "ramp spells", "mana dorks", "board wipes", and "burn spell" no longer receive an inferred type or cost — and concept phrases outrank both the paragraph-length and the one-sentence hypothetical on the same filters. The v2 cascade is the strongest real configuration measured, and on full-pool R-precision it exceeds the hand-mapped oracle because it over-narrows less. Archetype precision is flat, as expected once ranking-by-popularity is treated as a separate sort. Two residual failures are knowledge-gap cases the 27B comparison predicted: "destroy target artifact" still receives an inferred instant filter, and "red pingers" receives an invented Flying keyword. Latency did not fall with the shorter prompt: the inference server caches the shared prompt prefix, so per-query cost is dominated by output tokens (about 62), which v2's three-field JSON did not reduce; trimming null fields from the output is the obvious next step, and the simplification claim is stated here in request tokens and rule count rather than wall-clock time.
 
-*[TODO — v2 on the base embedder (completes the 2×2); omit-null output rule and re-measure latency; eval v2: pool top-10 across all logged rows, judge the holes, freeze; pairs_v2 with doc-like anchors and synthetic queries, retrain, re-run grid; hyde_v2 with a one-sentence hypothetical and trimmed rules (measure tokens/latency); Scryfall comparator; direct-tag-lookup ablation (expected to fail on broad tags for the same reason — the argument for embedding over lookup).]*
+**Table 8 — Rewriter × embedder (R-precision against tag pools, filters applied, n = 21).**
+
+| | Base embedder | Tuned embedder |
+|---|---|---|
+| v1 rewriter (hypothetical paragraph) | 0.215 | 0.326 |
+| v2 rewriter (concept phrases, explicit-only filters) | 0.163 | **0.510** |
+
+*[DRAFTED — REVIEW; journal §5i]* The two interventions are not independent. On the base encoder the lighter v2 rewriter is *worse* than v1: a bare concept phrase such as "ramp" carries no signal for an encoder that never learned the domain's vocabulary, whereas a paragraph of hypothetical rules text at least overlaps lexically with card text. On the tuned encoder the same rewriter is the strongest configuration measured. Fine-tuning the encoder is what makes the simpler, cheaper rewriter viable; neither half delivers the result alone. With a final output rule that omits unset fields, the v2 rewriter produces about 28 output tokens per query and runs in 0.77 s on the same 8B model, against 1.19 s for v1 — the simplification claim now holds in wall-clock terms as well as in request size, at a cost of a few queries whose filters shifted under the changed prompt (R-precision 0.558 → 0.510 on the tuned encoder across that change).
+
+*[TODO — eval v2: pool top-10 across all logged rows, judge the holes, freeze; pairs_v2 with doc-like anchors and synthetic queries, retrain, re-run grid; hyde_v2 with a one-sentence hypothetical and trimmed rules (measure tokens/latency); Scryfall comparator; direct-tag-lookup ablation (expected to fail on broad tags for the same reason — the argument for embedding over lookup).]*
 
 ---
 

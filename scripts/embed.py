@@ -43,19 +43,24 @@ from src.logging_utils import PipelineRun
 from src.preprocess_text import build_embedding_text, format_for_nomic_document, load_keyword_dict
 from src.utils.device import select_device
 
+# Rows lacking a vector for THIS version, or whose stored text hash no longer
+# matches (preprocessing drift) — other versions' rows are untouched.
 _SELECT_SQL = """
-    SELECT oracle_id, face_index, oracle_text, keywords
-    FROM cards
-    WHERE embedding IS NULL OR embedding_version IS DISTINCT FROM %s
+    SELECT c.oracle_id, c.face_index, c.oracle_text, c.keywords
+    FROM cards c
+    LEFT JOIN card_embeddings e
+      ON e.oracle_id = c.oracle_id AND e.face_index = c.face_index
+     AND e.embedding_version = %s
+    WHERE e.oracle_id IS NULL
 """
 
-_UPDATE_SQL = """
-    UPDATE cards
-    SET embedding = %s,
-        embedding_version = %s,
-        embedding_text_hash = %s,
-        updated_at = NOW()
-    WHERE oracle_id = %s AND face_index = %s
+_UPSERT_SQL = """
+    INSERT INTO card_embeddings (oracle_id, face_index, embedding_version, embedding, embedding_text_hash)
+    VALUES (%s, %s, %s, %s, %s)
+    ON CONFLICT (oracle_id, face_index, embedding_version) DO UPDATE
+    SET embedding = EXCLUDED.embedding,
+        embedding_text_hash = EXCLUDED.embedding_text_hash,
+        created_at = NOW()
 """
 
 
@@ -196,8 +201,8 @@ def main() -> int:
                         batch_rows, vectors, batch_hashes, strict=True
                     ):
                         cur.execute(
-                            _UPDATE_SQL,
-                            (vec, version, h, oracle_id, face_index),
+                            _UPSERT_SQL,
+                            (oracle_id, face_index, version, vec, h),
                         )
                 conn.commit()
                 updated += end - start

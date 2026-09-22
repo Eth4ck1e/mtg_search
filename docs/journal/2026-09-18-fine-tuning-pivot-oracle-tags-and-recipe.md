@@ -397,6 +397,24 @@ DB state: `cards.embedding` holds **tuned** vectors (left in place so the dashbo
 
 **Next.** Omit-nulls output rule (latency); re-run v2 on the **base** embedder to complete the 2×2 (v2 × base is the missing cell for the paper's "does fine-tuning make the simpler prompt viable" argument); then the Scryfall expert-query comparator.
 
+### 5i. Omit-nulls, the 2×2, and versioned embeddings (2026-09-22, rows 56–61)
+
+**Migration 0004 — `card_embeddings`.** The dashboard was found pinned to the base version while `cards.embedding` held tuned vectors: every search returned nothing. Root cause is the one-vector-per-face design. New table keyed by `(oracle_id, face_index, embedding_version)`; `embed.py` upserts per version and only encodes faces missing *that* version; `Searcher(embedding_model=...)` pins any version; the dashboard loads every embedder with vectors and offers a selector, plus an EDHREC sort and "load more" paging. Base and tuned now coexist (31,972 rows each). No more re-embedding to switch.
+
+**Omit-nulls output rule** (task 1). Stage 1 latency **1,384 → 772 ms**, output tokens **62 → 28**. The prompt change shifted some filter outputs (model variance under a changed prompt, not randomness — temperature is 0): R-prec 0.558 → 0.510, reachable 0.81 → 0.72 (rows 51 → 61). One regression exposed a contract hazard — `colors: []` meant "colourless" and zeroed "free counterspell" — fixed: `[]` is no constraint unless `colors_op = exactly`. Latency win kept; the quality delta is two or three queries flipping on a 21-query set and is reported as-is.
+
+**The 2×2** (task 2), set metrics inside the Stage 2 set:
+
+| Prompt \ Embedder | base | tuned |
+|---|---|---|
+| v1 (hypothetical paragraph) + SQL | 0.215 (row 38) | 0.326 (42) |
+| v2 (concepts, explicit filters) + SQL | **0.163** (57) | **0.510** (61) |
+| v2, no SQL | 0.198 (58) | 0.631 (53) |
+
+**On the base embedder the simpler prompt is *worse* than v1** (0.163 vs 0.215): a bare concept phrase like "ramp" means nothing to an encoder that never learned the vocabulary, whereas a paragraph of rules text at least overlaps lexically. On the tuned embedder the same prompt is the best cell. That is the paper's central mechanism, now measured: **fine-tuning is what makes the lighter rewriter viable; neither half works alone.** Stage 1 cost with v2 is 0.77 s and 28 output tokens on the same 8B model.
+
+Committed rows: 56 (v2 tuned, omit-nulls, pre-fix), 57–58 (v2 base), 61 (v2 tuned, fixed).
+
 ## 6. CLAUDE.md revisions
 
 §5 (do not fine-tune the embedder on keyword definitions), §6 (fine-tuning deferred to M6), and §11 (anti-suggestion) all encode the pre-pivot position. Revised today to: reminder-text augmentation stays the corpus-side lever; tag-derived contrastive fine-tuning is the query-side lever, motivated by the 2026-09-18 test evidence and gated on the base-embedder control run in §5 above. Hand-written definition dictionaries remain banned.

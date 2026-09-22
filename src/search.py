@@ -30,10 +30,11 @@ series: colour filters admit colourless cards unless the op is ``exactly``;
 inferred keywords (selective strictness, journal §2 of the prompt design
 notes) — enable it per run via :class:`FilterPolicy`.
 
-The embedding column is pinned to ``settings.embedding_version`` so a search
-never silently mixes vectors from different checkpoints. Point
-``EMBEDDING_MODEL`` at a fine-tuned checkpoint directory and re-embed; the
-version string follows and this module searches only those rows.
+Vectors live in ``card_embeddings`` keyed by ``embedding_version`` (migration
+0004), so several checkpoints coexist and a search never mixes them. The
+searcher pins ``settings.embedding_version`` by default; pass
+``embedding_model=`` to search another checkpoint's vectors (the dashboard's
+model selector does this).
 
 CLI (raw mode needs no server; hyde/passthrough need ``mlx_lm.server``)::
 
@@ -131,7 +132,9 @@ def _clean_colors(values: list[str], field_name: str) -> list[str]:
     return cleaned
 
 
-def _color_clause(column: str, values: list[str], op: str | None, params: dict[str, Any]) -> str:
+def _color_clause(
+    column: str, values: list[str], op: str | None, params: dict[str, Any]
+) -> str | None:
     """Compile a colour filter with the colourless allowance.
 
     ``contains_any`` (default): card shares ≥1 colour with the request, OR is
@@ -145,8 +148,11 @@ def _color_clause(column: str, values: list[str], op: str | None, params: dict[s
     params[key] = values
     op = op or "contains_any"
     if not values:
-        # Empty list = "colourless" per the prompt contract.
-        return f"cardinality({column}) = 0"
+        # An empty list means "colourless" ONLY with op == "exactly". A bare []
+        # is what small models emit for "no colour mentioned" (seen 2026-09-22:
+        # "free counterspell" -> colors: [] -> zero candidates), so it is no
+        # constraint at all.
+        return f"cardinality({column}) = 0" if op == "exactly" else None
     if op == "contains_any":
         return f"({column} && %({key})s OR cardinality({column}) = 0)"
     if op == "contains_all":
@@ -225,20 +231,20 @@ def build_where(
         return clauses, params
 
     if policy.colors and filters.colors is not None:
-        clauses.append(
-            _color_clause(
-                "colors", _clean_colors(filters.colors, "colors"), filters.colors_op, params
-            )
+        c = _color_clause(
+            "colors", _clean_colors(filters.colors, "colors"), filters.colors_op, params
         )
+        if c:
+            clauses.append(c)
     if policy.color_identity and filters.color_identity is not None:
-        clauses.append(
-            _color_clause(
-                "color_identity",
-                _clean_colors(filters.color_identity, "color_identity"),
-                filters.colors_op,
-                params,
-            )
+        c = _color_clause(
+            "color_identity",
+            _clean_colors(filters.color_identity, "color_identity"),
+            filters.colors_op,
+            params,
         )
+        if c:
+            clauses.append(c)
     if policy.types and filters.types:
         clauses.append(_word_clause("type_line", filters.types, "type", params, join="OR"))
     if policy.subtypes and filters.subtypes:
@@ -271,12 +277,13 @@ def build_where(
 
 _SEARCH_SQL = """
     WITH ranked AS (
-        SELECT oracle_id::text AS oracle_id, name, type_line, mana_cost, oracle_text,
-               embedding <=> %(vec)s AS distance,
+        SELECT c.oracle_id::text AS oracle_id, c.name, c.type_line, c.mana_cost, c.oracle_text,
+               e.embedding <=> %(vec)s AS distance,
                ROW_NUMBER() OVER (
-                   PARTITION BY oracle_id ORDER BY embedding <=> %(vec)s
+                   PARTITION BY c.oracle_id ORDER BY e.embedding <=> %(vec)s
                ) AS rn
-        FROM cards
+        FROM cards c
+        JOIN card_embeddings e ON e.oracle_id = c.oracle_id AND e.face_index = c.face_index
         WHERE {where}
     )
     SELECT oracle_id, name, type_line, mana_cost, oracle_text, distance
@@ -286,16 +293,21 @@ _SEARCH_SQL = """
     LIMIT %(k)s
 """
 
-_COUNT_SQL = "SELECT COUNT(DISTINCT oracle_id) FROM cards WHERE {where}"
+_COUNT_SQL = """
+    SELECT COUNT(DISTINCT c.oracle_id) FROM cards c
+    JOIN card_embeddings e ON e.oracle_id = c.oracle_id AND e.face_index = c.face_index
+    WHERE {where}
+"""
 
 # Full ranking of the candidate set (ids only, best face per card). No LIMIT:
 # pgvector scores every candidate regardless, so this costs the same as a
 # top-K search plus the transfer of ~1 row per candidate card.
 _RANK_SQL = """
-    SELECT oracle_id::text, MIN(embedding <=> %(vec)s) AS distance
-    FROM cards
+    SELECT c.oracle_id::text, MIN(e.embedding <=> %(vec)s) AS distance
+    FROM cards c
+    JOIN card_embeddings e ON e.oracle_id = c.oracle_id AND e.face_index = c.face_index
     WHERE {where}
-    GROUP BY oracle_id
+    GROUP BY c.oracle_id
     ORDER BY distance
 """
 
@@ -343,9 +355,11 @@ class Searcher:
         policy: FilterPolicy = DEFAULT_POLICY,
         device: str | None = None,
         prompt_path: Path | None = None,
+        embedding_model: str | None = None,
     ) -> None:
         self.policy = policy
-        self.embedding_version = settings.embedding_version
+        self.embedding_model = embedding_model or settings.embedding_model
+        self.embedding_version = f"{self.embedding_model}|preproc={settings.preprocess_version}"
         self.prompt_path = prompt_path or (settings.prompts_dir / "hyde_v1.yaml")
         self.known_keywords: set[str] = set()  # canonical Scryfall keywords present in the corpus
         self.prompt_version = (
@@ -354,7 +368,7 @@ class Searcher:
         if model is None:
             dev = select_device(prefer=device)
             model = SentenceTransformer(
-                settings.embedding_model, device=str(dev), trust_remote_code=True
+                self.embedding_model, device=str(dev), trust_remote_code=True
             )
         self.model = model
         self._owns_conn = conn is None
@@ -385,7 +399,7 @@ class Searcher:
         return np.asarray(vec, dtype=np.float32)
 
     def _run_sql(self, where_clauses: list[str], params: dict[str, Any], vec: np.ndarray, k: int):
-        base = ["embedding IS NOT NULL", "embedding_version = %(ver)s", *where_clauses]
+        base = ["e.embedding_version = %(ver)s", *where_clauses]
         where = " AND ".join(base)
         params = {**params, "ver": self.embedding_version, "vec": vec, "k": k}
         with self.conn.cursor() as cur:
@@ -420,9 +434,7 @@ class Searcher:
         """
         where_clauses, params = build_where(filters, policy or self.policy)
         vec = self.embed_query(embed_text)
-        where = " AND ".join(
-            ["embedding IS NOT NULL", "embedding_version = %(ver)s", *where_clauses]
-        )
+        where = " AND ".join(["e.embedding_version = %(ver)s", *where_clauses])
         params = {**params, "ver": self.embedding_version, "vec": vec}
         with self.conn.cursor() as cur:
             cur.execute(_RANK_SQL.format(where=where), params)

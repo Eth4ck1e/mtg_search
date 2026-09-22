@@ -30,7 +30,7 @@ Three sequential stages in a retrieval cascade (Wang et al. 2011 tradition). Exe
 
 - **Single store:** Postgres + pgvector. ~30k cards is well inside pgvector's comfort zone; corpus scale, structured attribute filtering, and vector search all coexist in one database. No separate vector DB at this scale.
 - **Schema philosophy:** real columns for well-defined attributes (`name`, `cmc`, `colors`, `type_line`, `oracle_text`, `power`, `toughness`, `keywords`, `layout`); JSONB for genuinely variable nested data (`legalities`, `card_faces`); `raw JSONB` as escape hatch for any Scryfall field not promoted to a column. Do not dump raw JSON into a single column.
-- **`embedding vector(768)` column** with a paired **`embedding_version`** column. The version string identifies the model + text-representation combination that produced each vector. Without this, silent inconsistency creeps in the first time the embedding pipeline changes.
+- **Versioned embeddings (migration 0004, 2026-09-22):** vectors live in `card_embeddings (oracle_id, face_index, embedding_version, embedding)`. Several checkpoints coexist (base and every fine-tune); `scripts/embed.py` encodes only faces missing the current `settings.embedding_version`; searchers pin one version (`Searcher(embedding_model=...)`). The old `cards.embedding` columns are retained but unused. Never overwrite a version's vectors to "switch models" — embed the new version alongside.
 - **Multi-faced cards** (transform, modal DFC, split, adventure): one row per face, composite key `(oracle_id, face_index)`. Dedupe by `oracle_id` at display time.
 
 ## 4. Ingestion

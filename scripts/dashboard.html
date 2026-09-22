@@ -87,8 +87,14 @@
       <label class="mid">Tag slug for pool check (optional)
         <input id="tagSlug" placeholder="sweeper" autocomplete="off">
       </label>
-      <label class="narrow">Top N
-        <input id="k" type="number" min="1" max="100" value="20">
+      <label class="mid">Embedder
+        <select id="embSel"></select>
+      </label>
+      <label class="narrow">Page size
+        <input id="k" type="number" min="1" max="200" value="20">
+      </label>
+      <label class="narrow">Sort
+        <select id="sort"><option value="match">match</option><option value="edhrec">EDHREC rank</option></select>
       </label>
       <span class="check"><input id="kw" type="checkbox"><label for="kw" style="display:inline;color:inherit;font-size:13px">apply keywords filter</label></span>
       <button id="useQuery">Embed raw query</button>
@@ -99,10 +105,11 @@
   <div id="status"></div>
   <div class="summary" id="summary"></div>
   <section class="grid" id="grid"></section>
+  <div style="text-align:center;margin:18px 0"><button id="loadMore" hidden>Load more</button></div>
 </main>
 <script>
 const $ = id => document.getElementById(id);
-let META = null, LAST = null;
+let META = null, LAST = null, PAGES = 1, RESULT = null;
 
 async function api(path, body) {
   const r = await fetch(path, body ? {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)} : undefined);
@@ -115,7 +122,11 @@ function esc(s){ return (s??'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','
 
 async function init() {
   META = await api('/api/meta');
-  $('meta').textContent = `embedder: ${META.embedding_version}  ·  rewriter: ${META.hyde_model.split('/').pop()}  ·  prompt: ${META.prompt}  ·  eval: ${META.eval_version}`;
+  $('meta').textContent = `rewriter: ${META.hyde_model.split('/').pop()}  ·  prompt: ${META.prompt}  ·  eval: ${META.eval_version}`;
+  for (const v of META.embedding_versions) {
+    const o = document.createElement('option'); o.value = v; o.textContent = v.split('|')[0].replace('nomic-ai/','');
+    if (v === META.embedding_version) o.selected = true; $('embSel').appendChild(o);
+  }
   for (const q of META.eval_queries) {
     const o = document.createElement('option');
     o.value = q.id; o.textContent = `${q.id} · ${q.query} [${q.category}, ${q.relevant_count} rel]`;
@@ -147,22 +158,29 @@ async function search() {
   let filters;
   try { filters = JSON.parse($('filters').value || '{}'); } catch (e) { return status('Filters box is not valid JSON: ' + esc(e.message), true); }
   if (!$('embedText').value.trim()) $('embedText').value = $('query').value;
-  const body = { embed_text:$('embedText').value, filters, k:+$('k').value, keywords_filter:$('kw').checked,
-                 eval_id:$('evalSel').value, tag_slug:$('tagSlug').value };
+  const body = { embed_text:$('embedText').value, filters, k:+$('k').value * PAGES, keywords_filter:$('kw').checked,
+                 eval_id:$('evalSel').value, tag_slug:$('tagSlug').value, embedding_version:$('embSel').value };
   $('searchBtn').disabled = true; status('Searching…');
   try {
-    const r = await api('/api/search', body); LAST = body; render(r);
+    const r = await api('/api/search', body); LAST = body; RESULT = r; render(r);
     const t = r.timings_ms;
     status(`${r.candidate_count.toLocaleString()} candidates after filters · embed ${t.embed_ms} ms · search ${t.sql_ms} ms` +
            (r.warnings.length ? ` · <b>${esc(r.warnings.join('; '))}</b>` : '') + `<br><code>${esc(r.where_sql)}</code>`);
   } catch (e) { status(esc(e.message), true); $('grid').innerHTML=''; $('summary').innerHTML=''; }
   $('searchBtn').disabled = false;
 }
-$('searchBtn').onclick = search;
+$('searchBtn').onclick = () => { PAGES = 1; search(); };
+$('loadMore').onclick = () => { PAGES += 1; search(); };
+$('sort').onchange = () => { if (RESULT) render(RESULT); };
+$('embSel').onchange = () => { PAGES = 1; if ($('embedText').value.trim()) search(); };
 $('query').onkeydown = e => { if (e.key === 'Enter') { $('embedText').value = $('embedText').value || $('query').value; search(); } };
 
 function render(r) {
-  const n = r.hits.length, s = r.summary, pills = [];
+  let hits = r.hits.slice();
+  if ($('sort').value === 'edhrec') hits.sort((a,b) => (a.edhrec_rank||1e9) - (b.edhrec_rank||1e9));
+  r = {...r, hits};
+  const n = r.hits.length, s = r.summary, pills = [`embedder: <b>${esc((r.embedding_version||'').split('|')[0].replace('nomic-ai/',''))}</b>`, `showing <b>${n}</b> of ${r.candidate_count.toLocaleString()} candidates`];
+  $('loadMore').hidden = n >= r.candidate_count;
   if ('judged_relevant' in s) pills.push(`eval-judged relevant: <b>${s.judged_relevant}/${n}</b>`, `unjudged: <b>${s.unjudged}/${n}</b>`);
   if ('in_tag_pool' in s) pills.push(`in tag pool: <b>${s.in_tag_pool}/${n}</b>`);
   $('summary').innerHTML = pills.map(p => `<span class="pill">${p}</span>`).join('');
@@ -194,7 +212,7 @@ $('grid').onclick = async e => {
   const card = btn.closest('.card');
   try {
     await api('/api/judge', { label:btn.dataset.l, oracle_id:card.dataset.id, name:card.dataset.name, rank:+card.dataset.rank,
-      score:+card.dataset.score, eval_id:LAST.eval_id, query:$('query').value, embed_text:LAST.embed_text });
+      score:+card.dataset.score, eval_id:LAST.eval_id, query:$('query').value, embed_text:LAST.embed_text, embedding_version:LAST.embedding_version });
     card.querySelectorAll('.judge button').forEach(b => b.classList.toggle('on', b === btn));
   } catch (err) { status(esc(err.message), true); }
 };

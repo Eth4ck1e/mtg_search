@@ -38,11 +38,13 @@ system: |
        Empty list if the query is purely structural.
     3. "hypothetical_card" — ONE sentence of rules text, only when no concept
        phrase captures the intent (a novel or very specific mechanic).
-       Otherwise null.
+       Otherwise omit the key.
 
   ## RULES
 
-  - Output ONLY valid JSON. No prose, no code fences.
+  - Output ONLY valid JSON. No prose, no code fences. OMIT every filter field
+    you are not setting — do not write "field": null. If there are no
+    filters at all, omit the "filters" key too.
   - Filters come only from words the user typed: colour words, numbers with
     "mana"/"cost"/"cmc", card types (creature, instant, sorcery, artifact,
     enchantment, land, planeswalker), creature subtypes, power/toughness,
@@ -56,7 +58,8 @@ system: |
   - Colours: when the user names a colour, set BOTH "colors" and
     "color_identity" to the same letters. Default "colors_op" to
     "contains_any" (admits colourless). Use "exactly" only for "mono-",
-    "only", or "exclusively".
+    "only", or "exclusively". For "colorless" cards use "colors": [] with
+    "colors_op": "exactly". Never emit an empty "colors" list otherwise.
   - "keywords" holds only canonical keyword ABILITIES the user typed (Flying,
     First strike, Trample, Haste, Deathtouch, Lifelink, ...). A slang noun for a
     kind of card ("pinger", "edict", "burn", "cantrip") is NEVER a keyword — it
@@ -93,17 +96,14 @@ examples:
     expected_output: |
       {
         "filters": {"colors": ["R"], "colors_op": "contains_any", "color_identity": ["R"], "cmc": {"op": "<=", "value": 2}},
-        "concepts": ["removal"],
-        "hypothetical_card": null
+        "concepts": ["removal"]
       }
 
   - category: jargon
     query: "board wipes"
     expected_output: |
       {
-        "filters": null,
-        "concepts": ["sweeper", "board wipe"],
-        "hypothetical_card": null
+        "concepts": ["sweeper", "board wipe"]
       }
 
   - category: hybrid
@@ -111,8 +111,7 @@ examples:
     expected_output: |
       {
         "filters": {"colors": ["G"], "colors_op": "contains_any", "color_identity": ["G"], "types": ["Creature"], "cmc": {"op": "<", "value": 2}},
-        "concepts": ["mana dork"],
-        "hypothetical_card": null
+        "concepts": ["mana dork"]
       }
 
   - category: jargon
@@ -120,8 +119,7 @@ examples:
     expected_output: |
       {
         "filters": {"cmc": {"op": "=", "value": 2}},
-        "concepts": ["mana rock"],
-        "hypothetical_card": null
+        "concepts": ["mana rock"]
       }
 
   - category: fragmented
@@ -129,15 +127,13 @@ examples:
     expected_output: |
       {
         "filters": {"types": ["Sorcery"]},
-        "concepts": ["token maker"],
-        "hypothetical_card": null
+        "concepts": ["token maker"]
       }
 
   - category: natural
     query: "permanents that let me play lands out of my graveyard"
     expected_output: |
       {
-        "filters": null,
         "concepts": ["land recursion"],
         "hypothetical_card": "You may play lands from your graveyard."
       }
@@ -147,8 +143,7 @@ examples:
     expected_output: |
       {
         "filters": {"colors": ["B"], "colors_op": "contains_any", "color_identity": ["B"], "cmc": {"op": "<", "value": 4}},
-        "concepts": ["edict", "sacrifice removal"],
-        "hypothetical_card": null
+        "concepts": ["edict", "sacrifice removal"]
       }
 
   - category: constrained
@@ -156,8 +151,7 @@ examples:
     expected_output: |
       {
         "filters": {"types": ["Creature"], "keywords": ["Flying", "Vigilance"], "cmc": {"op": "<=", "value": 3}},
-        "concepts": [],
-        "hypothetical_card": null
+        "concepts": []
       }
 
 user_message_template: |

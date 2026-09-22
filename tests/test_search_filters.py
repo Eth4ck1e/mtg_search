@@ -43,9 +43,10 @@ def test_invalid_colour_symbol_raises() -> None:
         build_where(HyDEFilters(colors=["red"]))
 
 
-def test_empty_colour_list_means_colourless() -> None:
-    clauses, _ = build_where(HyDEFilters(colors=[]))
-    assert clauses == ["cardinality(colors) = 0"]
+def test_empty_colour_list_is_no_constraint_unless_exactly() -> None:
+    assert build_where(HyDEFilters(colors=[]))[0] == []  # model said "no colour"
+    clauses, _ = build_where(HyDEFilters(colors=[], colors_op="exactly"))
+    assert clauses == ["cardinality(colors) = 0"]  # user said "colourless"
 
 
 def test_identity_mirrors_colour_op() -> None:
