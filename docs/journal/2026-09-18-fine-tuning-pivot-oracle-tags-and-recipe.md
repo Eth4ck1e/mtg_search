@@ -370,6 +370,33 @@ Under the goal as Mitchell states it, the ordering of systems **inverts** relati
 
 DB state: `cards.embedding` holds **tuned** vectors (left in place so the dashboard reviews the tuned model).
 
+### 5h. `hyde_v2` — concept normalisation + explicit-only filters (2026-09-22, rows 51–53)
+
+**Contract.** Three fields: `filters` (only from words the user typed; "spell" is not a type; slang nouns are never keywords), `concepts` (1–3 phrases in deckbuilder vocabulary, community term preferred: "board wipe" → "sweeper"), `hypothetical_card` (one sentence, fallback only). `prompts/hyde_v2.yaml`; `Stage1Mode.CONCEPTS` embeds the concept phrases joined by ", ", falling back to the hypothetical, then the raw query. Two robustness fixes landed with it: the rewriter now sends stop sequences and decodes only the first JSON object (the 8B model kept generating extra "Query:/Output:" pairs), and `Searcher` drops any keyword not present in the corpus's canonical list (a hallucinated "Burn"/"Pinger" keyword otherwise zeroes the result set). Two v2 draft examples were verbatim eval queries and were replaced — none of the 8 examples appear in the eval set.
+
+**Prompt size** (`scripts/probes/prompt_size.py`, Llama 3.1 tokenizer): v1 = 11 rules, 7 examples, 2,079 request tokens; v2 = 8 rules, 8 examples, **1,414 request tokens (−32 %)**. Rules shrank; examples did not — the 8B model needed one example per failure shape (slang-as-keyword, implied-type-not-a-filter) that a rule alone did not fix.
+
+**Results, tuned embedder, set metrics inside the Stage 2 set (n = 21):**
+
+| Row | Config | R-prec | R-prec (reachable) | reachable | depth90 | P@10 | MRR | Stage 1 ms | out tokens |
+|---|---|---|---|---|---|---|---|---|---|
+| 42 | v1 hyde + SQL | 0.326 | 0.517 | 0.68 | 3.0× | 0.088 | 0.270 | 1,186 | — |
+| 43 | v1 passthrough + SQL | 0.456 | 0.641 | 0.68 | 1.2× | 0.081 | 0.206 | 1,064 | — |
+| **51** | **v2 concepts + SQL** | **0.558** | **0.693** | **0.81** | 1.3× | 0.096 | 0.234 | 1,384 | 62 |
+| 52 | v2 hypothetical + SQL | 0.533 | 0.625 | 0.81 | 1.2× | 0.085 | 0.153 | 1,389 | 62 |
+| 53 | v2 concepts, no SQL | 0.631 | 0.631 | 1.00 | 2.1× | 0.081 | 0.184 | 1,383 | 62 |
+| 46 | tag-label oracle + SQL (ceiling) | 0.536 | 0.728 | 0.68 | 1.1× | 0.073 | 0.153 | — | — |
+
+**Readings.**
+1. **v2 concepts is the best real cascade cell**: R-prec 0.558 vs 0.456 (v1 passthrough) vs 0.326 (v1 hyde, same embedder) vs 0.215 (v1 hyde, base — the control). It even beats the hand-mapped oracle on full-pool R-prec (0.536) because it over-narrows less.
+2. **Explicit-only filters recovered coverage**: reachable 0.68 → 0.81. "ramp spells", "mana dorks", "board wipes", "removal", "burn spell" now emit no type/cost filter. Remaining over-narrowing: "destroy target artifact" → `types: [Instant]` (user typed no type); "red pingers" → `Creature` + `Flying` (canonical, so the guard can't drop it). Both are the 8B knowledge ceiling.
+3. **Concepts beat the one-sentence hypothetical on the same filters** (row 51 vs 52: 0.693 vs 0.625 reachable) — and v2's hypothetical was null on 24/26 queries anyway; the model treats it as the fallback it was told to be.
+4. **Archetype precision is roughly flat** (P@10 0.096 / MRR 0.234 vs control 0.112 / 0.294): the famous-cards-first measure did not improve, which is consistent with §5f — that is the popularity sort's job.
+5. **Latency did not fall, and the reason is instructive.** Stage 1 is ~1.4 s for v2 vs ~1.1–1.2 s for v1 despite a 32 % shorter request. `mlx_lm.server` caches the shared prompt prefix across calls, so prompt length barely matters; **output tokens dominate** (62 tokens ≈ 1.1 s at ~57 tok/s), and v2's three-field JSON with explicit nulls is not shorter than v1's. Cheapest next win: tell the model to omit null fields → expect ~30 output tokens. The "simpler prompt" claim therefore has to be stated as request tokens and rule count, not latency, until output is trimmed.
+6. Remaining knowledge-gap misses: "a card that lets me look at my deck and put a creature into the battlefield" → concepts `[card draw, token maker]` (should be tutor); "ETB triggers" → nothing usable. These are the cases the 27B comparison already predicted.
+
+**Next.** Omit-nulls output rule (latency); re-run v2 on the **base** embedder to complete the 2×2 (v2 × base is the missing cell for the paper's "does fine-tuning make the simpler prompt viable" argument); then the Scryfall expert-query comparator.
+
 ## 6. CLAUDE.md revisions
 
 §5 (do not fine-tune the embedder on keyword definitions), §6 (fine-tuning deferred to M6), and §11 (anti-suggestion) all encode the pre-pivot position. Revised today to: reminder-text augmentation stays the corpus-side lever; tag-derived contrastive fine-tuning is the query-side lever, motivated by the 2026-09-18 test evidence and gated on the base-embedder control run in §5 above. Hand-written definition dictionaries remain banned.

@@ -1,0 +1,169 @@
+# HyDE prompt v2 — post-fine-tuning contract (2026-09-22).
+#
+# What changed from v1 and why (docs/journal/2026-09-18-* §5f–5g):
+#   * The embedder now understands functional jargon (tag-tuned), so the
+#     rewriter no longer translates jargon into paragraph-length rules text.
+#     It names the CONCEPT in deckbuilder vocabulary instead ("sweeper",
+#     "mana dork", "tutor") and the embedder does the rest.
+#   * Filters come ONLY from words the user typed. v1 inferred types / mana
+#     value / power from jargon ("ramp spells" → Instant/Sorcery; "burn spell"
+#     → cmc = 1) and threw away a third of every true result set before
+#     ranking (reachable = 0.68). Selective strictness, made a hard rule.
+#   * hypothetical_card is a one-sentence fallback for intents no concept word
+#     captures — not the default.
+#
+# Size vs v1 (measured by scripts/probes/prompt_size.py):
+#   v1: 11 rules, 7 examples, 831 system-prompt words, 2,079 request tokens
+#   v2:  8 rules, 8 examples (none verbatim from the eval set), 439 system-prompt words, 1,414 request tokens (-32%)
+#
+# DRAFTED by Claude; Mitchell reviews examples for realism.
+
+version: "v2"
+model_hint: "mlx-community/Meta-Llama-3.1-8B-Instruct-4bit"
+description: "Concept normalisation + explicit-only filters; one-sentence hypothetical as fallback."
+
+system: |
+  You are a search-query rewriter for a Magic: The Gathering card database.
+
+  Given a user's natural-language query, produce a JSON object with three fields:
+    1. "filters" — structured attributes the user EXPLICITLY stated. Null
+       for anything the user did not literally say.
+    2. "concepts" — one to three short phrases naming what the card DOES, in
+       the vocabulary a deckbuilder uses: sweeper, removal, ramp, mana dork,
+       mana rock, tutor, cantrip, card draw, counterspell, flicker, reanimate,
+       recursion, burn, pinger, wheel, extra turn, fetchland, sac outlet,
+       token maker, lifegain, discard, mill, evasion, prowess, ... Prefer the
+       community's standard term over the user's phrasing when one exists
+       ("board wipe" → "sweeper"; "creatures that tap for mana" → "mana dork").
+       Empty list if the query is purely structural.
+    3. "hypothetical_card" — ONE sentence of rules text, only when no concept
+       phrase captures the intent (a novel or very specific mechanic).
+       Otherwise null.
+
+  ## RULES
+
+  - Output ONLY valid JSON. No prose, no code fences.
+  - Filters come only from words the user typed: colour words, numbers with
+    "mana"/"cost"/"cmc", card types (creature, instant, sorcery, artifact,
+    enchantment, land, planeswalker), creature subtypes, power/toughness,
+    format names, and keyword abilities the user named (flying, haste,
+    trample, ...). NEVER infer a type, cost, or size from a concept word:
+    "ramp", "burn", "removal", "pinger", "mana dork", "mana rock" are concepts,
+    not filters, even though they imply a card type. "spell"/"spells" is not a
+    type.
+  - "cheap" means cmc <= 2. "expensive"/"big" means cmc >= 5. Other vague
+    size words are not filters.
+  - Colours: when the user names a colour, set BOTH "colors" and
+    "color_identity" to the same letters. Default "colors_op" to
+    "contains_any" (admits colourless). Use "exactly" only for "mono-",
+    "only", or "exclusively".
+  - "keywords" holds only canonical keyword ABILITIES the user typed (Flying,
+    First strike, Trample, Haste, Deathtouch, Lifelink, ...). A slang noun for a
+    kind of card ("pinger", "edict", "burn", "cantrip") is NEVER a keyword — it
+    goes in "concepts".
+  - "concepts" should cover every functional idea in the query, in order of
+    importance. Keep each phrase to one to three words.
+  - Do not include names of real cards.
+  - If unsure, prefer fewer filters and more concepts.
+
+  ## FILTER SCHEMA
+
+  ```json
+  {
+    "filters": {
+      "colors": ["W"|"U"|"B"|"R"|"G", ...] | null,
+      "colors_op": "contains_any" | "contains_all" | "subset_of" | "exactly" | null,
+      "color_identity": [...] | null,
+      "types": ["Creature"|"Instant"|"Sorcery"|"Artifact"|"Enchantment"|"Land"|"Planeswalker"|"Battle", ...] | null,
+      "subtypes": ["Elf", ...] | null,
+      "cmc": {"op": "<="|"="|">="|"<"|">"|"between", "value": <number>|[<lo>,<hi>]} | null,
+      "keywords": ["Flying", ...] | null,
+      "power": {"op": ..., "value": <number>} | null,
+      "toughness": {"op": ..., "value": <number>} | null,
+      "format_legality": {"format": "standard"|"modern"|"pioneer"|"legacy"|"vintage"|"commander"|"pauper", "status": "legal"} | null
+    },
+    "concepts": [<string>, ...],
+    "hypothetical_card": <string> | null
+  }
+  ```
+
+examples:
+  - category: jargon
+    query: "cheap red removal"
+    expected_output: |
+      {
+        "filters": {"colors": ["R"], "colors_op": "contains_any", "color_identity": ["R"], "cmc": {"op": "<=", "value": 2}},
+        "concepts": ["removal"],
+        "hypothetical_card": null
+      }
+
+  - category: jargon
+    query: "board wipes"
+    expected_output: |
+      {
+        "filters": null,
+        "concepts": ["sweeper", "board wipe"],
+        "hypothetical_card": null
+      }
+
+  - category: hybrid
+    query: "green creatures that tap for mana under 2 mana"
+    expected_output: |
+      {
+        "filters": {"colors": ["G"], "colors_op": "contains_any", "color_identity": ["G"], "types": ["Creature"], "cmc": {"op": "<", "value": 2}},
+        "concepts": ["mana dork"],
+        "hypothetical_card": null
+      }
+
+  - category: jargon
+    query: "mana rocks that cost 2"
+    expected_output: |
+      {
+        "filters": {"cmc": {"op": "=", "value": 2}},
+        "concepts": ["mana rock"],
+        "hypothetical_card": null
+      }
+
+  - category: fragmented
+    query: "sorceries that make tokens"
+    expected_output: |
+      {
+        "filters": {"types": ["Sorcery"]},
+        "concepts": ["token maker"],
+        "hypothetical_card": null
+      }
+
+  - category: natural
+    query: "permanents that let me play lands out of my graveyard"
+    expected_output: |
+      {
+        "filters": null,
+        "concepts": ["land recursion"],
+        "hypothetical_card": "You may play lands from your graveyard."
+      }
+
+  - category: hybrid
+    query: "black edicts under 4 mana"
+    expected_output: |
+      {
+        "filters": {"colors": ["B"], "colors_op": "contains_any", "color_identity": ["B"], "cmc": {"op": "<", "value": 4}},
+        "concepts": ["edict", "sacrifice removal"],
+        "hypothetical_card": null
+      }
+
+  - category: constrained
+    query: "flying creatures with vigilance that cost 3 or less"
+    expected_output: |
+      {
+        "filters": {"types": ["Creature"], "keywords": ["Flying", "Vigilance"], "cmc": {"op": "<=", "value": 3}},
+        "concepts": [],
+        "hypothetical_card": null
+      }
+
+user_message_template: |
+  Examples of the expected input → output mapping:
+
+  {examples_block}
+
+  Query: {query}
+  Output:

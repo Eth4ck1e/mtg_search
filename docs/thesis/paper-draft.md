@@ -341,7 +341,25 @@ The ordering of systems inverts relative to Table 4. The tuned embedder given th
 
 *[DRAFTED — REVIEW; journal §5g]* Measured inside the cascade, the pre-filter shows both of its faces at once. On every filtered configuration only 68% of each tag pool survives Stage 2 ("reachable"). Part of that is correct narrowing the user asked for — "instants that draw cards" should exclude non-instants, and the tag pool is then the wrong target — but part is inferred narrowing the user did not ask for: "ramp spells" receives a types filter of instant/sorcery and loses 1,784 ramp permanents; "burn spell that deals 3 damage" receives a mana-value filter of exactly 1. Within what Stage 2 admits, however, the tuned embedder ranks well: R-precision over the reachable set reaches 0.64 for the user's own words and 0.73 for tag vocabulary, and a user reaches 90% of the admitted set within 1.1–1.2× its size, against 3.4× with no filter at all. The pre-filter improves ranking inside the set while reducing coverage of it; the two effects are reported separately because a single number would hide the trade. Both fixes belong to the rewriter: filters should be derived only from constraints the user typed (selective strictness, Section 6.2), and the evaluation target for filtered queries should be the tag pool intersected with the user-explicit constraint.
 
-*[TODO — eval v2: pool top-10 across all logged rows, judge the holes, freeze; pairs_v2 with doc-like anchors and synthetic queries, retrain, re-run grid; hyde_v2 with a one-sentence hypothetical and trimmed rules (measure tokens/latency); Scryfall comparator; direct-tag-lookup ablation (expected to fail on broad tags for the same reason — the argument for embedding over lookup).]*
+### 5.6 The v2 rewriter: concept normalisation with explicit-only filters
+
+*[DRAFTED — REVIEW; journal §5h, rows 51–53]*
+
+The second prompt version implements the Section 6.3 hypothesis directly. The rewriter emits (a) filters derived only from attributes the user literally typed, (b) one to three concept phrases in deckbuilder vocabulary with the community's standard term preferred ("board wipe" → "sweeper"), and (c) a one-sentence hypothetical only when no concept phrase captures the intent. Stage 3 embeds the concept phrases. Measured with the Llama 3.1 tokenizer, the v2 request is 1,414 tokens against 2,079 for v1 (−32%), with 8 rules against 11; the example count did not fall (8 vs 7) because the 8B model needed one demonstration per failure shape that a rule alone did not correct.
+
+**Table 7 — v1 vs v2 on the tuned embedder, filters applied (n = 21 tag-mapped queries).**
+
+| Rewriter | Query-side text | R-prec (full) | R-prec (reachable) | Reachable | P@10 | MRR | Stage 1 latency |
+|---|---|---|---|---|---|---|---|
+| v1 | hypothetical paragraph | 0.326 | 0.517 | 0.68 | 0.088 | 0.270 | 1.19 s |
+| v1 | user's raw query | 0.456 | 0.641 | 0.68 | 0.081 | 0.206 | 1.06 s |
+| **v2** | **concept phrases** | **0.558** | **0.693** | **0.81** | 0.096 | 0.234 | 1.38 s |
+| v2 | one-sentence hypothetical | 0.533 | 0.625 | 0.81 | 0.085 | 0.153 | 1.39 s |
+| — | tag-label oracle (ceiling) | 0.536 | 0.728 | 0.68 | 0.073 | 0.153 | — |
+
+Explicit-only filtering raised coverage from 68% to 81% of each target set — "ramp spells", "mana dorks", "board wipes", and "burn spell" no longer receive an inferred type or cost — and concept phrases outrank both the paragraph-length and the one-sentence hypothetical on the same filters. The v2 cascade is the strongest real configuration measured, and on full-pool R-precision it exceeds the hand-mapped oracle because it over-narrows less. Archetype precision is flat, as expected once ranking-by-popularity is treated as a separate sort. Two residual failures are knowledge-gap cases the 27B comparison predicted: "destroy target artifact" still receives an inferred instant filter, and "red pingers" receives an invented Flying keyword. Latency did not fall with the shorter prompt: the inference server caches the shared prompt prefix, so per-query cost is dominated by output tokens (about 62), which v2's three-field JSON did not reduce; trimming null fields from the output is the obvious next step, and the simplification claim is stated here in request tokens and rule count rather than wall-clock time.
+
+*[TODO — v2 on the base embedder (completes the 2×2); omit-null output rule and re-measure latency; eval v2: pool top-10 across all logged rows, judge the holes, freeze; pairs_v2 with doc-like anchors and synthetic queries, retrain, re-run grid; hyde_v2 with a one-sentence hypothetical and trimmed rules (measure tokens/latency); Scryfall comparator; direct-tag-lookup ablation (expected to fail on broad tags for the same reason — the argument for embedding over lookup).]*
 
 ---
 

@@ -1,0 +1,13 @@
+# v2 prompt but embedding its one-sentence hypothetical_card (falls back to raw when null) — isolates concept-vs-hypothetical on the same filters
+name: "cascade_v2_hyde"
+description: >
+  v2 prompt but embedding its one-sentence hypothetical_card (falls back to raw when null) — isolates concept-vs-hypothetical on the same filters
+eval_set: "data/eval/queries_v1_draft.yaml"
+retrieval:
+  type: cascade
+  stage1: hyde
+  prompt: prompts/hyde_v2.yaml
+  sql: true
+  keywords_filter: false
+  k: 10
+  set_metrics: true

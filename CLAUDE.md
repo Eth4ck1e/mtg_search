@@ -103,7 +103,8 @@ mtg_search/
 ├── archive/poc_v1/                      # POC snapshot, preserved
 ├── _planning-archive/                   # Pre-repo local planning docs (historical)
 ├── configs/
-│   ├── cascade_hyde_v1.yaml             # Full cascade, base-embedder control row
+│   ├── cascade_hyde_v1.yaml             # Full cascade, v1 prompt (control row on the base embedder)
+│   ├── cascade_v2_concepts.yaml         # v2 prompt: concept phrases embedded, explicit-only filters
 │   ├── cascade_hyde_v1_nosql.yaml       # Minus-SQL ablation
 │   ├── cascade_passthrough.yaml         # Filters from HyDE, raw query embedded
 │   └── raw_dense.yaml                   # No rewriter, no filter (pure dense floor)

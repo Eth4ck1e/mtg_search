@@ -1,0 +1,13 @@
+# v2 prompt, minus-SQL ablation
+name: "cascade_v2_concepts_nosql"
+description: >
+  v2 prompt, minus-SQL ablation
+eval_set: "data/eval/queries_v1_draft.yaml"
+retrieval:
+  type: cascade
+  stage1: concepts
+  prompt: prompts/hyde_v2.yaml
+  sql: false
+  keywords_filter: false
+  k: 10
+  set_metrics: true

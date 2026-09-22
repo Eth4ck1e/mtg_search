@@ -72,6 +72,8 @@ class HyDEResult(BaseModel):
 
     filters: HyDEFilters | None = None
     hypothetical_card: str | None = None
+    concepts: list[str] | None = None  # v2+: functional concepts in deckbuilder vocabulary
+    completion_tokens: int | None = None  # from the server's usage block, for prompt-cost logging
 
 
 class HyDEError(RuntimeError):
@@ -161,6 +163,9 @@ def rewrite_query(
         "max_tokens": settings.hyde_max_tokens,
         "temperature": settings.hyde_temperature,
         "response_format": {"type": "json_object"},
+        # Small models sometimes keep generating further "Query: ... Output:"
+        # pairs after the answer; stop at the first one.
+        "stop": ["\nQuery:", "\n\nQuery:"],
     }
 
     try:
@@ -180,14 +185,21 @@ def rewrite_query(
     except (KeyError, IndexError) as exc:
         raise HyDEError(f"Unexpected chat-completions response shape: {body}") from exc
 
+    # Some models (Gemma 3) wrap output in ```json fences despite instructions.
+    stripped = content.strip()
+    if stripped.startswith("```"):
+        stripped = stripped.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
     try:
-        parsed = json.loads(content)
+        # Decode only the FIRST JSON object; ignore any trailing text.
+        parsed, _end = json.JSONDecoder().raw_decode(stripped)
     except json.JSONDecodeError as exc:
         raise HyDEError(
             f"HyDE returned non-JSON content (max_tokens truncation?): {content!r}"
         ) from exc
 
-    return HyDEResult.model_validate(parsed)
+    result = HyDEResult.model_validate(parsed)
+    result.completion_tokens = (body.get("usage") or {}).get("completion_tokens")
+    return result
 
 
 # ---- CLI ---------------------------------------------------------------

@@ -20,6 +20,9 @@ Stage 1 modes (the rows of the experimental grid — see
                     embedder is expected to understand jargon directly.
 * ``raw``         — no rewriter call at all: no filters, raw query embedded.
                     Pure dense retrieval, the old ``embedding_only`` config.
+* ``concepts``    — (v2 prompt) rewriter supplies filters and 1-3 concept
+                    phrases in deckbuilder vocabulary; the phrases are embedded.
+                    Falls back to ``hypothetical_card``, then the raw query.
 
 Filter semantics follow the decisions logged during the 2026-09-18 test
 series: colour filters admit colourless cards unless the op is ``exactly``;
@@ -88,6 +91,9 @@ class Stage1Mode(StrEnum):
     HYDE = "hyde"
     PASSTHROUGH = "passthrough"
     RAW = "raw"
+    CONCEPTS = (
+        "concepts"  # v2: embed the rewriter's concept phrases; hypothetical, then raw, as fallbacks
+    )
 
 
 @dataclass(frozen=True)
@@ -341,6 +347,7 @@ class Searcher:
         self.policy = policy
         self.embedding_version = settings.embedding_version
         self.prompt_path = prompt_path or (settings.prompts_dir / "hyde_v1.yaml")
+        self.known_keywords: set[str] = set()  # canonical Scryfall keywords present in the corpus
         self.prompt_version = (
             f"{self.prompt_path.name}:{_load_prompt(self.prompt_path).get('version')}"
         )
@@ -353,6 +360,9 @@ class Searcher:
         self._owns_conn = conn is None
         self.conn = conn or psycopg.connect(settings.database_url)
         register_vector(self.conn)
+        with self.conn.cursor() as cur:
+            cur.execute("SELECT DISTINCT unnest(keywords) FROM cards")
+            self.known_keywords = {r[0] for r in cur.fetchall()}
 
     def close(self) -> None:
         if self._owns_conn:
@@ -492,6 +502,16 @@ class Searcher:
             if not query_text:
                 warnings.append("hyde returned no hypothetical_card; embedding raw query")
                 query_text = query
+        elif mode is Stage1Mode.CONCEPTS:
+            concepts = [c.strip() for c in (hyde.concepts or []) if c and c.strip()] if hyde else []
+            if concepts:
+                query_text = ", ".join(concepts)
+            elif hyde and (hyde.hypothetical_card or "").strip():
+                query_text = hyde.hypothetical_card.strip()
+                warnings.append("no concepts; embedding hypothetical_card")
+            else:
+                query_text = query
+                warnings.append("no concepts or hypothetical; embedding raw query")
         else:
             query_text = query
 
@@ -500,6 +520,14 @@ class Searcher:
         where_clauses: list[str] = []
         params: dict[str, Any] = {}
         if use_sql and hyde is not None:
+            if hyde.filters and hyde.filters.keywords and self.known_keywords:
+                # Guard: a hallucinated keyword ("Burn", "Pinger") zeroes the
+                # result set. Keep only canonical keywords the corpus contains.
+                kept = [k for k in hyde.filters.keywords if k in self.known_keywords]
+                dropped = [k for k in hyde.filters.keywords if k not in self.known_keywords]
+                if dropped:
+                    warnings.append(f"non-canonical keywords dropped: {dropped}")
+                    hyde.filters.keywords = kept or None
             try:
                 where_clauses, params = build_where(hyde.filters, self.policy)
             except FilterError as exc:

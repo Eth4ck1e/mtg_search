@@ -10,7 +10,8 @@ Config contract (``retrieval`` block)::
 
     retrieval:
       type: cascade            # or "embedding_only" (legacy alias for stage1: raw)
-      stage1: hyde             # hyde | passthrough | raw   (src.search.Stage1Mode)
+      stage1: hyde             # hyde | passthrough | raw | concepts   (src.search.Stage1Mode)
+      prompt: prompts/hyde_v2.yaml   # optional; default prompts/hyde_v1.yaml
       sql: true                # false = minus-SQL ablation
       keywords_filter: false   # FilterPolicy.keywords
       k: 10
@@ -86,6 +87,7 @@ def _build_per_query_record(
         "relevant_count": len(relevant_ids),
         "borderline_count": len(borderline_ids),
         "stage1": hyde,
+        "stage1_completion_tokens": result.hyde.completion_tokens if result.hyde else None,
         "query_text": result.query_text,
         "where_sql": result.where_sql,
         "candidate_count": result.candidate_count,
@@ -233,8 +235,13 @@ def main() -> int:
         set_metrics_list: list[SetMetrics] = []
         latencies_ms: list[float] = []
 
-        with Searcher(policy=policy) as searcher:
+        prompt_path = cfg.get("retrieval", {}).get("prompt")
+        with Searcher(
+            policy=policy, prompt_path=Path(prompt_path) if prompt_path else None
+        ) as searcher:
             run.event("model_loaded", model=settings.embedding_model)
+            if mode is not Stage1Mode.RAW:
+                print(f"  Prompt:        {searcher.prompt_version}\n")
             for q in tqdm(queries, desc="evaluate", unit="query"):
                 relevant_ids = _ids(q, "relevant")
                 borderline_ids = _ids(q, "borderline")
@@ -270,6 +277,16 @@ def main() -> int:
         aggregate = aggregate_metrics(per_query_metrics, latencies_ms)
         if want_set:
             aggregate.update(aggregate_set_metrics(set_metrics_list))
+        toks = [
+            r["stage1_completion_tokens"] for r in per_query if r.get("stage1_completion_tokens")
+        ]
+        if toks:
+            aggregate["stage1_completion_tokens_mean"] = sum(toks) / len(toks)
+        s1 = [
+            r["timings_ms"].get("stage1_ms") for r in per_query if r["timings_ms"].get("stage1_ms")
+        ]
+        if s1:
+            aggregate["stage1_ms_mean"] = sum(s1) / len(s1)
         run.note(**{f"agg_{key}": val for key, val in aggregate.items()})
 
         # ----- Stdout summary -----
@@ -284,6 +301,8 @@ def main() -> int:
             ("latency p50 (ms)", aggregate["latency_p50"]),
             ("latency p95 (ms)", aggregate["latency_p95"]),
             ("latency mean (ms)", aggregate["latency_mean"]),
+            ("stage1 mean (ms)", aggregate.get("stage1_ms_mean", 0.0)),
+            ("stage1 out tokens", aggregate.get("stage1_completion_tokens_mean", 0.0)),
         ]:
             print(f"    {label:20s} {value:.4f}")
         if want_set:
