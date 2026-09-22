@@ -459,7 +459,15 @@ An observation from testing suggests a natural production extension: HyDE's stru
 
 This is out of scope for the current work (no production frontend planned this term), but the cascade architecture supports it naturally: a `HyDEResult` object's `filters` field can be modified in place before being passed to the search orchestrator without any pipeline change. The pattern reinforces the accessibility framing — non-experts get LLM-driven filter proposals, experts can override and refine.
 
-### 6.6 Limitations
+### 6.6 What review of the results shows
+
+*[YOUR PROSE — 2026-09-22, from the dashboard review; lightly edited]*
+
+Reviewing results visually surfaced both sides of the system in two searches. For *"destroy all creatures"* the rewriter mapped the query to the sweeper category, which is partially correct but broader than what was asked — Scryfall has no narrower tag either; `boardwipe` and its variants are aliases of `sweeper` — and by review the results are far less useful than Scryfall's literal `o:"destroy all creatures"`. Attempting to fix this by embedding the user's words alongside the concept repaired that query and lost equivalent ground elsewhere (Section 5.6: 0.486 vs 0.510 R-precision), so it is reported as an ablation rather than adopted. It is likely that simple attempts to fix individual failures now make overall results worse, and this drives home the point that while the idea is showing merit, there is still a lot of work needed to make it foolproof as a search tool.
+
+In other cases the results are very good, especially on human-syntax searching. A search for *"is a planeswalker"* did exactly what one would expect right away and filtered by type; the same search on Scryfall returns nothing — the user would have to use the advanced interface or know to type `type:planeswalker`. A relatively simple task either way, but one has no prior-knowledge requirement compared to the other.
+
+### 6.7 Limitations
 
 *[DRAFTED — REVIEW]*
 

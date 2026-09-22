@@ -446,6 +446,16 @@ The expert path is short *only because* `otag:` exists — every jargon query ne
 
 **Caveats.** The expert queries are drafted, not collected from real experts — Mitchell's review is the check; a small expert-user sample is future work. 20 of 21 tag-mapped targets were seen in training (the `no_tag` column is the independent check: 0.39 vs 0.35 for the control). Rows 74–79 in `experiment_runs` (kind `scryfall_comparator`).
 
+### 5k. Dashboard review — two observations and a null result (Mitchell, 2026-09-22)
+
+**Observation 1 (weakness).** "destroy all creatures" → v2 concepts `sweeper, board wipe` → the whole 870-card sweeper category (land destruction, mass bounce included), which by review is far less useful than Scryfall's `o:"destroy all creatures"`. Checked: `boardwipe`, `board-wipe`, `board wipe`, `wipe`, `mass-removal` are all aliases of `sweeper` on Scryfall (identical 942-card result set); there is no narrower community tag, and the specificity lives only in Oracle text. The rewriter replaced a specific phrase with its category.
+
+Tried the principled fix — embed the user's words first, then the concepts (`Stage1Mode.QUERY_PLUS_CONCEPTS`, row 84/85). On that query: P@10 0 → 0.20, first result Day of Judgment. Overall: **R-prec 0.486 vs 0.510, Scryfall parity 0.563 vs 0.565** — a wash; gains on the specific queries, losses on bare-jargon ones ("mana dorks" + "mana dork" is noise). Kept as an ablation row, not the default. Mitchell's read, recorded verbatim: *"it's likely that our simple attempts to fix now may make our overall results worse and this just drives home the point that while the idea is showing merit there is still a lot of work that would need to be done to make it foolproof as a search tool."* That sentence belongs in the Discussion.
+
+**Observation 2 (strength).** *"I did a search 'is a planeswalker' and it did exactly what you would expect right away and filtered by type planeswalker, and the same search on Scryfall would return nothing. You would have to use the advanced interface or know the shortcuts to type `type:planeswalker` into the search bar to do the same thing. Relatively simple task either way but one has no prior-knowledge requirement compared to the other."* — the accessibility claim in one example, for the paper's Discussion.
+
+**Also noted:** the dashboard's "match %" is raw cosine, and the tuned model's scores sit at 30–40 % even on excellent results (base: 60–75 %; nonsense query on tuned: 22 %). Contrastive fine-tuning pulls the distribution down and spreads it; the value is meaningful relative to the query's own distribution, not on a fixed scale. To do: show relative match (top = 100 %) with raw cosine in a tooltip.
+
 ## 6. CLAUDE.md revisions
 
 §5 (do not fine-tune the embedder on keyword definitions), §6 (fine-tuning deferred to M6), and §11 (anti-suggestion) all encode the pre-pivot position. Revised today to: reminder-text augmentation stays the corpus-side lever; tag-derived contrastive fine-tuning is the query-side lever, motivated by the 2026-09-18 test evidence and gated on the base-embedder control run in §5 above. Hand-written definition dictionaries remain banned.

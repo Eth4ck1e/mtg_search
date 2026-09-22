@@ -95,6 +95,7 @@ class Stage1Mode(StrEnum):
     CONCEPTS = (
         "concepts"  # v2: embed the rewriter's concept phrases; hypothetical, then raw, as fallbacks
     )
+    QUERY_PLUS_CONCEPTS = "query_plus_concepts"  # v2: user's words FIRST, then the concepts
 
 
 @dataclass(frozen=True)
@@ -514,6 +515,13 @@ class Searcher:
             if not query_text:
                 warnings.append("hyde returned no hypothetical_card; embedding raw query")
                 query_text = query
+        elif mode is Stage1Mode.QUERY_PLUS_CONCEPTS:
+            # The user's phrasing often carries specificity a tag drops
+            # ("destroy all creatures" vs "sweeper", 2026-09-22): keep it, and
+            # let the concepts add the community vocabulary.
+            concepts = [c.strip() for c in (hyde.concepts or []) if c and c.strip()] if hyde else []
+            extra = [c for c in concepts if c.lower() not in query.lower()]
+            query_text = ", ".join([query, *extra])
         elif mode is Stage1Mode.CONCEPTS:
             concepts = [c.strip() for c in (hyde.concepts or []) if c and c.strip()] if hyde else []
             if concepts:

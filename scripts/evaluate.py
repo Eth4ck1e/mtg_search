@@ -10,7 +10,7 @@ Config contract (``retrieval`` block)::
 
     retrieval:
       type: cascade            # or "embedding_only" (legacy alias for stage1: raw)
-      stage1: hyde             # hyde | passthrough | raw | concepts   (src.search.Stage1Mode)
+      stage1: hyde             # hyde | passthrough | raw | concepts | query_plus_concepts
       prompt: prompts/hyde_v2.yaml   # optional; default prompts/hyde_v1.yaml
       sql: true                # false = minus-SQL ablation
       keywords_filter: false   # FilterPolicy.keywords
