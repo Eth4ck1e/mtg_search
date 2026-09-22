@@ -76,7 +76,7 @@
       <button id="rewriteBtn" title="Run the Stage 1 rewriter (needs mlx_lm.server)">Rewrite → fill boxes</button>
     </div>
     <div class="two">
-      <label>Text to embed (Stage 3) — hypothetical text, a tag label, or the raw query
+      <label>Text to embed (Stage 3) — concept phrases, a tag label, hypothetical text, or the raw query
         <textarea id="embedText" rows="4"></textarea>
       </label>
       <label>Filters JSON (Stage 2) — edit and re-search
@@ -148,8 +148,10 @@ $('rewriteBtn').onclick = async () => {
   try {
     const r = await api('/api/rewrite', {query});
     $('filters').value = JSON.stringify(r.filters, null, 2);
-    $('embedText').value = r.hypothetical_card || query;
-    status(r.hypothetical_card ? 'Rewriter filled both boxes. Edit if you like, then Search.' : 'Rewriter returned filters only — embedding the raw query.');
+    $('embedText').value = r.embed_text;
+    const src = r.concepts.length ? `concepts: ${r.concepts.join(', ')}` : r.hypothetical_card ? 'hypothetical (no concept fit)' : 'raw query (rewriter gave nothing to embed)';
+    status(`Rewriter → ${esc(src)}${r.completion_tokens ? ` · ${r.completion_tokens} output tokens` : ''}. Edit either box, then Search.`);
+    PAGES = 1; search();
   } catch (e) { status(esc(e.message), true); }
   $('rewriteBtn').disabled = false;
 };

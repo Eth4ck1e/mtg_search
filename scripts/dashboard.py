@@ -50,6 +50,8 @@ from src.config import settings
 from src.query_rewriter import HyDEError, HyDEFilters, rewrite_query
 from src.search import FilterError, FilterPolicy, Searcher
 
+PROMPT = settings.prompts_dir / "hyde_v2.yaml"  # the dashboard rewrites with the current prompt
+
 PAGE = Path(__file__).with_name("dashboard.html")
 JUDGMENTS = settings.eval_dir / "judgments_pending.jsonl"
 EVAL_SET = settings.eval_dir / "queries_v1_draft.yaml"
@@ -88,7 +90,7 @@ class App:
         for v in versions:
             model = v.split("|preproc=")[0]
             print(f"  Loading embedder {model} ...", flush=True)
-            self.searchers[v] = Searcher(embedding_model=model)
+            self.searchers[v] = Searcher(embedding_model=model, prompt_path=PROMPT)
         default = settings.embedding_version
         self.default_version = default if default in self.searchers else versions[0]
         self.searcher = self.searchers[self.default_version]
@@ -132,9 +134,17 @@ class App:
 
     def rewrite(self, body: dict[str, Any]) -> dict[str, Any]:
         result = rewrite_query(body["query"], prompt_path=self.searcher.prompt_path)
+        concepts = [c.strip() for c in (result.concepts or []) if c and c.strip()]
+        # Same precedence as Stage1Mode.CONCEPTS: concepts, then hypothetical, then raw.
+        embed_text = (
+            ", ".join(concepts) or (result.hypothetical_card or "").strip() or body["query"]
+        )
         return {
             "filters": result.filters.model_dump(exclude_none=True) if result.filters else {},
+            "concepts": concepts,
             "hypothetical_card": result.hypothetical_card or "",
+            "embed_text": embed_text,
+            "completion_tokens": result.completion_tokens,
         }
 
     def search(self, body: dict[str, Any]) -> dict[str, Any]:
