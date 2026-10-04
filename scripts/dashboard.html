@@ -218,7 +218,20 @@ $('grid').onclick = async e => {
     card.querySelectorAll('.judge button').forEach(b => b.classList.toggle('on', b === btn));
   } catch (err) { status(esc(err.message), true); }
 };
-init().catch(e => status(esc(e.message), true));
+// Shareable demo links: ?q=<query>[&emb=tuned|base][&k=12][&rewrite=0]
+// With q set, the page runs Rewrite (unless rewrite=0) and Search on load.
+async function fromUrl() {
+  const p = new URLSearchParams(location.search), q = p.get('q');
+  if (!q) return;
+  $('query').value = q;
+  if (p.get('k')) $('k').value = p.get('k');
+  const emb = p.get('emb');
+  if (emb) for (const o of $('embSel').options)
+    if ((emb === 'base') === o.value.startsWith('nomic-ai/')) { o.selected = true; break; }
+  if (p.get('rewrite') === '0') { $('embedText').value = q; await search(); }
+  else $('rewriteBtn').click();
+}
+init().then(fromUrl).catch(e => status(esc(e.message), true));
 </script>
 </body>
 </html>

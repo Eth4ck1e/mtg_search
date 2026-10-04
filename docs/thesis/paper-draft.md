@@ -370,7 +370,7 @@ Explicit-only filtering raised coverage from 68% to 81% of each target set — "
 
 ### 5.7 Comparison against expert Scryfall queries
 
-*[DRAFTED — REVIEW; journal §5j, rows 72–79. Expert queries in `data/eval/scryfall_expert_queries_v1.yaml` are LLM-drafted and reviewed by the author; result sets fetched 2026-09-22.]*
+*[DRAFTED — REVIEW; journal §5j; numbers from the generated report `docs/reports/2026-10-03/` (grid rows 88–101, comparator rows 102–129). Expert queries in `data/eval/scryfall_expert_queries_v1.yaml` are LLM-drafted and reviewed by the author; result sets fetched 2026-09-22. Corrected 2026-10-03: an earlier draft of this section mixed figures from a 21-query run into tables labelled 26 queries.]*
 
 For each evaluation query an expert Scryfall search was written in two forms: with the community oracle tags (`otag:`) an expert would use today, and without them, from Oracle text and attributes alone. Each was run through Scryfall's search API (all pages, one request per second) and the result set restricted to the corpus. The cascade's full ranking was then scored against that set: R-precision (the fraction of the first |S| results that are in S), Jaccard overlap at depth |S|, and the depth needed to see 90% of S.
 
@@ -382,20 +382,20 @@ For each evaluation query an expert Scryfall search was written in two forms: wi
 | v2 rewriter, tuned encoder | 0.523 | 0.446 | 0.98× | 0.391 |
 | v2 rewriter, tuned encoder, keyword filter on | **0.565** | **0.492** | **0.95×** | — |
 
-A depth below 1.0× means the user sees 90% of the expert's set before scrolling past as many cards as the set contains. Per query, the best configuration reaches parity of 0.85 or higher on ten of the 26 queries (instants that cost 1 mana 1.00, haste creatures 1.00, tutor 0.96, cheap blue counterspells 0.95, extra turns 0.94, counterspells 0.92, fetch lands 0.91, instants that draw cards 0.86, red creatures under 3 mana 0.85) and fails on the rewriter's known knowledge-gap cases. One "failure" is instructive: for *a card that destroys all creatures* the expert wrote `o:"destroy all creatures"` (84 cards) while the cascade retrieved the whole sweeper category (870 cards) — broader than the expert, not wrong.
+A depth below 1.0× means the user sees 90% of the expert's set before scrolling past as many cards as the set contains. Per query, the best configuration reaches parity of 0.85 or higher on nine of the 26 queries (instants that cost 1 mana 1.00, haste creatures 1.00, tutor 0.96, cheap blue counterspells 0.95, extra turns 0.94, counterspells 0.92, fetch lands 0.91, instants that draw cards 0.86, red creatures under 3 mana 0.85) and fails on the rewriter's known knowledge-gap cases. One "failure" is instructive: for *a card that destroys all creatures* the expert wrote `o:"destroy all creatures"` (84 cards) while the cascade retrieved the whole sweeper category (870 cards) — broader than the expert, not wrong.
 
-The comparator is itself imperfect. Against the hand-curated judgments, the tagged expert sets have 11% precision and 90% recall; the untagged sets 17% and 72%. This is the annotation-hole effect of Section 5.4 seen from the other side, and it is why parity with the expert set rather than precision against thirty judged archetypes is the number reported.
+The comparator is itself imperfect. Against the hand-curated judgments, the tagged expert sets have 9% precision and 92% recall; the untagged sets 14% and 77%. This is the annotation-hole effect of Section 5.4 seen from the other side, and it is why parity with the expert set rather than precision against thirty judged archetypes is the number reported.
 
-**Table 10 — What the user had to type (mean over 26 queries).**
+**Table 10 — What the user had to type (mean over 26 queries; from `docs/reports/2026-10-03/tables/06_query_complexity.csv`).**
 
 | | Plain language (this work) | Scryfall, tags allowed | Scryfall, no tags |
 |---|---|---|---|
-| Length | 3.8 words | 20 characters | 59 characters |
-| Operators | 0 | 1.5 | 3.3 |
-| Requires `otag:` | — | every jargon query | — |
+| Length | 3.7 words | 20 characters | 52 characters |
+| Operators | 0 | 1.7 | 3.2 |
+| Requires `otag:` | — | 81% of queries | — |
 | Boolean grouping or negation | 0 | rare | common |
 
-The expert path is short only because community tags exist, and using them requires knowing the tag's exact slug: `sweeper`, not "board wipe"; `counterspell-free`; `mana-dork`. Without tags the same intent takes three operators, quoted Oracle phrases, and boolean grouping, and still reaches only 72% recall of the judged cards. The cascade takes the 3.8-word query with no syntax and reaches 0.57 R-precision against the tagged expert's result set. That is the accessibility claim of Section 1.1 with a measurement attached: not that the system beats Scryfall, but that it reaches most of what an expert reaches without the user learning the grammar.
+The expert path is short only because community tags exist, and using them requires knowing the tag's exact slug: `sweeper`, not "board wipe"; `counterspell-free`; `mana-dork`. Without tags the same intent takes three operators, quoted Oracle phrases, and boolean grouping, and still reaches only 77% recall of the judged cards. The cascade takes the 3.7-word query with no syntax and reaches 0.57 R-precision against the tagged expert's result set. That is the accessibility claim of Section 1.1 with a measurement attached: not that the system beats Scryfall, but that it reaches most of what an expert reaches without the user learning the grammar.
 
 *[TODO — eval v2: pool top-10 across all logged rows, judge the holes, freeze; pairs_v2 with doc-like anchors and synthetic queries, retrain, re-run grid; hyde_v2 with a one-sentence hypothetical and trimmed rules (measure tokens/latency); Scryfall comparator; direct-tag-lookup ablation (expected to fail on broad tags for the same reason — the argument for embedding over lookup).]*
 

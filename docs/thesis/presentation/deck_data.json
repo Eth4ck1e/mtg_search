@@ -1,0 +1,171 @@
+{
+ "source": "docs/reports/2026-10-03 (experiment_runs rows 88-129)",
+ "two_by_two": {
+  "v1": {
+   "base": 0.215,
+   "tuned": 0.326
+  },
+  "v2": {
+   "base": 0.169,
+   "tuned": 0.51
+  }
+ },
+ "stage1": {
+  "v1_tokens": 42,
+  "v2_tokens": 28,
+  "v1_request_tokens": 2079,
+  "v2_request_tokens": 1378
+ },
+ "parity": {
+  "control": 0.343,
+  "headline": 0.565,
+  "headline_depth90": 0.95,
+  "n_ge_085": 9,
+  "n": 26
+ },
+ "per_query": [
+  {
+   "q": "instants that cost 1 mana",
+   "parity": 0.999,
+   "expert": "t:instant mv=1"
+  },
+  {
+   "q": "haste creatures",
+   "parity": 0.998,
+   "expert": "t:creature kw:haste"
+  },
+  {
+   "q": "tutor",
+   "parity": 0.958,
+   "expert": "otag:tutor"
+  },
+  {
+   "q": "cheap blue counterspells",
+   "parity": 0.95,
+   "expert": "otag:counterspell c:u mv<=2"
+  },
+  {
+   "q": "extra turns",
+   "parity": 0.943,
+   "expert": "otag:extra-turn"
+  },
+  {
+   "q": "counterspells",
+   "parity": 0.916,
+   "expert": "otag:counterspell"
+  },
+  {
+   "q": "fetch lands",
+   "parity": 0.906,
+   "expert": "otag:fetchland"
+  },
+  {
+   "q": "instants that draw cards",
+   "parity": 0.862,
+   "expert": "t:instant otag:draw"
+  },
+  {
+   "q": "red creatures under 3 mana",
+   "parity": 0.85,
+   "expert": "t:creature c:r mv<3"
+  },
+  {
+   "q": "graveyard recursion",
+   "parity": 0.743,
+   "expert": "otag:recursion"
+  },
+  {
+   "q": "wheels",
+   "parity": 0.743,
+   "expert": "otag:wheel"
+  },
+  {
+   "q": "flicker effects",
+   "parity": 0.734,
+   "expert": "otag:flicker"
+  },
+  {
+   "q": "ramp spells",
+   "parity": 0.683,
+   "expert": "otag:ramp"
+  },
+  {
+   "q": "creatures with flying",
+   "parity": 0.664,
+   "expert": "t:creature kw:flying"
+  },
+  {
+   "q": "board wipes",
+   "parity": 0.609,
+   "expert": "otag:sweeper"
+  },
+  {
+   "q": "card draw engines",
+   "parity": 0.526,
+   "expert": "otag:draw-engine"
+  },
+  {
+   "q": "red pingers under 3 mana",
+   "parity": 0.422,
+   "expert": "otag:pinger c:r mv<3"
+  },
+  {
+   "q": "mana dorks",
+   "parity": 0.417,
+   "expert": "otag:mana-dork"
+  },
+  {
+   "q": "removal",
+   "parity": 0.328,
+   "expert": "otag:removal"
+  },
+  {
+   "q": "ETB triggers",
+   "parity": 0.164,
+   "expert": "t:creature o:\"when\" o:\"enters\""
+  },
+  {
+   "q": "destroy target artifact",
+   "parity": 0.094,
+   "expert": "otag:removal-artifact o:destroy"
+  },
+  {
+   "q": "a card that destroys all creatures",
+   "parity": 0.083,
+   "expert": "otag:sweeper o:\"destroy all creatures\""
+  },
+  {
+   "q": "free counterspell",
+   "parity": 0.077,
+   "expert": "otag:counterspell-free"
+  },
+  {
+   "q": "burn spell that deals 3 damage to any target",
+   "parity": 0.028,
+   "expert": "otag:burn-any o:\"3 damage\""
+  },
+  {
+   "q": "a card that lets me look at my deck and put a creature into the battlefield",
+   "parity": 0.0,
+   "expert": "otag:tutor-creature o:\"onto the battlefield\""
+  },
+  {
+   "q": "creatures that get bigger every time I cast a spell",
+   "parity": 0.0,
+   "expert": "t:creature otag:cast-trigger-you o:\"+1/+1\""
+  }
+ ],
+ "complexity": {
+  "plain": "3.7 words",
+  "tags": "20 chars",
+  "no_tags": "52 chars",
+  "ops_tags": "1.7",
+  "ops_no_tags": "3.2"
+ },
+ "finetune": {
+  "pairs": "207,062",
+  "minutes": "71",
+  "heldout_ndcg": "0.114 \u2192 0.242",
+  "nanobeir": "0.514 \u2192 0.495"
+ }
+}

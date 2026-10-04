@@ -54,3 +54,10 @@ data/training/card_tags_*.json
 # Scryfall comparator result sets (~2 MB of oracle_ids; regenerable in ~5 min via
 # scripts/scryfall_comparator.py fetch). The committed manifest records what was fetched.
 data/eval/scryfall_results_*.json
+
+# Presentation build outputs (regenerable: see docs/thesis/presentation/presentation-notes.md).
+# Screenshots contain card art; keep them out of the public repo.
+docs/thesis/presentation/*.pptx
+docs/thesis/presentation/assets/
+docs/thesis/presentation/node_modules/
+docs/thesis/presentation/package-lock.json

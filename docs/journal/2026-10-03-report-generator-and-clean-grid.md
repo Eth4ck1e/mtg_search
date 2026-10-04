@@ -23,6 +23,31 @@ All seven configurations were re-run on **both** embedders in one session (possi
 - Stage 1 latency in the grid varies run to run (v1: 1.05–1.72 s; v2: 0.76–1.22 s) because each run is a separate process and the first calls pay model warm-up; the per-query token counts are stable (v1 42, v2 28 output tokens). Report latency as a range and tokens as the stable cost measure.
 - On the full-pool measure the unfiltered tuned rows score highest (raw query 0.598, v2 concepts 0.623) because filters cut the reachable pool to ~0.7; on Scryfall parity — where the expert's set is also filtered — the filtered rows win (0.565 vs 0.40–0.42). The two measures answer different questions and both tables are needed.
 
+## Correction to the 2026-09-22 comparator write-up
+
+Exporting slide data from the report CSVs exposed numbers in journal §5j (2026-09-18 entry) and paper §5.7 that were copied by hand from the **21-query** comparator rows (68–71) but labelled "26 queries". The 26-query values, from `06_query_complexity.csv` and `05_parity_per_query.csv`:
+
+| Quantity | Written on 09-22 | Correct (n = 26) |
+|---|---|---|
+| Plain query length | 3.8 words | 3.7 words |
+| Expert query, no tags | 59 chars, 3.3 operators | 52 chars, 3.2 operators |
+| Expert query, tags | 20 chars, 1.5 operators | 20 chars, 1.7 operators |
+| Queries needing `otag:` | "100% of jargon queries" | 81% of all queries |
+| Expert sets vs judgments (tags) | 11% precision / 90% recall | 9% / 92% |
+| Expert sets vs judgments (no tags) | 17% / 72% | 14% / 77% |
+| Queries at ≥ 0.85 parity | "ten of 26" | nine of 26 |
+
+Paper §5.7 is corrected and now cites the report folder. The parity headline numbers (0.343 → 0.565) were always from 26-query rows and are unchanged. This is the failure the report generator exists to prevent: **numbers go from `experiment_runs` to the report to the paper and slides, never from a terminal to prose.**
+
+## Presentation deck (thesis class, 5–10 minute slot)
+
+`docs/thesis/presentation/`: `build_deck.js` (pptxgenjs; `npm install && npm run build`), `deck_data.json` (exported from the report CSVs), `presentation-notes.md` (timing plans for 5 and 10 minutes, demo script with one-click links, expected questions, rebuild steps). The `.pptx` and the demo screenshots are gitignored (regenerable; screenshots contain card art).
+
+- Eight slides + five backup: problem (plain words vs Scryfall syntax), the three stages, the "tutor" before/after, rewriter × embedder, Scryfall parity, live demo, limits and next; backups are per-query parity and four demo screenshots.
+- **Demo links.** The dashboard now accepts `?q=<query>&emb=tuned|base&k=N` and runs the search on load, so the three demo searches are pre-loaded browser tabs rather than live typing. Best demo found by auditioning queries: **"tutor"** — the base embedder returns Mentor-mechanic creatures (Barging Sergeant, Blade Instructor, Proud Mentor: a tutor is a teacher); the tuned embedder returns Grim Tutor, Rhystic Tutor, Demonic Bargain.
+- **Charts are drawn as shapes, not chart objects.** Both QuickLook and Keynote dropped pptxgenjs's native charts on this machine; shape-drawn bars render identically in Keynote and PowerPoint. Verified by exporting the deck through Keynote to PDF and inspecting every chart slide.
+- Display rounding: values exported to three decimals are rounded half-up in the deck (0.565 → 0.57), matching the report.
+
 ## Next
 
 Presentation prep (window opens 2026-10-19); expert-query review and the hole-judging pass remain open on Mitchell's side.

@@ -266,9 +266,10 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
             self._send(code, json.dumps(obj, default=str).encode(), "application/json")
 
         def do_GET(self) -> None:
-            if self.path in ("/", "/index.html"):
+            path = self.path.split("?", 1)[0]  # demo links carry ?q=...
+            if path in ("/", "/index.html"):
                 self._send(200, PAGE.read_bytes(), "text/html; charset=utf-8")
-            elif self.path == "/api/meta":
+            elif path == "/api/meta":
                 self._json(200, app.meta())
             else:
                 self._json(404, {"error": "not found"})
