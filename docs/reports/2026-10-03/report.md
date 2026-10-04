@@ -1,6 +1,6 @@
 # Results report
 
-Generated 2026-10-04 00:00 UTC at commit `69e3892` by `scripts/generate_report.py` from `experiment_runs` rows since 2026-09-01 (85 rows read, 20 eval cells selected). Eval set: v1-draft. Newest row per (configuration, embedder) wins; superseded ids are in the appendix.
+Generated 2026-10-04 01:57 UTC at commit `6c71776` by `scripts/generate_report.py` from `experiment_runs` rows since 2026-09-01 (85 rows read, 20 eval cells selected). Eval set: v1-draft. Newest row per (configuration, embedder) wins; superseded ids are in the appendix.
 
 **Headline configuration:** `cascade_v2_concepts_kw` on the tuned embedder (row 101). **Control:** `cascade_hyde_v1` on the base embedder (row 90).
 
@@ -130,6 +130,39 @@ For each eval query an expert Scryfall search was run and its result set restric
 | Queries needing `otag:` | — | 81% | 0% |
 | Expert set precision vs judgments | — | 0.09 | 0.14 |
 | Expert set recall vs judgments | — | 0.92 | 0.77 |
+
+## 6. Per query: control vs headline
+
+P@10 against the hand-curated judgments; R-prec against the query's tag pool (— where no tag is mapped); parity against the expert Scryfall result set (tags allowed).
+
+| ID | Query | Category | Control P@10 | Headline P@10 | Control R-prec | Headline R-prec | Control parity | Headline parity |
+|---|---|---|---|---|---|---|---|---|
+| q_001 | creatures with flying | fragmented | 0.000 | 0.000 | — | — | 0.598 | 0.664 |
+| q_002 | destroy target artifact | mechanical | 0.100 | 0.000 | 0.382 | 0.205 | 0.486 | 0.094 |
+| q_003 | instants that draw cards | fragmented | 0.000 | 0.100 | 0.157 | 0.157 | 0.706 | 0.862 |
+| q_004 | burn spell that deals 3 damage to any target | natural | 0.100 | 0.100 | 0.067 | 0.034 | 0.021 | 0.028 |
+| q_005 | haste creatures | fragmented | 0.000 | 0.100 | — | — | 0.902 | 0.998 |
+| q_006 | ramp spells | jargon | 0.000 | 0.000 | 0.088 | 0.704 | 0.084 | 0.683 |
+| q_007 | counterspells | jargon | 0.200 | 0.100 | 0.669 | 0.916 | 0.671 | 0.916 |
+| q_008 | board wipes | jargon | 0.400 | 0.000 | 0.183 | 0.611 | 0.182 | 0.609 |
+| q_009 | removal | jargon | 0.400 | 0.000 | 0.410 | 0.839 | 0.215 | 0.328 |
+| q_010 | card draw engines | jargon | 0.000 | 0.100 | 0.228 | 0.527 | 0.228 | 0.526 |
+| q_011 | tutor | jargon | 0.000 | 0.100 | 0.106 | 0.960 | 0.107 | 0.958 |
+| q_012 | graveyard recursion | jargon | 0.100 | 0.000 | 0.573 | 0.767 | 0.562 | 0.743 |
+| q_013 | fetch lands | jargon | 0.300 | 0.400 | 0.604 | 0.906 | 0.604 | 0.906 |
+| q_014 | flicker effects | jargon | 0.000 | 0.100 | 0.000 | 0.743 | 0.000 | 0.734 |
+| q_015 | ETB triggers | jargon | 0.000 | 0.000 | — | — | 0.166 | 0.164 |
+| q_016 | mana dorks | jargon | 0.000 | 0.200 | 0.000 | 0.415 | 0.000 | 0.417 |
+| q_017 | wheels | jargon | 0.000 | 0.200 | 0.022 | 0.745 | 0.022 | 0.743 |
+| q_018 | extra turns | jargon | 0.500 | 0.600 | 0.208 | 0.943 | 0.208 | 0.943 |
+| q_019 | free counterspell | constrained | 0.100 | 0.100 | 0.077 | 0.077 | 0.077 | 0.077 |
+| q_020 | red creatures under 3 mana | constrained | 0.000 | 0.000 | — | — | 0.852 | 0.850 |
+| q_021 | instants that cost 1 mana | constrained | 0.300 | 0.000 | — | — | 0.999 | 0.999 |
+| q_022 | a card that lets me look at my deck and put a creature into the battlefield | natural | 0.000 | 0.000 | 0.015 | 0.000 | 0.023 | 0.000 |
+| q_023 | creatures that get bigger every time I cast a spell | natural | 0.000 | 0.000 | 0.249 | 0.000 | 0.105 | 0.000 |
+| q_024 | a card that destroys all creatures | natural | 0.300 | 0.000 | 0.183 | 0.651 | 0.298 | 0.083 |
+| q_025 | red pingers under 3 mana | hybrid | 0.000 | 0.100 | 0.000 | 0.148 | 0.000 | 0.422 |
+| q_026 | cheap blue counterspells | hybrid | 0.100 | 0.200 | 0.298 | 0.366 | 0.806 | 0.950 |
 
 ## Appendix — provenance
 

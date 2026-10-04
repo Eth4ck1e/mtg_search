@@ -12,15 +12,15 @@ This document governs Claude Code's behavior in this project. It overrides defau
 
 Consumer catalogs — trading card games, e-commerce, media libraries, technical documentation — increasingly need natural-language search that works for average users, not just experts fluent in the catalog's structured query syntax. Traditional keyword and faceted-filter search excels when the user knows the domain's vocabulary, but excludes the majority who query informally. Naive dense retrieval fails on the same catalogs because short informal queries embed too far from formal domain text. This project uses Magic: The Gathering (~30k unique cards) as a test bed for a research question that generalizes across consumer catalog domains: **can natural-language semantic search match or beat the domain-standard search tool (Scryfall) for non-expert users, and does the pattern extend to similar catalog domains?**
 
-The technical response is a **three-stage retrieval cascade** that addresses the **query–document asymmetry problem** identified by the original POC. Stage 1 is a HyDE-style query rewriter (local instruction-tuned LLM) that transforms the natural-language query into structured attributes plus a hypothetical card ability text. Stage 2 is a SQL pre-filter that narrows the candidate set on the extracted structured attributes. Stage 3 is semantic vector search over Oracle text embeddings inside the pre-filtered candidate set. The methodological response is a measurement discipline that quantifies per-component contribution through the –SQL ablation and comparison against Scryfall's expert-crafted queries. Real-world outcome — accessibility for non-experts — anchors the paper's argument; there is no internal-baseline diff.
+The technical response is a **three-stage retrieval cascade** that addresses the **query–document asymmetry problem** identified by the original POC. Stage 1 is a query rewriter (local instruction-tuned LLM) that transforms the natural-language query into structured attributes plus the text Stage 3 embeds — originally a HyDE-style hypothetical card ability text (prompt v1), now short concept phrases in deckbuilder vocabulary with a one-sentence hypothetical as fallback (prompt v2, 2026-09-22). Stage 2 is a SQL pre-filter that narrows the candidate set on the extracted structured attributes. Stage 3 is semantic vector search over Oracle text embeddings inside the pre-filtered candidate set, using an embedder fine-tuned on Scryfall's community oracle tags (2026-09-18). The methodological response is a measurement discipline that quantifies per-component contribution through the –SQL ablation and comparison against Scryfall's expert-crafted queries. Real-world outcome — accessibility for non-experts — anchors the paper's argument; there is no internal-baseline diff.
 
 ## 2. Architecture
 
 Three sequential stages in a retrieval cascade (Wang et al. 2011 tradition). Execution order matches numbering:
 
-1. **HyDE query rewriter (Stage 1).** A local instruction-tuned LLM (`mlx-community/Meta-Llama-3.1-8B-Instruct-4bit` — MLX-quantized for Apple Silicon inference via `mlx_lm.server`; final choice pending M4 candidate evaluation) transforms the user's natural-language query into a structured JSON output with two fields: (a) filter attributes for Stage 2, and (b) a hypothetical MTG card ability text for Stage 3. Served over an OpenAI-compatible HTTP endpoint so `query_rewriter.py` is backend-agnostic (swap MLX → vLLM/llama.cpp/TGI without touching Python). Reference: Gao et al. 2022, *"Precise Zero-Shot Dense Retrieval without Relevance Labels."* Preserved at [`docs/sources/2022_gao_hyde.pdf`](docs/sources/2022_gao_hyde.pdf).
+1. **HyDE query rewriter (Stage 1).** A local instruction-tuned LLM (`mlx-community/Meta-Llama-3.1-8B-Instruct-4bit` — MLX-quantized for Apple Silicon inference via `mlx_lm.server`; final choice pending M4 candidate evaluation) transforms the user's natural-language query into structured JSON. **Current contract (`prompts/hyde_v2.yaml`):** (a) `filters` for Stage 2, derived only from attributes the user literally typed; (b) `concepts`, one to three phrases in deckbuilder vocabulary, which Stage 3 embeds; (c) `hypothetical_card`, one sentence, only when no concept fits. The original v1 contract (filters + a hypothetical MTG card ability text, `prompts/hyde_v1.yaml`) is kept as the control configuration. Served over an OpenAI-compatible HTTP endpoint so `query_rewriter.py` is backend-agnostic (swap MLX → vLLM/llama.cpp/TGI without touching Python). Reference: Gao et al. 2022, *"Precise Zero-Shot Dense Retrieval without Relevance Labels."* Preserved at [`docs/sources/2022_gao_hyde.pdf`](docs/sources/2022_gao_hyde.pdf).
 2. **SQL pre-filter (Stage 2).** Structured attributes handed off from Stage 1 — color identity, mana value, type line, P/T, legality, and other categorical or numeric facts — narrow the candidate set. Postgres handles this natively; the pre-filter runs before any vector operation.
-3. **Semantic vector search (Stage 3).** The Stage 1 hypothetical ability text is embedded with `nomic-ai/nomic-embed-text-v1.5` (137M-param bi-encoder, 768-dim output). ANN search runs **inside** the candidate set narrowed by Stage 2 — pre-filter, not post-filter on top-K. Post-filter on top-K collapses recall on constrained queries.
+3. **Semantic vector search (Stage 3).** The Stage 1 query-side text (concept phrases under v2; hypothetical ability text under v1) is embedded with Nomic Embed v1.5 (137M-param bi-encoder, 768-dim output) — the fine-tuned checkpoint `models/nomic-mtg-v1` for the headline configuration, the stock `nomic-ai/nomic-embed-text-v1.5` for the control. Both sets of card vectors coexist in `card_embeddings`. ANN search runs **inside** the candidate set narrowed by Stage 2 — pre-filter, not post-filter on top-K. Post-filter on top-K collapses recall on constrained queries.
 
 **Design invariant:** the semantic stage always executes over the SQL-narrowed candidate set. This is the load-bearing design decision separating this cascade from generic dense retrieval.
 
@@ -76,7 +76,7 @@ The shape consistency across all logs is what makes week 14's `scripts/generate_
 
 The project is structured as **seven milestones (M0–M7)** rather than calendar weeks. The original 14-week schedule (in the roadmap files below) assumed a student writing every line by hand; LLM-assisted artifact production runs roughly 6× faster, so the calendar pace and the comprehension pace would diverge without explicit checkpoints. Each milestone-transition is gated by a **checkpoint** the curator must clear before the next milestone begins — see [`docs/process/milestone-checkpoints.md`](docs/process/milestone-checkpoints.md) for the framework.
 
-**Milestone status (updated 2026-09-11 after the baseline-abandonment pivot):**
+**Milestone status (updated 2026-10-03):**
 
 | ID | Milestone | Roadmap mapping | Status |
 |---|---|---|---|
@@ -84,10 +84,10 @@ The project is structured as **seven milestones (M0–M7)** rather than calendar
 | M1 | DB + logging + corpus characterized | [Phase 1](docs/roadmap/phase-1-foundation-and-logging.md) | ✓ Complete |
 | M2 | Corpus ingested + preprocessing pipeline | [Phase 2](docs/roadmap/phase-2-ingestion-and-schema.md) | ✓ Complete (2026-09-11 rebuild with Nomic Embed v1.5) |
 | M3 | First baseline measured | [Phase 3](docs/roadmap/phase-3-baseline-and-eval.md) | ⚠️ Superseded — baseline abandoned 2026-09-11; the previously claimed `experiment_runs.id=13` measurements were confirmed fabricated. Paper reframed from diff-vs-baseline to outcome-vs-Scryfall. See `docs/journal/2026-09-11-pivot-baseline-abandonment-and-encoder-switch.md`. |
-| M4 | HyDE + SQL pre-filter | [Phase 4](docs/roadmap/phase-4-hyde-and-prefilter.md) | In progress |
-| M5 | Systematic evaluation + report generation | [Phase 5](docs/roadmap/phase-5-systematic-eval.md) | Pending |
-| M6 | Embedder fine-tuning on Scryfall oracle tags | [Phase 6](docs/roadmap/phase-6-optimization.md) | **Activated 2026-09-18** on M4 test evidence; tag pipeline landed. Gated on the M4 base-embedder control run. See `docs/journal/2026-09-18-fine-tuning-pivot-oracle-tags-and-recipe.md`. |
-| M7 | Final paper + presentation | [Phase 7](docs/roadmap/phase-7-finalization.md) | Pending |
+| M4 | HyDE + SQL pre-filter | [Phase 4](docs/roadmap/phase-4-hyde-and-prefilter.md) | Deliverables landed (`src/query_rewriter.py`, `src/search.py`, prompts v1 + v2, control rows logged). Checkpoint with Mitchell not yet held. |
+| M5 | Systematic evaluation + report generation | [Phase 5](docs/roadmap/phase-5-systematic-eval.md) | Deliverables landed 2026-10-03: 7-config × 2-embedder grid, Scryfall comparator, `scripts/generate_report.py` → `docs/reports/`. Open: Mitchell's review of the expert queries and the dashboard hole-judging pass (eval v2). |
+| M6 | Embedder fine-tuning on Scryfall oracle tags | [Phase 6](docs/roadmap/phase-6-optimization.md) | First run done 2026-09-18 (`models/nomic-mtg-v1`, 71 min on the M3): set retrieval roughly tripled vs the base embedder, held-out tags doubled, NanoBEIR −0.02. Further runs (intersection anchors, LLM-refined subtags) are future work. See `docs/journal/2026-09-18-fine-tuning-pivot-oracle-tags-and-recipe.md`. |
+| M7 | Final paper + presentation | [Phase 7](docs/roadmap/phase-7-finalization.md) | In progress. Deck built (`docs/thesis/presentation/`); paper draft has generated references and appendices; **Mitchell writes the prose** (see §10 "Paper writing"). Final draft due 2026-12-04. |
 
 The roadmap files remain the source of truth for per-phase sub-task lists and "Notes for final report" sections. They no longer drive the schedule. **Treat deliverables and logging discipline as the contract; week numbers in the roadmap are historical context only.** The `docs/process/timeline.md` document is the current source of truth for the Fall 2026 semester schedule.
 
@@ -124,7 +124,7 @@ mtg_search/
 │   ├── reports/                         # Generated results reports (one dated folder per run)
 │   ├── roadmap/                         # Phase files (M0–M7 mapping in §8 above)
 │   ├── sources/                         # Academic source PDFs (gitignored) + bibliography
-│   └── thesis/                          # Thesis-class deliverables (abstracts, timeline)
+│   └── thesis/                          # Paper draft (single source of truth), references.bib, presentation/ (deck build + notes)
 ├── scripts/                             # Entry-point scripts
 │   ├── migrate.py                       # SQL migration runner
 │   ├── download_scryfall.py             # Scryfall bulk .jsonl.gz fetch
@@ -140,7 +140,10 @@ mtg_search/
 │   ├── evaluate.py                      # Run a config through src/search.py, write experiment_runs row
 │   ├── dashboard.py (+ dashboard.html)  # Local results-review UI: editable text/filters, card grid, judgments
 │   ├── scryfall_comparator.py           # Expert-query result parity + query-complexity proxy (paper's primary comparator)
-│   └── generate_report.py               # experiment_runs → docs/reports/<date>/ (report.md, CSV tables, SVG figures)
+│   ├── generate_report.py               # experiment_runs → docs/reports/<date>/ (report.md, CSV tables, SVG figures); --paper regenerates paper Appendices A–C
+│   ├── build_references.py              # arXiv metadata + extra_references.yaml → paper References section + references.bib
+│   ├── build_eval_v2.py                 # Fold dashboard judgments into a new eval-set version
+│   └── probes/                          # One-off analyses (set-retrieval probe, prompt size)
 ├── src/
 │   ├── config.py                        # Pydantic Settings (single source of truth)
 │   ├── logging_utils.py                 # PipelineRun JSONL context manager
@@ -151,7 +154,7 @@ mtg_search/
 │   ├── db/                              # experiment_log writer + SQL migrations
 │   ├── eval/                            # Pure-Python metric calculation
 │   └── utils/                           # device selection, warning suppression
-├── tests/                               # ~80 tests, mix of unit + integration
+├── tests/                               # ~120 tests, mix of unit + integration
 └── logs/                                # JSONL pipeline-run logs (gitignored)
 ```
 
@@ -164,6 +167,8 @@ mtg_search/
 - **Follow Python best practices:** type hints where they earn their keep, docstrings on public functions, sensible module structure, tests where they catch real bugs (no test theater).
 - **Work within the existing repo structure.** Don't restructure without a reason.
 - **Cite industry practice** for style/structure questions.
+
+**Paper writing (stated by Mitchell 2026-10-03).** Mitchell writes the paper's prose himself. The process: first a step-by-step review of the whole project (what was done, why, what the research said); then the paper in stages, paragraph by paragraph. For each paragraph Claude **prompts** and supplies **simplified bullet points of the facts** needed; Mitchell writes; Claude helps revise by further prompting, **not by rewriting**. Do not draft or rewrite paper prose unless explicitly asked — the aim is that the wording is not biased toward Claude's. Mechanical work stays with Claude: generated tables and figures, references, appendices, formatting, and checking every number against `docs/reports/`. Sections of `docs/thesis/paper-draft.md` marked *[DRAFTED — REVIEW]* are raw material for Mitchell's rewrite, not finished text.
 
 ## 11. Anti-Suggestions
 
@@ -191,7 +196,7 @@ The conference presentation is end of Fall 2026 or Spring 2027. The final paper 
 - `docs/sources/` → academic source PDFs with an annotated bibliography
 - `scripts/generate_report.py` → automated tables/figures from logged data
 
-**`scripts/generate_report.py` is a deliverable, not an afterthought.** It must exist by M5 and run cleanly by M7.
+**`scripts/generate_report.py` is a deliverable, not an afterthought.** It exists as of 2026-10-03. **Numbers reach the paper and the slides only through it** (`docs/reports/<date>/tables/*.csv`): on 2026-10-03 hand-copied figures in the paper were found to come from a 21-query run while labelled as 26 queries. References likewise come from `scripts/build_references.py`, which takes authors and titles from arXiv metadata rather than memory.
 
 ## 13. Quick Reference
 
@@ -222,8 +227,8 @@ PYTHONPATH="$PWD" .venv/bin/python scripts/download_scryfall.py --dataset oracle
 PYTHONPATH="$PWD" .venv/bin/python scripts/ingest_tags.py          # full replace of oracle_tags + card_tags
 PYTHONPATH="$PWD" .venv/bin/python scripts/build_training_pairs.py # → data/training/pairs_v1.jsonl + manifest
 PYTHONPATH="$PWD" .venv/bin/python scripts/finetune_embedder.py --smoke   # 5-step MPS sanity run (~1 min)
-PYTHONPATH="$PWD" .venv/bin/python scripts/finetune_embedder.py           # full run → models/<run>/ (~6 h on M3; stop the MLX server first)
-# Then: EMBEDDING_MODEL=models/<run> in .env → scripts/embed.py → evaluate.py on each config
+PYTHONPATH="$PWD" .venv/bin/python scripts/finetune_embedder.py           # full run → models/<run>/ (~71 min training, ~1h45 with probes on the M3; stop the MLX server first)
+# Then: EMBEDDING_MODEL=models/<run> scripts/embed.py (adds that version alongside the others) → evaluate.py on each config
 
 # Start MLX HyDE server (Apple Silicon; leave running in a separate shell)
 lsof -iTCP:8080 -sTCP:LISTEN                            # confirm port 8080 free
@@ -254,5 +259,6 @@ PYTHONPATH="$PWD" .venv/bin/python scripts/scryfall_comparator.py compare --row 
 
 # Reporting — tables + figures for the paper and slides, regenerated from experiment_runs
 # (newest row per configuration × embedder wins; never copy numbers into the paper by hand)
-PYTHONPATH="$PWD" .venv/bin/python scripts/generate_report.py --since 2026-09-01 --out docs/reports/
+PYTHONPATH="$PWD" .venv/bin/python scripts/generate_report.py --since 2026-09-01 --out docs/reports/ --paper   # --paper also regenerates paper Appendices A–C
+PYTHONPATH="$PWD" .venv/bin/python scripts/build_references.py     # paper References section + docs/thesis/references.bib (re-run after changing citations)
 ```

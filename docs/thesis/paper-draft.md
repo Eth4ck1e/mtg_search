@@ -12,6 +12,14 @@ date: "Fall 2026 · CSCI 5953 · CSUSB"
 
 ## Abstract
 
+> **STALE — to be rewritten by Mitchell (flagged 2026-10-03; not edited).** The abstract below predates the fine-tuning work and the measurements. Facts that have changed, all from `docs/reports/2026-10-03/`:
+> - Stage 1 no longer has to produce a paragraph of hypothetical card text. The current rewriter (prompt v2) produces filters plus one to three concept phrases; the hypothetical text is a fallback.
+> - The embedder was fine-tuned on 207,062 (tag, card) pairs from Scryfall's community oracle tags (71 minutes on a laptop). Retrieval on 482 held-out tags roughly doubled.
+> - Measurements are complete, not "in progress". Parity with expert Scryfall result sets: 0.34 (first version) → 0.57 (current). Nine of 26 queries reach 0.85 or better.
+> - The reported measures changed from recall@10 / MRR to set-retrieval measures (R-precision against the full result set; parity with the expert's Scryfall result set), because the goal is every matching card in ranked order, not ten archetypes.
+> - Comparators: the first version (v1 rewriter, base embedder), the same cascade with the SQL pre-filter removed, and expert Scryfall queries with and without community tags.
+> - The claim is parity for non-experts, not beating Scryfall: 3.7 words of plain language versus 20–52 characters of query syntax.
+
 *[YOUR PROSE — Sept 4 draft, refreshed 2026-09-18 for post-pivot scope: two comparators (dropped naive-baseline reference), Scryfall comparator uses LLM-crafted expert queries, dropped fabricated-baseline framing]*
 
 Keyword or faceted filtering is still commonly used across the internet for consumer-facing product catalogs. Magic: The Gathering (MTG), the world's most popular and established trading card game, is a particular case where keyword search and faceted filtering dominate retrieval. For many product catalogs, faceted filtering and sorting work well. However, the compositional rules text in products like trading cards introduces a layer of complexity that simple filtering and sorting cannot address. This research addresses these limitations in trading card product catalogs of a small-to-medium corpus (~30,000 documents) through a three-stage retrieval cascade. The Hypothetical Document Embeddings (HyDE) query rewriter (Stage 1) uses a generative large language model to split each natural-language query into (a) structured attributes handed to Stage 2 and (b) a hypothetical card ability text handed to Stage 3. The SQL pre-filter (Stage 2) narrows the candidate set using structured attributes such as color, mana value, types, and legality. Finally, Stage 3 embeds the generated hypothetical card ability text using Nomic Embed v1.5 for vector search over card ability text embeddings inside the narrowed candidate set from Stage 2. This architecture is evaluated on a benchmark of 26 hand-curated queries with graded relevance labels, measuring how many correct results appear in the top 10 and the rank of the first correct match (recall@10 and MRR). Performance is compared against two points of reference: a version of the cascade with the SQL pre-filter removed, isolating that stage's contribution; and the Scryfall search tool that MTG players use today, evaluated with LLM-crafted expert-level queries to represent the strongest form of the competing structured-search paradigm. Full cascade and ablation measurements are in progress; the primary claim concerns whether the cascade matches or exceeds Scryfall for non-expert users on the same eval queries. While MTG serves as the test bed, the retrieval principles used in this research generalize to any consumer catalog domain where structured-query interfaces currently reward expert users and exclude those who query in natural language.
@@ -35,6 +43,13 @@ Attempts to bridge this gap with off-the-shelf dense retrieval fail for a specif
 Scryfall already offers an easy method for much of this: its community-maintained oracle tags (`otag:`) let a power user retrieve cards by function. Both approaches may end up performing the same on a results measure. However, the benefit of this system over Scryfall then becomes ease of use. The pre-filter stage removes the complexity of Scryfall power-user querying, and with plain language the user gets objectively the same results a structured-query power user can get, lowering the bar for novice users searching for cards. So even if it performs no better by a results measure, it is still a win from a user perspective. Parity with an expert-crafted Scryfall query is the accessibility claim proven, not a tie.
 
 ### 1.2 Contributions
+
+> **STALE — to be rewritten by Mitchell (flagged 2026-10-03; not edited).** What the list below does not yet reflect:
+> - Contribution 1 says the design avoids domain fine-tuning "as a starting point"; fine-tuning the embedder is now a central part of the result.
+> - A finding not listed: the two changes depend on each other. The simpler rewriter is worse than the original on the base embedder (0.169 vs 0.215 R-precision) and best on the tuned one (0.510).
+> - A methodological finding not listed: hand-curated top-10 judgments under-credit correct results (annotation holes); 95% of the tuned model's top results were members of the intended tag though only 10% were judged.
+> - The Scryfall comparison now has numbers (parity 0.57; query-complexity table).
+> - Contribution 4 (interactive filter refinement) exists as a review dashboard, not a user-facing feature.
 
 *[DRAFTED — REVIEW]*
 
@@ -65,15 +80,15 @@ The evaluation methodology used here builds on Manning, Raghavan, and Schütze (
 
 *[DRAFTED — REVIEW]*
 
-Hypothetical Document Embeddings (HyDE), introduced by Gao et al. (2022), is the primary technique adapted in this work. HyDE addresses the query-document asymmetry by using an instruction-tuned generative language model (Ouyang et al., 2022) to transform a natural-language query into a hypothetical target document. The hypothetical document, rather than the raw query, is embedded and used for retrieval. Query2doc (Wang et al., 2023) is a concurrent technique that concatenates the hypothetical document with the query rather than replacing it. Best-practices studies on LLM query expansion (Wang, 2024) and the recent adaptive-HyDE literature (2025) address extensions and refinements.
+Hypothetical Document Embeddings (HyDE), introduced by Gao et al. (2022), is the primary technique adapted in this work. HyDE addresses the query-document asymmetry by using an instruction-tuned generative language model (Ouyang et al., 2022) to transform a natural-language query into a hypothetical target document. The hypothetical document, rather than the raw query, is embedded and used for retrieval. Query2doc (Wang et al., 2023) is a concurrent technique that concatenates the hypothetical document with the query rather than replacing it. Best-practices studies on LLM query expansion (Zhang et al., 2024) and the recent adaptive-HyDE literature (Lei et al., 2025) address extensions and refinements.
 
-A critique worth engaging with is the "Rethinking LLM-based Query Expansion" work (2025), which argues that observed HyDE gains may partially reflect LLM knowledge leakage from pre-training rather than pure query rewriting. In the MTG-specific setting studied here, this concern is somewhat mitigated: MTG's Oracle text is a bounded, formal, well-known corpus, and the empirical failure modes observed with smaller models suggest that domain knowledge is often *absent*, not leaked.
+A critique worth engaging with is the "Rethinking LLM-based Query Expansion" work (Yoon et al., 2025), which argues that observed HyDE gains may partially reflect LLM knowledge leakage from pre-training rather than pure query rewriting. In the MTG-specific setting studied here, this concern is somewhat mitigated: MTG's Oracle text is a bounded, formal, well-known corpus, and the empirical failure modes observed with smaller models suggest that domain knowledge is often *absent*, not leaked.
 
 ### 2.3 Filtered vector search
 
 *[DRAFTED — REVIEW]*
 
-The SQL pre-filter design decision is grounded in the filtered ANN literature. An In-Depth Study of Filter-Agnostic Vector Search on a PostgreSQL Database System (2026) is directly applicable — this work uses pgvector as its retrieval backend. Recent experimental studies of attribute filtering in ANN search (2025) and benchmarks on transformer-based embedding vectors (2025) inform the pre-filter-versus-post-filter design decision made here: pre-filtering preserves recall on structurally-constrained queries, while post-filtering top-K vector results collapses recall in those cases.
+The SQL pre-filter design decision is grounded in the filtered ANN literature. An in-depth study of filter-agnostic vector search on a PostgreSQL database system (Lu et al., 2026) is directly applicable — this work uses pgvector as its retrieval backend. Recent experimental studies of attribute filtering in ANN search (Li et al., 2025) and benchmarks on transformer-based embedding vectors (Iff et al., 2025) inform the pre-filter-versus-post-filter design decision made here: pre-filtering preserves recall on structurally-constrained queries, while post-filtering top-K vector results collapses recall in those cases.
 
 The cascade architecture itself follows the multi-stage retrieval tradition established by Wang et al. (2011) — filter-then-rank pipelines rather than parallel dual-encoder ranking (Guo et al., 2016).
 
@@ -81,7 +96,7 @@ The cascade architecture itself follows the multi-stage retrieval tradition esta
 
 *[DRAFTED — REVIEW]*
 
-The generalization argument in Section 1.1 draws directly on Amazon's semantic product search work (Nigam et al., 2020), which addresses the same query-document asymmetry problem in an e-commerce catalog. Their approach — combining structured product attributes with semantic retrieval — is architecturally similar to the cascade proposed here, providing a published precedent for the generalization claim.
+The generalization argument in Section 1.1 draws directly on Home Depot's semantic product search work (Choi et al., 2020), which addresses the same query-document asymmetry problem in an e-commerce catalog. Their approach — combining structured product attributes with semantic retrieval — is architecturally similar to the cascade proposed here, providing a published precedent for the generalization claim.
 
 ### 2.5 Domain adaptation of dense retrievers
 
@@ -510,44 +525,269 @@ Embedder fine-tuning on oracle tags is now in scope (Section 6.3); HyDE LoRA fin
 
 ## References
 
-*[TODO — compile full bibliography from docs/sources/README.md. BibTeX blocks for the three IR-eval papers are already in data/eval/methodology_references.md.]*
+*Generated by `scripts/build_references.py` from `docs/sources/arxiv_metadata.json` and `extra_references.yaml`; lists the works cited in the text above. Do not edit by hand — re-run the script after changing citations. BibTeX for every source held: `docs/thesis/references.bib`.*
 
-Primary references cited in this draft:
+Choi, J. I., Kallumadi, S., Mitra, B., Agichtein, E., & Javed, F. (2020). Semantic Product Search for Matching Structured Product Catalogs in E-Commerce. *arXiv preprint*. arXiv:2008.08180.
 
-1. Manning, C.D., Raghavan, P., Schütze, H. (2008). *Introduction to Information Retrieval*, Ch. 8.
-2. Reimers, N., Gurevych, I. (2019). Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. *EMNLP.*
-3. Karpukhin, V., et al. (2020). Dense Passage Retrieval for Open-Domain Question Answering. *EMNLP.*
-4. Nigam, P., et al. (2020). Semantic Product Search for Matching Structured Product Catalogs in E-Commerce.
-5. Thakur, N., et al. (2021). BEIR: A Heterogeneous Benchmark for Zero-shot Evaluation of Information Retrieval Models.
-6. Hu, E., et al. (2021). LoRA: Low-Rank Adaptation of Large Language Models.
-7. Wang, L., et al. (2011). A Cascade Ranking Model for Efficient Ranked Retrieval. *SIGIR.*
-8. Ouyang, L., et al. (2022). Training language models to follow instructions with human feedback (InstructGPT).
-9. Gao, L., et al. (2022). Precise Zero-Shot Dense Retrieval without Relevance Labels (HyDE).
-10. Wang, L., et al. (2023). Query2doc: Query Expansion with Large Language Models.
-11. Nussbaum, Z., et al. (2024). Nomic Embed: Training a Reproducible Long Context Text Embedder.
-12. Muennighoff, N., et al. (2022). MTEB: Massive Text Embedding Benchmark.
-13. Järvelin, K., Kekäläinen, J. (2002). Cumulated Gain-Based Evaluation of IR Techniques. *ACM TOIS.*
-14. Voorhees, E.M. (2000). Variations in Relevance Judgments and the Measurement of Retrieval Effectiveness.
-15. Sormunen, E. (2002). Liberal Relevance Criteria of TREC.
-16. [2026] An In-Depth Study of Filter-Agnostic Vector Search on a PostgreSQL Database System.
-17. [2025] Attribute Filtering in Approximate Nearest Neighbor Search: An In-depth Experimental Study.
-18. [2025] Never Come Up Empty: Adaptive HyDE Retrieval for Improving LLM Developer Support.
+Gao, L., Ma, X., Lin, J., & Callan, J. (2022). Precise Zero-Shot Dense Retrieval without Relevance Labels. *arXiv preprint*. arXiv:2212.10496.
+
+Gwon, D., Jedidi, N., & Lin, J. (2025). Study on LLMs for Promptagator-Style Dense Retriever Training. *CIKM 2025*. arXiv:2510.02241.
+
+Hu, E. J., Shen, Y., Wallis, P., et al. (2021). LoRA: Low-Rank Adaptation of Large Language Models. *arXiv preprint*. arXiv:2106.09685.
+
+Iff, P., Bruegger, P., Chrapek, M., et al. (2025). Benchmarking Filtered Approximate Nearest Neighbor Search Algorithms on Transformer-based Embedding Vectors. *arXiv preprint*. arXiv:2507.21989.
+
+Järvelin, K., & Kekäläinen, J. (2002). Cumulated gain-based evaluation of IR techniques. *ACM Transactions on Information Systems, 20(4), 422–446*. doi:10.1145/582415.582418.
+
+Karpukhin, V., Oğuz, B., Min, S., et al. (2020). Dense Passage Retrieval for Open-Domain Question Answering. *Proceedings of EMNLP 2020*. arXiv:2004.04906.
+
+Kasmaee, A. S., Khodadad, M., Astaraki, M., et al. (2025). ChEmbed: Enhancing Chemical Literature Search Through Domain-Specific Text Embeddings. *arXiv preprint*. arXiv:2508.01643.
+
+Lan, M., Zheng, L., & Kilicoglu, H. (2026). BioHiCL: Hierarchical Multi-Label Contrastive Learning for Biomedical Retrieval with MeSH Labels. *ACL 2026*. arXiv:2604.15591.
+
+Lei, F., Mezouar, M. E., Noei, S., & Zou, Y. (2025). Never Come Up Empty: Adaptive HyDE Retrieval for Improving LLM Developer Support. *arXiv preprint*. arXiv:2507.16754.
+
+Li, M., Yan, X., Lu, B., et al. (2025). Attribute Filtering in Approximate Nearest Neighbor Search: An In-depth Experimental Study. *SIGMOD 2026*. arXiv:2508.16263.
+
+Li, M., Lv, X., Zou, J., et al. (2025). Query Expansion in the Age of Pre-trained and Large Language Models: A Comprehensive Survey. *arXiv preprint*. arXiv:2509.07794.
+
+Lu, D., Caminal, H., Chatzakis, M., et al. (2026). An In-Depth Study of Filter-Agnostic Vector Search on a PostgreSQL Database System: [Experiments and Analysis]. *SIGMOD 2026*. arXiv:2603.23710.
+
+Manning, C. D., Raghavan, P., & Schütze, H. (2008). Introduction to Information Retrieval. *Cambridge University Press (Chapter 8: Evaluation in information retrieval)*.
+
+Moreira, G. d. S. P., Osmulski, R., Xu, M., et al. (2024). NV-Retriever: Improving text embedding models with effective hard-negative mining. *arXiv preprint*. arXiv:2407.15831.
+
+Muennighoff, N., Tazi, N., Magne, L., & Reimers, N. (2022). MTEB: Massive Text Embedding Benchmark. *arXiv preprint*. arXiv:2210.07316.
+
+Murtaza, S. S., Nie, Y., Soni, U., Wen, E., & Frydenlund, A. (2026). When Synthetic Data Hurts: On Catastrophic Forgetting in Skill Retrieval for LLM Agents. *EMNLP 2026 Industry Track*. arXiv:2609.10750.
+
+Nussbaum, Z., Morris, J. X., Duderstadt, B., & Mulyar, A. (2024). Nomic Embed: Training a Reproducible Long Context Text Embedder. *Transactions on Machine Learning Research*. arXiv:2402.01613.
+
+Ouyang, L., Wu, J., Jiang, X., et al. (2022). Training language models to follow instructions with human feedback. *arXiv preprint*. arXiv:2203.02155.
+
+Pande, M., Kumar, S., & Damle, A. Y. (2025). When Fine-Tuning Fails: Lessons from MS MARCO Passage Ranking. *arXiv preprint*. arXiv:2506.18535.
+
+Paull, N. (2025). CustomIR: Unsupervised Fine-Tuning of Dense Embeddings for Known Document Corpora. *arXiv preprint*. arXiv:2510.21729.
+
+Reimers, N., & Gurevych, I. (2019). Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. *Proceedings of EMNLP 2019*. arXiv:1908.10084.
+
+Senthil, V., Hathidara, A., & Schreiber, S. (2026). CoHyDE: Iterative Co-Training of LLM Rewriter & Dense Encoder for Tool Retrieval. *REALM Workshop at EMNLP 2026*. arXiv:2605.29271.
+
+Sormunen, E. (2002). Liberal relevance criteria of TREC: counting on negligible documents?. *Proceedings of SIGIR 2002, 324–330*. doi:10.1145/564376.564433.
+
+Tamber, M. S., Kazi, S., Sourabh, V., & Lin, J. (2025). Conventional Contrastive Learning Often Falls Short: Improving Dense Retrieval with Cross-Encoder Listwise Distillation and Synthetic Data. *arXiv preprint*. arXiv:2505.19274.
+
+Thakur, N., Reimers, N., Rücklé, A., Srivastava, A., & Gurevych, I. (2021). BEIR: A Heterogenous Benchmark for Zero-shot Evaluation of Information Retrieval Models. *NeurIPS 2021 Datasets and Benchmarks Track*. arXiv:2104.08663.
+
+Voorhees, E. M. (2000). Variations in relevance judgments and the measurement of retrieval effectiveness. *Information Processing & Management, 36(5), 697–716*. doi:10.1016/S0306-4573(00)00010-8.
+
+Wang, L., Lin, J., & Metzler, D. (2011). A cascade ranking model for efficient ranked retrieval. *Proceedings of SIGIR 2011, 105–114*. doi:10.1145/2009916.2009934.
+
+Wang, L., Yang, N., & Wei, F. (2023). Query2doc: Query Expansion with Large Language Models. *Proceedings of EMNLP 2023*. arXiv:2303.07678.
+
+Yoon, Y., Jung, J., Yoon, S., & Park, K. (2025). Hypothetical Documents or Knowledge Leakage? Rethinking LLM-based Query Expansion. *Findings of ACL 2025*. arXiv:2504.14175.
+
+Zhang, L., Wu, Y., Yang, Q., & Nie, J. (2024). Exploring the Best Practices of Query Expansion with Large Language Models. *arXiv preprint*. arXiv:2401.06311.
+
+**Cited but unresolved** (no publication identified — resolve or remove before submission):
+
+- Guo et al., 2016 — Section 2.3 (dual-encoder / 'tower' terminology). Inherited from an early planning document. No source PDF is held and the intended paper was never recorded. Either identify it or drop the citation.
 
 ---
 
 ## Appendices
 
-### Appendix A — HyDE prompt (v1)
+### Appendix A — Query-rewriter prompt (v2)
 
-*[Include the final version of `prompts/hyde_v1.yaml` verbatim in the appendix. Full system prompt with schema, rules, few-shot examples.]*
+*Generated by `scripts/generate_report.py --paper` on 2026-10-03; do not edit by hand.* The original v1 prompt is `prompts/hyde_v1.yaml` in the repository.
+
+**System prompt**
+
+````text
+You are a search-query rewriter for a Magic: The Gathering card database.
+
+Given a user's natural-language query, produce a JSON object with three fields:
+  1. "filters" — structured attributes the user EXPLICITLY stated. Null
+     for anything the user did not literally say.
+  2. "concepts" — one to three short phrases naming what the card DOES, in
+     the vocabulary a deckbuilder uses: sweeper, removal, ramp, mana dork,
+     mana rock, tutor, cantrip, card draw, counterspell, flicker, reanimate,
+     recursion, burn, pinger, wheel, extra turn, fetchland, sac outlet,
+     token maker, lifegain, discard, mill, evasion, prowess, ... Prefer the
+     community's standard term over the user's phrasing when one exists
+     ("board wipe" → "sweeper"; "creatures that tap for mana" → "mana dork").
+     Empty list if the query is purely structural.
+  3. "hypothetical_card" — ONE sentence of rules text, only when no concept
+     phrase captures the intent (a novel or very specific mechanic).
+     Otherwise omit the key.
+
+## RULES
+
+- Output ONLY valid JSON. No prose, no code fences. OMIT every filter field
+  you are not setting — do not write "field": null. If there are no
+  filters at all, omit the "filters" key too.
+- Filters come only from words the user typed: colour words, numbers with
+  "mana"/"cost"/"cmc", card types (creature, instant, sorcery, artifact,
+  enchantment, land, planeswalker), creature subtypes, power/toughness,
+  format names, and keyword abilities the user named (flying, haste,
+  trample, ...). NEVER infer a type, cost, or size from a concept word:
+  "ramp", "burn", "removal", "pinger", "mana dork", "mana rock" are concepts,
+  not filters, even though they imply a card type. "spell"/"spells" is not a
+  type.
+- "cheap" means cmc <= 2. "expensive"/"big" means cmc >= 5. Other vague
+  size words are not filters.
+- Colours: when the user names a colour, set BOTH "colors" and
+  "color_identity" to the same letters. Default "colors_op" to
+  "contains_any" (admits colourless). Use "exactly" only for "mono-",
+  "only", or "exclusively". For "colorless" cards use "colors": [] with
+  "colors_op": "exactly". Never emit an empty "colors" list otherwise.
+- "keywords" holds only canonical keyword ABILITIES the user typed (Flying,
+  First strike, Trample, Haste, Deathtouch, Lifelink, ...). A slang noun for a
+  kind of card ("pinger", "edict", "burn", "cantrip") is NEVER a keyword — it
+  goes in "concepts".
+- "concepts" should cover every functional idea in the query, in order of
+  importance. Keep each phrase to one to three words.
+- Do not include names of real cards.
+- If unsure, prefer fewer filters and more concepts.
+
+## FILTER SCHEMA
+
+```json
+{
+  "filters": {
+    "colors": ["W"|"U"|"B"|"R"|"G", ...] | null,
+    "colors_op": "contains_any" | "contains_all" | "subset_of" | "exactly" | null,
+    "color_identity": [...] | null,
+    "types": ["Creature"|"Instant"|"Sorcery"|"Artifact"|"Enchantment"|"Land"|"Planeswalker"|"Battle", ...] | null,
+    "subtypes": ["Elf", ...] | null,
+    "cmc": {"op": "<="|"="|">="|"<"|">"|"between", "value": <number>|[<lo>,<hi>]} | null,
+    "keywords": ["Flying", ...] | null,
+    "power": {"op": ..., "value": <number>} | null,
+    "toughness": {"op": ..., "value": <number>} | null,
+    "format_legality": {"format": "standard"|"modern"|"pioneer"|"legacy"|"vintage"|"commander"|"pauper", "status": "legal"} | null
+  },
+  "concepts": [<string>, ...],
+  "hypothetical_card": <string> | null
+}
+```
+````
+
+**Few-shot examples (8)**
+
+````text
+Query: cheap red removal
+Output: {
+  "filters": {"colors": ["R"], "colors_op": "contains_any", "color_identity": ["R"], "cmc": {"op": "<=", "value": 2}},
+  "concepts": ["removal"]
+}
+
+Query: board wipes
+Output: {
+  "concepts": ["sweeper", "board wipe"]
+}
+
+Query: green creatures that tap for mana under 2 mana
+Output: {
+  "filters": {"colors": ["G"], "colors_op": "contains_any", "color_identity": ["G"], "types": ["Creature"], "cmc": {"op": "<", "value": 2}},
+  "concepts": ["mana dork"]
+}
+
+Query: mana rocks that cost 2
+Output: {
+  "filters": {"cmc": {"op": "=", "value": 2}},
+  "concepts": ["mana rock"]
+}
+
+Query: sorceries that make tokens
+Output: {
+  "filters": {"types": ["Sorcery"]},
+  "concepts": ["token maker"]
+}
+
+Query: permanents that let me play lands out of my graveyard
+Output: {
+  "concepts": ["land recursion"],
+  "hypothetical_card": "You may play lands from your graveyard."
+}
+
+Query: black edicts under 4 mana
+Output: {
+  "filters": {"colors": ["B"], "colors_op": "contains_any", "color_identity": ["B"], "cmc": {"op": "<", "value": 4}},
+  "concepts": ["edict", "sacrifice removal"]
+}
+
+Query: flying creatures with vigilance that cost 3 or less
+Output: {
+  "filters": {"types": ["Creature"], "keywords": ["Flying", "Vigilance"], "cmc": {"op": "<=", "value": 3}},
+  "concepts": []
+}
+````
 
 ### Appendix B — Evaluation set
 
-*[Include `data/eval/queries_v1_draft.yaml` — the 26 queries with tri-state relevance judgments.]*
+*Generated by `scripts/generate_report.py --paper` on 2026-10-03; do not edit by hand.* 26 queries (`data/eval/queries_v1_draft.yaml`, version v1-draft); the full relevance judgments (card ids with a one-line reason each) are in that file. *Mapped tag* is the Scryfall oracle tag used as the set-retrieval target; the expert queries are the Scryfall comparator inputs.
+
+| ID | Query | Category | Relevant | Borderline | Mapped tag | Expert Scryfall query | Without tags |
+|---|---|---|---|---|---|---|---|
+| q_001 | creatures with flying | fragmented | 30 | 0 | — | `t:creature kw:flying` | `t:creature kw:flying` |
+| q_002 | destroy target artifact | mechanical | 30 | 0 | removal-artifact | `otag:removal-artifact o:destroy` | `o:"destroy target artifact"` |
+| q_003 | instants that draw cards | fragmented | 17 | 8 | draw | `t:instant otag:draw` | `t:instant o:"draw"` |
+| q_004 | burn spell that deals 3 damage to any target | natural | 20 | 0 | burn | `otag:burn-any o:"3 damage"` | `o:"deals 3 damage to any target"` |
+| q_005 | haste creatures | fragmented | 30 | 0 | — | `t:creature kw:haste` | `t:creature kw:haste` |
+| q_006 | ramp spells | jargon | 28 | 5 | ramp | `otag:ramp` | `(o:"search your library for" o:"land card" o:"onto the battlefield") or (o:"add" o:"mana" -t:land -o:"{T}: Add")` |
+| q_007 | counterspells | jargon | 30 | 0 | counterspell | `otag:counterspell` | `o:"counter target" (t:instant or t:creature or t:enchantment)` |
+| q_008 | board wipes | jargon | 76 | 0 | sweeper | `otag:sweeper` | `o:"destroy all creatures" or o:"exile all creatures" or (o:"all creatures get -" o:"until end of turn") or o:"destroy all nonland permanents"` |
+| q_009 | removal | jargon | 72 | 4 | removal | `otag:removal` | `(o:"destroy target" or o:"exile target") (o:creature or o:permanent or o:"nonland permanent")` |
+| q_010 | card draw engines | jargon | 20 | 1 | draw-engine | `otag:draw-engine` | `-t:instant -t:sorcery (o:"whenever" or o:"at the beginning") o:"draw a card"` |
+| q_011 | tutor | jargon | 37 | 0 | tutor | `otag:tutor` | `o:"search your library for a" -o:"basic land card" -t:land` |
+| q_012 | graveyard recursion | jargon | 33 | 1 | recursion | `otag:recursion` | `o:"from your graveyard" (o:"return target" or o:"return up to" or o:"put target")` |
+| q_013 | fetch lands | jargon | 16 | 7 | fetchland | `otag:fetchland` | `t:land o:"search your library for" o:"land card" o:"sacrifice"` |
+| q_014 | flicker effects | jargon | 32 | 3 | flicker | `otag:flicker` | `o:"exile" o:"return" o:"to the battlefield under" (o:"target creature" or o:"target permanent" or o:"another target")` |
+| q_015 | ETB triggers | jargon | 33 | 0 | — | `t:creature o:"when" o:"enters"` | `t:creature o:"when" o:"enters"` |
+| q_016 | mana dorks | jargon | 23 | 1 | mana-dork | `otag:mana-dork` | `t:creature o:"{T}: Add"` |
+| q_017 | wheels | jargon | 9 | 4 | wheel | `otag:wheel` | `o:"discards" o:"hand" o:"draws seven cards"` |
+| q_018 | extra turns | jargon | 17 | 2 | extra-turn | `otag:extra-turn` | `o:"take an extra turn"` |
+| q_019 | free counterspell | constrained | 11 | 0 | counterspell-free | `otag:counterspell-free` | `o:"counter target spell" (o:"rather than pay" or o:"without paying" or mv=0)` |
+| q_020 | red creatures under 3 mana | constrained | 17 | 0 | — | `t:creature c:r mv<3` | `t:creature c:r mv<3` |
+| q_021 | instants that cost 1 mana | constrained | 25 | 0 | — | `t:instant mv=1` | `t:instant mv=1` |
+| q_022 | a card that lets me look at my deck and put a creature into the battlefield | natural | 10 | 0 | tutor-creature | `otag:tutor-creature o:"onto the battlefield"` | `o:"search your library for a creature card" o:"onto the battlefield"` |
+| q_023 | creatures that get bigger every time I cast a spell | natural | 18 | 0 | cast-trigger-you | `t:creature otag:cast-trigger-you o:"+1/+1"` | `t:creature o:"whenever you cast" o:"+1/+1"` |
+| q_024 | a card that destroys all creatures | natural | 12 | 0 | sweeper | `otag:sweeper o:"destroy all creatures"` | `o:"destroy all creatures"` |
+| q_025 | red pingers under 3 mana | hybrid | 11 | 3 | pinger | `otag:pinger c:r mv<3` | `c:r mv<3 o:"{T}:" o:"deals 1 damage"` |
+| q_026 | cheap blue counterspells | hybrid | 16 | 1 | counterspell | `otag:counterspell c:u mv<=2` | `c:u mv<=2 o:"counter target"` |
 
 ### Appendix C — Per-query results
 
-*[TODO — populated after M5 measurements land. Full recall@10 and MRR per (query, configuration) pair.]*
+*Generated by `scripts/generate_report.py --paper` on 2026-10-03; do not edit by hand.* Source: `docs/reports/2026-10-03/tables/07_per_query.csv`, `experiment_runs` rows 90 (control) and 101 (headline). P@10 is against the hand-curated judgments, R-prec against the query's tag pool, parity against the expert Scryfall result set (tags allowed).
+
+| ID | Query | Category | Control P@10 | Headline P@10 | Control R-prec | Headline R-prec | Control parity | Headline parity |
+|---|---|---|---|---|---|---|---|---|
+| q_001 | creatures with flying | fragmented | 0.000 | 0.000 | — | — | 0.598 | 0.664 |
+| q_002 | destroy target artifact | mechanical | 0.100 | 0.000 | 0.382 | 0.205 | 0.486 | 0.094 |
+| q_003 | instants that draw cards | fragmented | 0.000 | 0.100 | 0.157 | 0.157 | 0.706 | 0.862 |
+| q_004 | burn spell that deals 3 damage to any target | natural | 0.100 | 0.100 | 0.067 | 0.034 | 0.021 | 0.028 |
+| q_005 | haste creatures | fragmented | 0.000 | 0.100 | — | — | 0.902 | 0.998 |
+| q_006 | ramp spells | jargon | 0.000 | 0.000 | 0.088 | 0.704 | 0.084 | 0.683 |
+| q_007 | counterspells | jargon | 0.200 | 0.100 | 0.669 | 0.916 | 0.671 | 0.916 |
+| q_008 | board wipes | jargon | 0.400 | 0.000 | 0.183 | 0.611 | 0.182 | 0.609 |
+| q_009 | removal | jargon | 0.400 | 0.000 | 0.410 | 0.839 | 0.215 | 0.328 |
+| q_010 | card draw engines | jargon | 0.000 | 0.100 | 0.228 | 0.527 | 0.228 | 0.526 |
+| q_011 | tutor | jargon | 0.000 | 0.100 | 0.106 | 0.960 | 0.107 | 0.958 |
+| q_012 | graveyard recursion | jargon | 0.100 | 0.000 | 0.573 | 0.767 | 0.562 | 0.743 |
+| q_013 | fetch lands | jargon | 0.300 | 0.400 | 0.604 | 0.906 | 0.604 | 0.906 |
+| q_014 | flicker effects | jargon | 0.000 | 0.100 | 0.000 | 0.743 | 0.000 | 0.734 |
+| q_015 | ETB triggers | jargon | 0.000 | 0.000 | — | — | 0.166 | 0.164 |
+| q_016 | mana dorks | jargon | 0.000 | 0.200 | 0.000 | 0.415 | 0.000 | 0.417 |
+| q_017 | wheels | jargon | 0.000 | 0.200 | 0.022 | 0.745 | 0.022 | 0.743 |
+| q_018 | extra turns | jargon | 0.500 | 0.600 | 0.208 | 0.943 | 0.208 | 0.943 |
+| q_019 | free counterspell | constrained | 0.100 | 0.100 | 0.077 | 0.077 | 0.077 | 0.077 |
+| q_020 | red creatures under 3 mana | constrained | 0.000 | 0.000 | — | — | 0.852 | 0.850 |
+| q_021 | instants that cost 1 mana | constrained | 0.300 | 0.000 | — | — | 0.999 | 0.999 |
+| q_022 | a card that lets me look at my deck and put a creature into the battlefield | natural | 0.000 | 0.000 | 0.015 | 0.000 | 0.023 | 0.000 |
+| q_023 | creatures that get bigger every time I cast a spell | natural | 0.000 | 0.000 | 0.249 | 0.000 | 0.105 | 0.000 |
+| q_024 | a card that destroys all creatures | natural | 0.300 | 0.000 | 0.183 | 0.651 | 0.298 | 0.083 |
+| q_025 | red pingers under 3 mana | hybrid | 0.000 | 0.100 | 0.000 | 0.148 | 0.000 | 0.422 |
+| q_026 | cheap blue counterspells | hybrid | 0.100 | 0.200 | 0.298 | 0.366 | 0.806 | 0.950 |
 
 ### Appendix D — Failure-mode test series
 

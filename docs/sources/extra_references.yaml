@@ -1,0 +1,74 @@
+# References that are not on arXiv, plus venue information for arXiv entries.
+# Read by scripts/build_references.py together with arxiv_metadata.json.
+
+# Published venue per arXiv id — each taken from that entry's own arXiv
+# comment / journal-ref field (see arxiv_metadata.json), not from memory.
+venues:
+  "1908.10084": "Proceedings of EMNLP 2019"
+  "2004.04906": "Proceedings of EMNLP 2020"
+  "2104.08663": "NeurIPS 2021 Datasets and Benchmarks Track"
+  "2303.07678": "Proceedings of EMNLP 2023"
+  "2402.01613": "Transactions on Machine Learning Research"
+  "2504.14175": "Findings of ACL 2025"
+  "2508.16263": "SIGMOD 2026"
+  "2603.23710": "SIGMOD 2026"
+  "2603.18005": "Findings of EACL 2026"
+  "2604.15591": "ACL 2026"
+  "2602.04731": "Findings of EMNLP 2026"
+  "2609.10750": "EMNLP 2026 Industry Track"
+  "2602.12727": "KDD 2026"
+  "2605.29271": "REALM Workshop at EMNLP 2026"
+  "2510.02241": "CIKM 2025"
+  "2308.12039": "TREC 2022 Deep Learning Track"
+
+# How the paper refers to a work when it is not "<first author> ... <year>".
+aliases:
+  "2508.01643": ["ChEmbed"]
+  "2510.21729": ["CustomIR"]
+  "2605.29271": ["CoHyDE"]
+  "2604.15591": ["BioHiCL"]
+  "2407.15831": ["NV-Retriever"]
+
+manual:
+  - key: manning2008introduction
+    authors: ["Christopher D. Manning", "Prabhakar Raghavan", "Hinrich Schütze"]
+    year: 2008
+    title: "Introduction to Information Retrieval"
+    venue: "Cambridge University Press (Chapter 8: Evaluation in information retrieval)"
+    bibtype: book
+  - key: jarvelin2002cumulated
+    authors: ["Kalervo Järvelin", "Jaana Kekäläinen"]
+    year: 2002
+    title: "Cumulated gain-based evaluation of IR techniques"
+    venue: "ACM Transactions on Information Systems, 20(4), 422–446"
+    doi: "10.1145/582415.582418"
+    bibtype: article
+  - key: voorhees2000variations
+    authors: ["Ellen M. Voorhees"]
+    year: 2000
+    title: "Variations in relevance judgments and the measurement of retrieval effectiveness"
+    venue: "Information Processing & Management, 36(5), 697–716"
+    doi: "10.1016/S0306-4573(00)00010-8"
+    bibtype: article
+  - key: sormunen2002liberal
+    authors: ["Eero Sormunen"]
+    year: 2002
+    title: "Liberal relevance criteria of TREC: counting on negligible documents?"
+    venue: "Proceedings of SIGIR 2002, 324–330"
+    doi: "10.1145/564376.564433"
+    bibtype: inproceedings
+  - key: wang2011cascade
+    authors: ["Lidan Wang", "Jimmy Lin", "Donald Metzler"]
+    year: 2011
+    title: "A cascade ranking model for efficient ranked retrieval"
+    venue: "Proceedings of SIGIR 2011, 105–114"
+    doi: "10.1145/2009916.2009934"
+    bibtype: inproceedings
+
+# Cited in the paper but NOT resolved to a specific publication. Do not guess.
+unresolved:
+  - cite: "Guo et al., 2016"
+    where: "Section 2.3 (dual-encoder / 'tower' terminology)"
+    note: >
+      Inherited from an early planning document. No source PDF is held and the
+      intended paper was never recorded. Either identify it or drop the citation.

@@ -2,7 +2,7 @@
 
 Natural-language semantic search for Magic: The Gathering cards. CSCI 5953 independent study, CSUSB. Author: Mitchell Trafford.
 
-**Status:** M4 (query rewriting + SQL pre-filter) in progress. See [`CLAUDE.md`](CLAUDE.md) §8 for the current milestone map.
+**Status (2026-10-03):** system, evaluation, and report generation are in place; the paper and presentation (M7) are in progress. Latest results: [`docs/reports/`](docs/reports/). See [`CLAUDE.md`](CLAUDE.md) §8 for the milestone map.
 
 ## Why this project exists
 
@@ -12,9 +12,9 @@ MTG players think in informal terms: *"a blue counterspell that costs 2"*, *"car
 
 A **three-stage retrieval cascade** over ~30,000 unique cards, backed by Postgres + pgvector:
 
-1. **HyDE query rewriter** (local instruction-tuned LLM) transforms the user's natural-language query into (a) structured filter attributes and (b) hypothetical card ability text.
+1. **Query rewriter** (local instruction-tuned LLM) transforms the user's natural-language query into (a) structured filter attributes and (b) the text to search with — short concept phrases in deckbuilder vocabulary (prompt v2), or a HyDE-style hypothetical card ability text (prompt v1, kept as the control).
 2. **SQL pre-filter** narrows the candidate set on the structured attributes (colors, mana value, types, legality).
-3. **Semantic vector search** ranks the pre-filtered candidates by cosine similarity between the hypothetical ability text embedding and the card ability text embeddings.
+3. **Semantic vector search** ranks the pre-filtered candidates by cosine similarity between the embedded query-side text and the card ability text embeddings, using a Nomic Embed v1.5 checkpoint fine-tuned on Scryfall's community oracle tags.
 
 The full architecture spec, working conventions, and anti-patterns live in [`CLAUDE.md`](CLAUDE.md).
 
@@ -56,7 +56,10 @@ The full architecture spec, working conventions, and anti-patterns live in [`CLA
 │   ├── eval_lookup.py           # Scryfall candidate finder for eval curation
 │   ├── render_review.py         # HTML review UI for eval set
 │   ├── evaluate.py              # Run a config, write experiment_runs row
-│   └── dashboard.py             # Local web UI for reviewing and judging results
+│   ├── dashboard.py             # Local web UI for reviewing and judging results
+│   ├── scryfall_comparator.py   # Parity with expert Scryfall queries
+│   ├── generate_report.py       # experiment_runs → docs/reports/ (tables + figures)
+│   └── build_references.py      # Paper references from arXiv metadata
 ├── src/                         # Library code (importable modules)
 │   ├── config.py                # Pydantic settings (single source of truth)
 │   ├── logging_utils.py         # PipelineRun JSONL context manager
@@ -67,7 +70,7 @@ The full architecture spec, working conventions, and anti-patterns live in [`CLA
 │   ├── db/                      # experiment_log writer + SQL migrations
 │   ├── eval/                    # Pure-Python metric calculation (recall@K, MRR)
 │   └── utils/                   # select_device, misc helpers
-├── tests/                       # Test suite (~80 tests, unit + integration)
+├── tests/                       # Test suite (~120 tests, unit + integration)
 └── logs/                        # JSONL pipeline-run logs (gitignored)
 ```
 

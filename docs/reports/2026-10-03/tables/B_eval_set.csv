@@ -1,0 +1,27 @@
+ID,Query,Category,Relevant,Borderline,Mapped tag,Expert Scryfall query,Without tags
+q_001,creatures with flying,fragmented,30,0,—,`t:creature kw:flying`,`t:creature kw:flying`
+q_002,destroy target artifact,mechanical,30,0,removal-artifact,`otag:removal-artifact o:destroy`,"`o:""destroy target artifact""`"
+q_003,instants that draw cards,fragmented,17,8,draw,`t:instant otag:draw`,"`t:instant o:""draw""`"
+q_004,burn spell that deals 3 damage to any target,natural,20,0,burn,"`otag:burn-any o:""3 damage""`","`o:""deals 3 damage to any target""`"
+q_005,haste creatures,fragmented,30,0,—,`t:creature kw:haste`,`t:creature kw:haste`
+q_006,ramp spells,jargon,28,5,ramp,`otag:ramp`,"`(o:""search your library for"" o:""land card"" o:""onto the battlefield"") or (o:""add"" o:""mana"" -t:land -o:""{T}: Add"")`"
+q_007,counterspells,jargon,30,0,counterspell,`otag:counterspell`,"`o:""counter target"" (t:instant or t:creature or t:enchantment)`"
+q_008,board wipes,jargon,76,0,sweeper,`otag:sweeper`,"`o:""destroy all creatures"" or o:""exile all creatures"" or (o:""all creatures get -"" o:""until end of turn"") or o:""destroy all nonland permanents""`"
+q_009,removal,jargon,72,4,removal,`otag:removal`,"`(o:""destroy target"" or o:""exile target"") (o:creature or o:permanent or o:""nonland permanent"")`"
+q_010,card draw engines,jargon,20,1,draw-engine,`otag:draw-engine`,"`-t:instant -t:sorcery (o:""whenever"" or o:""at the beginning"") o:""draw a card""`"
+q_011,tutor,jargon,37,0,tutor,`otag:tutor`,"`o:""search your library for a"" -o:""basic land card"" -t:land`"
+q_012,graveyard recursion,jargon,33,1,recursion,`otag:recursion`,"`o:""from your graveyard"" (o:""return target"" or o:""return up to"" or o:""put target"")`"
+q_013,fetch lands,jargon,16,7,fetchland,`otag:fetchland`,"`t:land o:""search your library for"" o:""land card"" o:""sacrifice""`"
+q_014,flicker effects,jargon,32,3,flicker,`otag:flicker`,"`o:""exile"" o:""return"" o:""to the battlefield under"" (o:""target creature"" or o:""target permanent"" or o:""another target"")`"
+q_015,ETB triggers,jargon,33,0,—,"`t:creature o:""when"" o:""enters""`","`t:creature o:""when"" o:""enters""`"
+q_016,mana dorks,jargon,23,1,mana-dork,`otag:mana-dork`,"`t:creature o:""{T}: Add""`"
+q_017,wheels,jargon,9,4,wheel,`otag:wheel`,"`o:""discards"" o:""hand"" o:""draws seven cards""`"
+q_018,extra turns,jargon,17,2,extra-turn,`otag:extra-turn`,"`o:""take an extra turn""`"
+q_019,free counterspell,constrained,11,0,counterspell-free,`otag:counterspell-free`,"`o:""counter target spell"" (o:""rather than pay"" or o:""without paying"" or mv=0)`"
+q_020,red creatures under 3 mana,constrained,17,0,—,`t:creature c:r mv<3`,`t:creature c:r mv<3`
+q_021,instants that cost 1 mana,constrained,25,0,—,`t:instant mv=1`,`t:instant mv=1`
+q_022,a card that lets me look at my deck and put a creature into the battlefield,natural,10,0,tutor-creature,"`otag:tutor-creature o:""onto the battlefield""`","`o:""search your library for a creature card"" o:""onto the battlefield""`"
+q_023,creatures that get bigger every time I cast a spell,natural,18,0,cast-trigger-you,"`t:creature otag:cast-trigger-you o:""+1/+1""`","`t:creature o:""whenever you cast"" o:""+1/+1""`"
+q_024,a card that destroys all creatures,natural,12,0,sweeper,"`otag:sweeper o:""destroy all creatures""`","`o:""destroy all creatures""`"
+q_025,red pingers under 3 mana,hybrid,11,3,pinger,`otag:pinger c:r mv<3`,"`c:r mv<3 o:""{T}:"" o:""deals 1 damage""`"
+q_026,cheap blue counterspells,hybrid,16,1,counterspell,`otag:counterspell c:u mv<=2`,"`c:u mv<=2 o:""counter target""`"

@@ -48,6 +48,12 @@ Paper §5.7 is corrected and now cites the report folder. The parity headline nu
 - **Charts are drawn as shapes, not chart objects.** Both QuickLook and Keynote dropped pptxgenjs's native charts on this machine; shape-drawn bars render identically in Keynote and PowerPoint. Verified by exporting the deck through Keynote to PDF and inspecting every chart slide.
 - Display rounding: values exported to three decimals are rounded half-up in the deck (0.565 → 0.57), matching the report.
 
+## References, appendices, and the writing plan
+
+- **`scripts/build_references.py`** builds the paper's References section (works actually cited, detected in the text) and `docs/thesis/references.bib` (all 42 sources) from `docs/sources/arxiv_metadata.json` — fetched in a single arXiv API request — and `extra_references.yaml` (non-arXiv works; venues copied from each entry's arXiv comment field). The first run corrected citations that had been written from memory: "Wang (2024)" → Zhang et al. (2024); "Nigam et al. (2020), Amazon" → Choi et al. (2020), Home Depot; four works cited by bare title or year now carry authors (Lei, Yoon, Lu, Li, Iff). One arXiv title in our bibliography had since changed (2602.04731, now "Modular Expert Merging for Biomedical Retrieval"). **"Guo et al., 2016" could not be resolved to a publication** and is listed as such rather than guessed.
+- **`generate_report.py --paper`** regenerates paper Appendices A (the v2 prompt, verbatim), B (evaluation-set summary with mapped tags and expert queries), and C (per-query control vs headline). Appendix D (the 10-query failure-mode series) remains a placeholder: those rewriter outputs were never logged to a file.
+- **Writing plan** (`docs/thesis/writing-plan.md`, CLAUDE.md §10): Mitchell writes the prose; Claude prompts with fact bullets and does not draft. Consequently the stale abstract and contributions list were **not** rewritten — each now carries a dated note listing the facts that changed. CLAUDE.md §1, §2, §8, §9, §12, §13 and the README were brought up to date with the current system.
+
 ## Next
 
 Presentation prep (window opens 2026-10-19); expert-query review and the hole-judging pass remain open on Mitchell's side.

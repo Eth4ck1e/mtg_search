@@ -1,0 +1,514 @@
+[
+ {
+  "id": "2401.06311",
+  "title": "Exploring the Best Practices of Query Expansion with Large Language Models",
+  "authors": [
+   "Le Zhang",
+   "Yihong Wu",
+   "Qian Yang",
+   "Jian-Yun Nie"
+  ],
+  "year": "2024",
+  "journal_ref": null,
+  "comment": null
+ },
+ {
+  "id": "2507.21989",
+  "title": "Benchmarking Filtered Approximate Nearest Neighbor Search Algorithms on Transformer-based Embedding Vectors",
+  "authors": [
+   "Patrick Iff",
+   "Paul Bruegger",
+   "Marcin Chrapek",
+   "David Kochergin",
+   "Maciej Besta",
+   "Torsten Hoefler"
+  ],
+  "year": "2025",
+  "journal_ref": null,
+  "comment": null
+ },
+ {
+  "id": "2407.15831",
+  "title": "NV-Retriever: Improving text embedding models with effective hard-negative mining",
+  "authors": [
+   "Gabriel de Souza P. Moreira",
+   "Radek Osmulski",
+   "Mengyao Xu",
+   "Ronay Ak",
+   "Benedikt Schifferer",
+   "Even Oldridge"
+  ],
+  "year": "2024",
+  "journal_ref": null,
+  "comment": null
+ },
+ {
+  "id": "2508.16263",
+  "title": "Attribute Filtering in Approximate Nearest Neighbor Search: An In-depth Experimental Study",
+  "authors": [
+   "Mocheng Li",
+   "Xiao Yan",
+   "Baotong Lu",
+   "Yue Zhang",
+   "James Cheng",
+   "Chenhao Ma"
+  ],
+  "year": "2025",
+  "journal_ref": null,
+  "comment": "15 pages, 15 figures, Accepted at SIGMOD 2026"
+ },
+ {
+  "id": "2605.29271",
+  "title": "CoHyDE: Iterative Co-Training of LLM Rewriter & Dense Encoder for Tool Retrieval",
+  "authors": [
+   "Vaishali Senthil",
+   "Ashutosh Hathidara",
+   "Sebastian Schreiber"
+  ],
+  "year": "2026",
+  "journal_ref": null,
+  "comment": "REALM Workshop, EMNLP 2026"
+ },
+ {
+  "id": "2008.08180",
+  "title": "Semantic Product Search for Matching Structured Product Catalogs in E-Commerce",
+  "authors": [
+   "Jason Ingyu Choi",
+   "Surya Kallumadi",
+   "Bhaskar Mitra",
+   "Eugene Agichtein",
+   "Faizan Javed"
+  ],
+  "year": "2020",
+  "journal_ref": null,
+  "comment": "4 pages"
+ },
+ {
+  "id": "2406.01607",
+  "title": "Recent advances in text embedding: A Comprehensive Review of Top-Performing Methods on the MTEB Benchmark",
+  "authors": [
+   "Hongliu Cao"
+  ],
+  "year": "2024",
+  "journal_ref": null,
+  "comment": "21 pages"
+ },
+ {
+  "id": "2504.14175",
+  "title": "Hypothetical Documents or Knowledge Leakage? Rethinking LLM-based Query Expansion",
+  "authors": [
+   "Yejun Yoon",
+   "Jaeyoon Jung",
+   "Seunghyun Yoon",
+   "Kunwoo Park"
+  ],
+  "year": "2025",
+  "journal_ref": null,
+  "comment": "ACL 2025 (Findings)"
+ },
+ {
+  "id": "2504.12558",
+  "title": "Benchmarking LLM-based Relevance Judgment Methods",
+  "authors": [
+   "Negar Arabzadeh",
+   "Charles L. A. Clarke"
+  ],
+  "year": "2025",
+  "journal_ref": null,
+  "comment": null
+ },
+ {
+  "id": "2603.18005",
+  "title": "Negative Sampling Techniques in Information Retrieval: A Survey",
+  "authors": [
+   "Laurin Wischounig",
+   "Abdelrahman Abdallah",
+   "Adam Jatowt"
+  ],
+  "year": "2026",
+  "journal_ref": null,
+  "comment": "Accepted at findings EACL 2026"
+ },
+ {
+  "id": "2509.07794",
+  "title": "Query Expansion in the Age of Pre-trained and Large Language Models: A Comprehensive Survey",
+  "authors": [
+   "Minghan Li",
+   "Xinxuan Lv",
+   "Junjie Zou",
+   "Tongna Chen",
+   "Chao Zhang",
+   "Suchao An",
+   "Ercong Nie",
+   "Guodong Zhou"
+  ],
+  "year": "2025",
+  "journal_ref": null,
+  "comment": "42 pages,10 figures,6 tables"
+ },
+ {
+  "id": "2606.01504",
+  "title": "Semantic Retrieval for Product Search in E-Commerce",
+  "authors": [
+   "Nikhil Kothari",
+   "Saksham Samdani",
+   "Ritam Mallick",
+   "Praveen Gupta",
+   "Ankit Vijay",
+   "Surender Kumar"
+  ],
+  "year": "2026",
+  "journal_ref": null,
+  "comment": null
+ },
+ {
+  "id": "2604.15591",
+  "title": "BioHiCL: Hierarchical Multi-Label Contrastive Learning for Biomedical Retrieval with MeSH Labels",
+  "authors": [
+   "Mengfei Lan",
+   "Lecheng Zheng",
+   "Halil Kilicoglu"
+  ],
+  "year": "2026",
+  "journal_ref": null,
+  "comment": "Accepted by ACL 2026 (Oral)"
+ },
+ {
+  "id": "2602.04731",
+  "title": "Modular Expert Merging for Biomedical Retrieval",
+  "authors": [
+   "Sameh Khattab",
+   "Jean-Philippe Corbeil",
+   "Osman Alperen \u00c7inar-Kora\u015f",
+   "Amin Dada",
+   "Julian Friedrich",
+   "Jiawei He",
+   "Douglas Teodoro",
+   "Jens Kleesiek"
+  ],
+  "year": "2026",
+  "journal_ref": null,
+  "comment": "Accepted to Findings of EMNLP 2026"
+ },
+ {
+  "id": "2104.08663",
+  "title": "BEIR: A Heterogenous Benchmark for Zero-shot Evaluation of Information Retrieval Models",
+  "authors": [
+   "Nandan Thakur",
+   "Nils Reimers",
+   "Andreas R\u00fcckl\u00e9",
+   "Abhishek Srivastava",
+   "Iryna Gurevych"
+  ],
+  "year": "2021",
+  "journal_ref": null,
+  "comment": "Accepted at NeurIPS 2021 Dataset and Benchmark Track"
+ },
+ {
+  "id": "2004.04906",
+  "title": "Dense Passage Retrieval for Open-Domain Question Answering",
+  "authors": [
+   "Vladimir Karpukhin",
+   "Barlas O\u011fuz",
+   "Sewon Min",
+   "Patrick Lewis",
+   "Ledell Wu",
+   "Sergey Edunov",
+   "Danqi Chen",
+   "Wen-tau Yih"
+  ],
+  "year": "2020",
+  "journal_ref": null,
+  "comment": "EMNLP 2020"
+ },
+ {
+  "id": "2212.10496",
+  "title": "Precise Zero-Shot Dense Retrieval without Relevance Labels",
+  "authors": [
+   "Luyu Gao",
+   "Xueguang Ma",
+   "Jimmy Lin",
+   "Jamie Callan"
+  ],
+  "year": "2022",
+  "journal_ref": null,
+  "comment": null
+ },
+ {
+  "id": "2210.07316",
+  "title": "MTEB: Massive Text Embedding Benchmark",
+  "authors": [
+   "Niklas Muennighoff",
+   "Nouamane Tazi",
+   "Lo\u00efc Magne",
+   "Nils Reimers"
+  ],
+  "year": "2022",
+  "journal_ref": null,
+  "comment": "24 pages, 14 tables, 6 figures"
+ },
+ {
+  "id": "2603.13776",
+  "title": "Retrieval-Feedback-Driven Distillation and Preference Alignment for Efficient LLM-based Query Expansion",
+  "authors": [
+   "Minghan Li",
+   "Guodong Zhou"
+  ],
+  "year": "2026",
+  "journal_ref": null,
+  "comment": "25 pages"
+ },
+ {
+  "id": "2510.02241",
+  "title": "Study on LLMs for Promptagator-Style Dense Retriever Training",
+  "authors": [
+   "Daniel Gwon",
+   "Nour Jedidi",
+   "Jimmy Lin"
+  ],
+  "year": "2025",
+  "journal_ref": null,
+  "comment": "CIKM 2025 short research paper"
+ },
+ {
+  "id": "2410.21228",
+  "title": "LoRA vs Full Fine-tuning: An Illusion of Equivalence",
+  "authors": [
+   "Reece Shuttleworth",
+   "Jacob Andreas",
+   "Antonio Torralba",
+   "Pratyusha Sharma"
+  ],
+  "year": "2024",
+  "journal_ref": null,
+  "comment": null
+ },
+ {
+  "id": "2506.18535",
+  "title": "When Fine-Tuning Fails: Lessons from MS MARCO Passage Ranking",
+  "authors": [
+   "Manu Pande",
+   "Shahil Kumar",
+   "Anay Yatin Damle"
+  ],
+  "year": "2025",
+  "journal_ref": null,
+  "comment": null
+ },
+ {
+  "id": "2609.10750",
+  "title": "When Synthetic Data Hurts: On Catastrophic Forgetting in Skill Retrieval for LLM Agents",
+  "authors": [
+   "Syed Shariyar Murtaza",
+   "Yifan Nie",
+   "Utkarsh Soni",
+   "Eugene Wen",
+   "Arvid Frydenlund"
+  ],
+  "year": "2026",
+  "journal_ref": null,
+  "comment": "8 main pages, 15 pages total, accepted in EMNLP Industry track 2026"
+ },
+ {
+  "id": "2602.12727",
+  "title": "Training Dense Retrievers with Multiple Positive Passages",
+  "authors": [
+   "Benben Wang",
+   "Minghao Tang",
+   "Hengran Zhang",
+   "Jiafeng Guo",
+   "Keping Bi"
+  ],
+  "year": "2026",
+  "journal_ref": null,
+  "comment": "Accepted by KDD 2026"
+ },
+ {
+  "id": "1908.10084",
+  "title": "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks",
+  "authors": [
+   "Nils Reimers",
+   "Iryna Gurevych"
+  ],
+  "year": "2019",
+  "journal_ref": null,
+  "comment": "Published at EMNLP 2019"
+ },
+ {
+  "id": "2303.07678",
+  "title": "Query2doc: Query Expansion with Large Language Models",
+  "authors": [
+   "Liang Wang",
+   "Nan Yang",
+   "Furu Wei"
+  ],
+  "year": "2023",
+  "journal_ref": null,
+  "comment": "Accepted to EMNLP 2023"
+ },
+ {
+  "id": "2402.01613",
+  "title": "Nomic Embed: Training a Reproducible Long Context Text Embedder",
+  "authors": [
+   "Zach Nussbaum",
+   "John X. Morris",
+   "Brandon Duderstadt",
+   "Andriy Mulyar"
+  ],
+  "year": "2024",
+  "journal_ref": null,
+  "comment": "Accepted to TMLR https://openreview.net/forum?id=IPmzyQSiQE"
+ },
+ {
+  "id": "2501.14466",
+  "title": "On Correlating Factors for Domain Adaptation Performance",
+  "authors": [
+   "Goksenin Yuksel",
+   "Jaap Kamps"
+  ],
+  "year": "2025",
+  "journal_ref": null,
+  "comment": null
+ },
+ {
+  "id": "2509.25602",
+  "title": "TRUE: A Reproducible Framework for LLM-Driven Relevance Judgment in Information Retrieval",
+  "authors": [
+   "Mouly Dewan",
+   "Jiqun Liu",
+   "Chirag Shah"
+  ],
+  "year": "2025",
+  "journal_ref": null,
+  "comment": null
+ },
+ {
+  "id": "2505.19274",
+  "title": "Conventional Contrastive Learning Often Falls Short: Improving Dense Retrieval with Cross-Encoder Listwise Distillation and Synthetic Data",
+  "authors": [
+   "Manveer Singh Tamber",
+   "Suleman Kazi",
+   "Vivek Sourabh",
+   "Jimmy Lin"
+  ],
+  "year": "2025",
+  "journal_ref": null,
+  "comment": "updated version of arxiv:2502.19712"
+ },
+ {
+  "id": "2203.02155",
+  "title": "Training language models to follow instructions with human feedback",
+  "authors": [
+   "Long Ouyang",
+   "Jeff Wu",
+   "Xu Jiang",
+   "Diogo Almeida",
+   "Carroll L. Wainwright",
+   "Pamela Mishkin",
+   "Chong Zhang",
+   "Sandhini Agarwal",
+   "Katarina Slama",
+   "Alex Ray",
+   "John Schulman",
+   "Jacob Hilton",
+   "Fraser Kelton",
+   "Luke Miller",
+   "Maddie Simens",
+   "Amanda Askell",
+   "Peter Welinder",
+   "Paul Christiano",
+   "Jan Leike",
+   "Ryan Lowe"
+  ],
+  "year": "2022",
+  "journal_ref": null,
+  "comment": null
+ },
+ {
+  "id": "2603.23710",
+  "title": "An In-Depth Study of Filter-Agnostic Vector Search on a PostgreSQL Database System: [Experiments and Analysis]",
+  "authors": [
+   "Duo Lu",
+   "Helena Caminal",
+   "Manos Chatzakis",
+   "Yannis Papakonstantinou",
+   "Yannis Chronis",
+   "Vaibhav Jain",
+   "Fatma \u00d6zcan"
+  ],
+  "year": "2026",
+  "journal_ref": null,
+  "comment": "26 pages, 13 figures, to be published at SIGMOD 2026"
+ },
+ {
+  "id": "2507.16754",
+  "title": "Never Come Up Empty: Adaptive HyDE Retrieval for Improving LLM Developer Support",
+  "authors": [
+   "Fangjian Lei",
+   "Mariam El Mezouar",
+   "Shayan Noei",
+   "Ying Zou"
+  ],
+  "year": "2025",
+  "journal_ref": null,
+  "comment": null
+ },
+ {
+  "id": "2508.01643",
+  "title": "ChEmbed: Enhancing Chemical Literature Search Through Domain-Specific Text Embeddings",
+  "authors": [
+   "Ali Shiraee Kasmaee",
+   "Mohammad Khodadad",
+   "Mahdi Astaraki",
+   "Mohammad Arshi Saloot",
+   "Nicholas Sherck",
+   "Hamidreza Mahyar",
+   "Soheila Samiee"
+  ],
+  "year": "2025",
+  "journal_ref": null,
+  "comment": null
+ },
+ {
+  "id": "2308.12039",
+  "title": "Hybrid Retrieval and Multi-stage Text Ranking Solution at TREC 2022 Deep Learning Track",
+  "authors": [
+   "Guangwei Xu",
+   "Yangzhao Zhang",
+   "Longhui Zhang",
+   "Dingkun Long",
+   "Pengjun Xie",
+   "Ruijie Guo"
+  ],
+  "year": "2023",
+  "journal_ref": null,
+  "comment": "TREC 2022 Deep Learning Track"
+ },
+ {
+  "id": "2106.09685",
+  "title": "LoRA: Low-Rank Adaptation of Large Language Models",
+  "authors": [
+   "Edward J. Hu",
+   "Yelong Shen",
+   "Phillip Wallis",
+   "Zeyuan Allen-Zhu",
+   "Yuanzhi Li",
+   "Shean Wang",
+   "Lu Wang",
+   "Weizhu Chen"
+  ],
+  "year": "2021",
+  "journal_ref": null,
+  "comment": "Draft V2 includes better baselines, experiments on GLUE, and more on adapter latency"
+ },
+ {
+  "id": "2510.21729",
+  "title": "CustomIR: Unsupervised Fine-Tuning of Dense Embeddings for Known Document Corpora",
+  "authors": [
+   "Nathan Paull"
+  ],
+  "year": "2025",
+  "journal_ref": null,
+  "comment": null
+ }
+]
