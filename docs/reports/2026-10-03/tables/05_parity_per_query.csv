@@ -1,0 +1,27 @@
+Query,Expert Scryfall query,Set size,Parity R-prec,Jaccard,Operators,Needs otag
+instants that cost 1 mana,`t:instant mv=1`,738,0.999,0.997,2,
+haste creatures,`t:creature kw:haste`,611,0.998,0.997,2,
+tutor,`otag:tutor`,1117,0.958,0.919,1,yes
+cheap blue counterspells,`otag:counterspell c:u mv<=2`,180,0.950,0.905,3,yes
+extra turns,`otag:extra-turn`,53,0.943,0.893,1,yes
+counterspells,`otag:counterspell`,511,0.916,0.845,1,yes
+fetch lands,`otag:fetchland`,53,0.906,0.828,1,yes
+instants that draw cards,`t:instant otag:draw`,632,0.862,0.758,2,yes
+red creatures under 3 mana,`t:creature c:r mv<3`,953,0.850,0.739,3,
+graveyard recursion,`otag:recursion`,2087,0.743,0.612,1,yes
+wheels,`otag:wheel`,136,0.743,0.591,1,yes
+flicker effects,`otag:flicker`,177,0.734,0.580,1,yes
+ramp spells,`otag:ramp`,2124,0.683,0.542,1,yes
+creatures with flying,`t:creature kw:flying`,3010,0.664,0.664,2,
+board wipes,`otag:sweeper`,870,0.609,0.438,1,yes
+card draw engines,`otag:draw-engine`,1489,0.526,0.357,1,yes
+red pingers under 3 mana,`otag:pinger c:r mv<3`,135,0.422,0.268,3,yes
+mana dorks,`otag:mana-dork`,412,0.417,0.264,1,yes
+removal,`otag:removal`,5952,0.328,0.326,1,yes
+ETB triggers,"`t:creature o:""when"" o:""enters""`",4250,0.164,0.125,3,
+destroy target artifact,`otag:removal-artifact o:destroy`,552,0.094,0.049,2,yes
+a card that destroys all creatures,"`otag:sweeper o:""destroy all creatures""`",84,0.083,0.043,2,yes
+free counterspell,`otag:counterspell-free`,13,0.077,0.040,1,yes
+burn spell that deals 3 damage to any target,"`otag:burn-any o:""3 damage""`",145,0.028,0.014,2,yes
+a card that lets me look at my deck and put a creature into the battlefield,"`otag:tutor-creature o:""onto the battlefield""`",88,0.000,0.000,2,yes
+creatures that get bigger every time I cast a spell,"`t:creature otag:cast-trigger-you o:""+1/+1""`",209,0.000,0.000,3,yes

@@ -128,27 +128,28 @@ def _load_label_oracle(path: Path) -> dict[str, str]:
 
 
 def _load_tag_pools(path: Path) -> dict[str, tuple[str, set[str]]]:
-    """query_id -> (tag slug, closure pool of in-corpus oracle_ids) for mapped queries."""
+    """query_id -> (tag slug, closure pool of in-corpus oracle_ids) for mapped queries.
+
+    One query for all tags: the closure view is a recursive CTE and is
+    re-evaluated per statement, so a per-tag loop cost ~1.5 s x 21 tags.
+    """
     spec = yaml.safe_load(path.read_text(encoding="utf-8"))["queries"]
-    out: dict[str, tuple[str, set[str]]] = {}
+    slug_by_qid = {qid: e["tags"][0] for qid, e in spec.items() if e.get("tags")}
     with psycopg.connect(settings.database_url) as conn, conn.cursor() as cur:
-        for qid, entry in spec.items():
-            tags = entry.get("tags") or []
-            if not tags:
-                continue
-            cur.execute(
-                """
-                SELECT DISTINCT ct.oracle_id::text
-                FROM oracle_tags t
-                JOIN oracle_tag_closure cl ON cl.ancestor_id = t.id
-                JOIN card_tags ct ON ct.tag_id = cl.descendant_id
-                JOIN (SELECT DISTINCT oracle_id FROM cards) c ON c.oracle_id = ct.oracle_id
-                WHERE t.slug = %s
-                """,
-                (tags[0],),
-            )
-            out[qid] = (tags[0], {r[0] for r in cur.fetchall()})
-    return out
+        cur.execute(
+            """
+    SELECT t.slug, array_agg(DISTINCT ct.oracle_id::text)
+    FROM oracle_tags t
+    JOIN oracle_tag_closure cl ON cl.ancestor_id = t.id
+    JOIN card_tags ct ON ct.tag_id = cl.descendant_id
+    JOIN (SELECT DISTINCT oracle_id FROM cards) c ON c.oracle_id = ct.oracle_id
+    WHERE t.slug = ANY(%s)
+    GROUP BY t.slug
+""",
+            (sorted(set(slug_by_qid.values())),),
+        )
+        pools = {slug: set(ids) for slug, ids in cur.fetchall()}
+    return {qid: (slug, pools.get(slug, set())) for qid, slug in slug_by_qid.items()}
 
 
 def _parse_retrieval(cfg: dict[str, Any]) -> tuple[Stage1Mode, bool, FilterPolicy, int]:
@@ -363,6 +364,7 @@ def main() -> int:
                 "hyde_model": settings.hyde_model if mode is not Stage1Mode.RAW else None,
                 "hyde_prompt": searcher.prompt_version if mode is not Stage1Mode.RAW else None,
                 "label_oracle": oracle_path,
+                "hyde_prompt_sha": searcher.prompt_sha if mode is not Stage1Mode.RAW else None,
                 "eval_set_path": str(eval_set_path),
                 "description": cfg.get("description"),
             },

@@ -46,6 +46,7 @@ CLI (raw mode needs no server; hyde/passthrough need ``mlx_lm.server``)::
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -366,6 +367,9 @@ class Searcher:
         self.prompt_version = (
             f"{self.prompt_path.name}:{_load_prompt(self.prompt_path).get('version')}"
         )
+        # Content hash: prompts get edited in place between runs; the version
+        # string alone cannot tell two edits of "v2" apart in experiment_runs.
+        self.prompt_sha = hashlib.sha256(self.prompt_path.read_bytes()).hexdigest()[:12]
         if model is None:
             dev = select_device(prefer=device)
             model = SentenceTransformer(

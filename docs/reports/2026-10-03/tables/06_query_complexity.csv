@@ -1,0 +1,6 @@
+,Plain language (this work),"Scryfall, tags allowed","Scryfall, no tags"
+Length,3.7 words,20 chars,52 chars
+Operators per query,0,1.7,3.2
+Queries needing `otag:`,—,81%,0%
+Expert set precision vs judgments,—,0.09,0.14
+Expert set recall vs judgments,—,0.92,0.77

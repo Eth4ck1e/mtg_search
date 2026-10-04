@@ -1,0 +1,30 @@
+Configuration,Embedder,Cascade row,Expert variant,Parity R-prec,Jaccard @|S|,Depth to 90% (x set),n
+"Raw query, no rewriter, no filter",base,88,tags allowed,0.191,0.134,2.74,26
+"Raw query, no rewriter, no filter",base,88,no tags,0.188,0.132,3.96,26
+"Raw query, no rewriter, no filter",tuned (nomic-mtg-v1),95,tags allowed,0.417,0.319,2.19,26
+"Raw query, no rewriter, no filter",tuned (nomic-mtg-v1),95,no tags,0.321,0.224,2.76,26
+v1 filters + raw query,base,89,tags allowed,0.306,0.240,1.20,26
+v1 filters + raw query,base,89,no tags,0.291,0.229,2.02,26
+v1 filters + raw query,tuned (nomic-mtg-v1),96,tags allowed,0.498,0.416,1.00,26
+v1 filters + raw query,tuned (nomic-mtg-v1),96,no tags,0.408,0.319,1.61,26
+"v1 hypothetical text, no filter",base,91,tags allowed,0.233,0.166,2.69,26
+"v1 hypothetical text, no filter",base,91,no tags,0.237,0.169,3.83,26
+"v1 hypothetical text, no filter",tuned (nomic-mtg-v1),98,tags allowed,0.320,0.240,2.40,26
+"v1 hypothetical text, no filter",tuned (nomic-mtg-v1),98,no tags,0.287,0.207,3.32,26
+v1 hypothetical text + filters,base,90,tags allowed,0.343,0.273,1.32,26
+v1 hypothetical text + filters,base,90,no tags,0.351,0.280,2.35,26
+v1 hypothetical text + filters,tuned (nomic-mtg-v1),97,tags allowed,0.414,0.340,1.04,26
+v1 hypothetical text + filters,tuned (nomic-mtg-v1),97,no tags,0.394,0.315,1.46,26
+"v2 concepts, no filter",base,93,tags allowed,0.146,0.099,3.19,26
+"v2 concepts, no filter",base,93,no tags,0.130,0.088,4.38,26
+"v2 concepts, no filter",tuned (nomic-mtg-v1),100,tags allowed,0.399,0.323,1.80,26
+"v2 concepts, no filter",tuned (nomic-mtg-v1),100,no tags,0.265,0.185,2.54,26
+v2 concepts + filters,base,92,tags allowed,0.265,0.207,1.63,26
+v2 concepts + filters,base,92,no tags,0.239,0.191,2.41,26
+v2 concepts + filters,tuned (nomic-mtg-v1),99,tags allowed,0.523,0.446,0.98,26
+v2 concepts + filters,tuned (nomic-mtg-v1),99,no tags,0.391,0.310,1.82,26
+v2 concepts + filters + keywords,base,94,tags allowed,0.304,0.249,1.56,26
+v2 concepts + filters + keywords,base,94,no tags,0.279,0.232,2.14,26
+v2 concepts + filters + keywords,tuned (nomic-mtg-v1),101,tags allowed,0.565,0.492,0.95,26
+v2 concepts + filters + keywords,tuned (nomic-mtg-v1),101,no tags,0.434,0.355,1.46,26
+v2 query + concepts + filters + keywords,tuned (nomic-mtg-v1),84,tags allowed,0.563,0.483,0.98,26

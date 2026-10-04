@@ -1,0 +1,2 @@
+Run,Row,Pairs,Steps,Train min,Held-out ndcg@10 base → tuned,Held-out recall@100 base → tuned,NanoBEIR mean ndcg@10 base → tuned
+nomic-mtg-v1,19,"207,062",809,71,0.114 → 0.242,0.164 → 0.327,0.514 → 0.495

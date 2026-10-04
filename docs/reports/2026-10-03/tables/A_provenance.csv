@@ -1,0 +1,21 @@
+Configuration,Embedder,Selected row,Date,Prompt,Prompt sha,Superseded rows
+raw_dense,base,88,2026-10-03,—,—,14
+raw_dense,tuned (nomic-mtg-v1),95,2026-10-03,—,—,"20, 45"
+cascade_passthrough,base,89,2026-10-03,hyde_v1.yaml:v1,4ec082543b20,"13, 39"
+cascade_passthrough,tuned (nomic-mtg-v1),96,2026-10-03,hyde_v1.yaml:v1,4ec082543b20,"21, 43"
+cascade_hyde_v1_nosql,base,91,2026-10-03,hyde_v1.yaml:v1,4ec082543b20,12
+cascade_hyde_v1_nosql,tuned (nomic-mtg-v1),98,2026-10-03,hyde_v1.yaml:v1,4ec082543b20,"23, 44"
+cascade_hyde_v1,base,90,2026-10-03,hyde_v1.yaml:v1,4ec082543b20,"11, 38, 67, 73"
+cascade_hyde_v1,tuned (nomic-mtg-v1),97,2026-10-03,hyde_v1.yaml:v1,4ec082543b20,"22, 42"
+cascade_v2_concepts_nosql,base,93,2026-10-03,hyde_v2.yaml:v2,5b6a7463643b,58
+cascade_v2_concepts_nosql,tuned (nomic-mtg-v1),100,2026-10-03,hyde_v2.yaml:v2,5b6a7463643b,53
+cascade_v2_concepts,base,92,2026-10-03,hyde_v2.yaml:v2,5b6a7463643b,57
+cascade_v2_concepts,tuned (nomic-mtg-v1),99,2026-10-03,hyde_v2.yaml:v2,5b6a7463643b,"51, 56, 61, 66, 72"
+cascade_v2_concepts_kw,base,94,2026-10-03,hyde_v2.yaml:v2,5b6a7463643b,—
+cascade_v2_concepts_kw,tuned (nomic-mtg-v1),101,2026-10-03,hyde_v2.yaml:v2,5b6a7463643b,78
+cascade_v2_query_plus_concepts,tuned (nomic-mtg-v1),84,2026-09-22,hyde_v2.yaml:v2,—,—
+cascade_v2_hyde,tuned (nomic-mtg-v1),52,2026-09-22,hyde_v2.yaml:v2,—,—
+oracle_tag_label,base,28,2026-09-19,hyde_v1.yaml:v1,—,—
+oracle_tag_label,tuned (nomic-mtg-v1),46,2026-09-22,hyde_v1.yaml:v1,—,26
+oracle_tag_label_nosql,base,29,2026-09-19,hyde_v1.yaml:v1,—,—
+oracle_tag_label_nosql,tuned (nomic-mtg-v1),27,2026-09-19,hyde_v1.yaml:v1,—,—

@@ -192,17 +192,21 @@ def cmd_compare(args: argparse.Namespace) -> int:
         cfg, per_query = got
         cur.execute("SELECT DISTINCT oracle_id::text FROM cards")
         corpus = {r[0] for r in cur.fetchall()}
-        pools: dict[str, set[str]] = {}
-        for qid, entry in oracle.items():
-            tags = entry.get("tags") or []
-            if tags:
-                cur.execute(
-                    """SELECT DISTINCT ct.oracle_id::text FROM oracle_tags t
-                       JOIN oracle_tag_closure cl ON cl.ancestor_id=t.id
-                       JOIN card_tags ct ON ct.tag_id=cl.descendant_id WHERE t.slug=%s""",
-                    (tags[0],),
-                )
-                pools[qid] = {r[0] for r in cur.fetchall()} & corpus
+        slug_by_qid = {qid: e["tags"][0] for qid, e in oracle.items() if e.get("tags")}
+        cur.execute(
+            """
+    SELECT t.slug, array_agg(DISTINCT ct.oracle_id::text)
+    FROM oracle_tags t
+    JOIN oracle_tag_closure cl ON cl.ancestor_id = t.id
+    JOIN card_tags ct ON ct.tag_id = cl.descendant_id
+    JOIN (SELECT DISTINCT oracle_id FROM cards) c ON c.oracle_id = ct.oracle_id
+    WHERE t.slug = ANY(%s)
+    GROUP BY t.slug
+""",
+            (sorted(set(slug_by_qid.values())),),
+        )
+        by_slug = {slug: set(ids) for slug, ids in cur.fetchall()}
+        pools: dict[str, set[str]] = {q: by_slug.get(sl, set()) for q, sl in slug_by_qid.items()}
 
     rows_out: list[dict[str, Any]] = []
     sms = []

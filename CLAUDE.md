@@ -121,6 +121,7 @@ mtg_search/
 │   ├── archive/                         # Original proposal + historical planning
 │   ├── journal/                         # Dated decision/analysis entries
 │   ├── process/                         # Workflow rulebooks + timeline
+│   ├── reports/                         # Generated results reports (one dated folder per run)
 │   ├── roadmap/                         # Phase files (M0–M7 mapping in §8 above)
 │   ├── sources/                         # Academic source PDFs (gitignored) + bibliography
 │   └── thesis/                          # Thesis-class deliverables (abstracts, timeline)
@@ -138,7 +139,8 @@ mtg_search/
 │   ├── render_review.py                 # Eval-set HTML reviewer
 │   ├── evaluate.py                      # Run a config through src/search.py, write experiment_runs row
 │   ├── dashboard.py (+ dashboard.html)  # Local results-review UI: editable text/filters, card grid, judgments
-│   └── scryfall_comparator.py           # Expert-query result parity + query-complexity proxy (paper's primary comparator)
+│   ├── scryfall_comparator.py           # Expert-query result parity + query-complexity proxy (paper's primary comparator)
+│   └── generate_report.py               # experiment_runs → docs/reports/<date>/ (report.md, CSV tables, SVG figures)
 ├── src/
 │   ├── config.py                        # Pydantic Settings (single source of truth)
 │   ├── logging_utils.py                 # PipelineRun JSONL context manager
@@ -250,6 +252,7 @@ PYTHONPATH="$PWD" .venv/bin/python scripts/dashboard.py
 PYTHONPATH="$PWD" .venv/bin/python scripts/scryfall_comparator.py fetch            # 1 req/s, only re-fetches changed queries
 PYTHONPATH="$PWD" .venv/bin/python scripts/scryfall_comparator.py compare --row <experiment_runs id with set_metrics>
 
-# Reporting (M5+)
+# Reporting — tables + figures for the paper and slides, regenerated from experiment_runs
+# (newest row per configuration × embedder wins; never copy numbers into the paper by hand)
 PYTHONPATH="$PWD" .venv/bin/python scripts/generate_report.py --since 2026-09-01 --out docs/reports/
 ```
