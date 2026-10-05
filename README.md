@@ -59,7 +59,9 @@ The full architecture spec, working conventions, and anti-patterns live in [`CLA
 │   ├── dashboard.py             # Local web UI for reviewing and judging results
 │   ├── scryfall_comparator.py   # Parity with expert Scryfall queries
 │   ├── generate_report.py       # experiment_runs → docs/reports/ (tables + figures)
-│   └── build_references.py      # Paper references from arXiv metadata
+│   ├── build_references.py      # Paper references from arXiv metadata
+│   ├── index_sources.py         # Source PDFs → searchable source library (Postgres)
+│   └── source_search.py         # Search sources; verify quotations verbatim with page numbers
 ├── src/                         # Library code (importable modules)
 │   ├── config.py                # Pydantic settings (single source of truth)
 │   ├── logging_utils.py         # PipelineRun JSONL context manager

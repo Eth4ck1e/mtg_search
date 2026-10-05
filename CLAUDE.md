@@ -142,6 +142,8 @@ mtg_search/
 │   ├── scryfall_comparator.py           # Expert-query result parity + query-complexity proxy (paper's primary comparator)
 │   ├── generate_report.py               # experiment_runs → docs/reports/<date>/ (report.md, CSV tables, SVG figures); --paper regenerates paper Appendices A–C
 │   ├── build_references.py              # arXiv metadata + extra_references.yaml → paper References section + references.bib
+│   ├── index_sources.py                 # Source PDFs → source_pages + source_chunks (the paper's own source library)
+│   ├── source_search.py                 # Search the source PDFs; --verify gates every quotation (verbatim + page)
 │   ├── build_eval_v2.py                 # Fold dashboard judgments into a new eval-set version
 │   └── probes/                          # One-off analyses (set-retrieval probe, prompt size)
 ├── src/
@@ -149,6 +151,7 @@ mtg_search/
 │   ├── logging_utils.py                 # PipelineRun JSONL context manager
 │   ├── preprocess_text.py               # build_embedding_text + Nomic prefix helpers
 │   ├── query_rewriter.py                # Stage 1 — HyDE HTTP client (MLX server)
+│   ├── source_library.py                # Passage search + verbatim quote matching over the source PDFs
 │   ├── search.py                        # Stage 2 + 3 — filter compiler + pgvector search inside the filtered set
 │   ├── data_processing/                 # scryfall_classify, ingest_transform, keyword_extract
 │   ├── db/                              # experiment_log writer + SQL migrations
@@ -197,6 +200,8 @@ The conference presentation is end of Fall 2026 or Spring 2027. The final paper 
 - `scripts/generate_report.py` → automated tables/figures from logged data
 
 **`scripts/generate_report.py` is a deliverable, not an afterthought.** It exists as of 2026-10-03. **Numbers reach the paper and the slides only through it** (`docs/reports/<date>/tables/*.csv`): on 2026-10-03 hand-copied figures in the paper were found to come from a 21-query run while labelled as 26 queries. References likewise come from `scripts/build_references.py`, which takes authors and titles from arXiv metadata rather than memory.
+
+**Source library (added 2026-10-05).** What a source *says* is held to the same standard as numbers: it comes from the source PDFs, never from a model's memory. `scripts/index_sources.py` extracts every PDF in `docs/sources/` page by page into Postgres (`source_pages`, `source_chunks`; migration 0005; stock Nomic embeddings — academic prose, not card text). `scripts/source_search.py` finds passages by meaning or exact words and returns the BibTeX key and PDF page; `--verify "quote" --source <key>` succeeds only if the wording is in that source. The `citation-librarian` subagent (`.claude/agents/citation-librarian.md`) is restricted to that tool. **Rule for Claude: any statement about what a source says, any quotation, and any page number goes through the citation-librarian agent or `source_search.py` — do not state them from memory, in the paper, in fact bullets for Mitchell, or in conversation.** A quotation that fails `--verify` is not offered. References with no PDF in `docs/sources/` (listed by `--list`) cannot be checked and must be reported as such.
 
 ## 13. Quick Reference
 
@@ -256,6 +261,12 @@ PYTHONPATH="$PWD" .venv/bin/python scripts/dashboard.py
 # Scryfall comparator (expert queries: data/eval/scryfall_expert_queries_v1.yaml; sets cached in data/eval/scryfall_results_v1.json)
 PYTHONPATH="$PWD" .venv/bin/python scripts/scryfall_comparator.py fetch            # 1 req/s, only re-fetches changed queries
 PYTHONPATH="$PWD" .venv/bin/python scripts/scryfall_comparator.py compare --row <experiment_runs id with set_metrics>
+
+# Source library — search the source PDFs, verify quotations (re-index after adding a PDF to docs/sources/)
+PYTHONPATH="$PWD" .venv/bin/python scripts/index_sources.py                         # full rebuild, ~1 min
+PYTHONPATH="$PWD" .venv/bin/python scripts/source_search.py "why do dense retrievers miss domain jargon" --k 5
+PYTHONPATH="$PWD" .venv/bin/python scripts/source_search.py --verify "exact wording" --source gao2022precise
+PYTHONPATH="$PWD" .venv/bin/python scripts/source_search.py --list                  # keys, and references with no PDF
 
 # Reporting — tables + figures for the paper and slides, regenerated from experiment_runs
 # (newest row per configuration × embedder wins; never copy numbers into the paper by hand)
