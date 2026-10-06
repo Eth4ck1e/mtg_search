@@ -118,80 +118,54 @@ The evaluation methodology's use of tri-state graded relevance judgments is grou
 
 ### 3.1 Task and dataset
 
-*[DRAFTED — REVIEW]*
+Our system is given a user query in plain language and returns the full set of cards that could match that query, ranked by how well they match, from a corpus of 31,124 cards. A result is measured against the results an expert could get from Scryfall's own search syntax on a similar query, and success is determined by comparing the two. The two resulting sets are compared with the Scryfall set as the standard to match, comparing how well our system can achieve similar results to an expertly crafted Scryfall search given a plain-language input.
 
-The task is: given a user's natural-language query, return the top-K most semantically relevant MTG cards from a corpus of ~30,000 unique cards.
+Scryfall provides a full database dump for limited use including research, which includes 38,740 entries as of our snapshot of 2026-09-11. The data was ingested into a local database and scrubbed of all cards that were not relevant for our purposes, including tokens, emblems, art cards, schemes, and planes (3,739). Additionally, digital-only cards (2,058), Un-set novelty cards (998), silver-bordered cards (458), memorabilia (350), and token-only products (13) were removed, and the remaining legal cards resulted in 31,124 cards. Multi-face cards (transform, modal double-faced, split, adventure) each had their own respective rows per face, for 31,972 rows. Finally, we embedded each face separately to retain the abilities of the individual pieces, and the results are merged to one card during search.
 
-**Corpus.** The Scryfall `oracle-cards` bulk dataset (2026-09-11 snapshot) contains 38,740 raw entries. Filtering rules exclude non-card layouts (tokens, emblems, art series, vanguard, planar, scheme), digital-only printings (Arena/MTGO exclusive), silver-bordered cards, memorabilia set-types, novelty Un-set (`set_type=funny`) products, and token-only booster products (`set_type=token`). The resulting corpus contains 31,972 face rows across 31,124 unique `oracle_id`s (80.3% retention rate). Multi-face cards (transform, modal-DFC, split, adventure) are stored as separate rows keyed on `(oracle_id, face_index)`; results deduplicate by `oracle_id` at display time.
-
-**Oracle tags (training signal).** *[DRAFTED — REVIEW]* Scryfall publishes the community-maintained Tagger oracle tags as an official daily bulk file (2026-09-18 snapshot: 4,551 functional tags, 236,170 tag-to-card assignments, a multi-parent hierarchy of depth ≤6). Tags name what a card *does* in player vocabulary — `sweeper`, `cantrip`, `ramp`, `sacrifice-outlet-creature` — independent of how its rules text phrases it. Joined on `oracle_id`, 99.4% of corpus cards carry at least one tag and 205,262 assignments fall inside the corpus; 3,022 tags cover five or more corpus cards. Tags are used only as distant supervision for embedder fine-tuning (Section 6.3). They are not embedded and are not used by the SQL pre-filter, so that the system's results never depend on a card having been tagged. Scryfall's data policy names research as a permitted use; the exact bulk-file date is cited for reproducibility.
+Scryfall also provides a separate bulk file for tags, which are a community-maintained resource including parent and child tags. These tags provide useful labels that identify what a card does or what category the card's abilities fall into (e.g. "sweeper", "ramp", "cantrip"). 99.4% of cards in our set carry at least one tag, and 3,022 tags cover five or more cards in the set. Tags are used as the training signal for the embedder fine-tuning and are not embedded themselves or used as a filter directly.
 
 ### 3.2 Three-stage retrieval cascade
 
-*[DRAFTED — REVIEW]*
+The system was designed to function in three cascading stages: the HyDE rewriter (Stage 1), the SQL pre-filter (Stage 2), and the ranking embedder (Stage 3). Original work focused only on Stage 3 embedding and data conditioning and inspired the additional research which led to the addition of Stages 1 and 2.
 
-The cascade consists of three sequential stages, executed in numerical order. The design invariant is that the semantic search stage always executes within the SQL-pre-filtered candidate set — a pre-filter design rather than a post-filter on top-K.
+#### 3.2.1 Stage 1 — Query rewriter
 
-#### 3.2.1 Stage 1 — HyDE query rewriter
+The first stage uses Llama 3.1 8B Instruct, 4-bit, served locally through `mlx_lm.server` on an OpenAI-compatible endpoint. The model achieved an average of 57 tokens/s and used 4.8 GB of unified memory on an M3 Max MacBook Pro. The user's input query is served to this stage directly, and it outputs a JSON object which is passed to Stage 2.
 
-*[YOUR PROSE, lightly edited for flow]*
+The final version of our prompt (v2) has three fields to instruct the model how to handle the rewriting and how to format the JSON object output: `filters` (only from attributes the user types directly), `concepts` (1–3 short phrases in deckbuilder vocabulary, preferring community terms like those given by oracle tags), and `hypothetical_card` (one sentence, used only when no concept fits).
 
-`hyde_v1.yaml` functions as the instruction prompt that tells the HyDE model exactly how to parse a query into SQL pre-filter attributes and a hypothetical card ability text. The main challenge with this method is engineering the prompt to cover the wide range of jargon, keywords, and varying output shapes that any given prompt may produce. For example, the jargon few-shot example teaches the model how to handle "cantrips," but cantrips directly reference structural attributes (cheap instants and sorceries that draw a card) rather than an ability-text pattern. In contrast, "ramp" is jargon that references an ability-text pattern (adding mana or accelerating mana production) with no clear structural filter constraints. This nuance makes it difficult to use simple few-shot examples to teach the model how to handle the variety of outputs a single stage of the cascade must produce.
-
-The base model handles general cases fairly well but struggles on more complex mechanics or jargon-specific prompts.
-
-**HyDE model.** The default HyDE model is `meta-llama/Llama-3.1-8B-Instruct`, served locally on Apple Silicon via `mlx_lm.server` (MLX-quantized 4-bit variant, ~4.8GB peak memory, ~57 tokens/sec generation on an M3 MacBook Pro). The server exposes an OpenAI-compatible endpoint, making the backend swappable for non-Apple hardware. The choice of a small local model preserves the paper's cost-story argument: HyDE inference must be affordable enough to run per-query on modest hardware.
-
-**Output contract.** HyDE produces a JSON object with two fields:
-
-- `filters` — a structured object with optional fields for colors, color identity, types, keywords, converted mana value, power, toughness, and format legality. Populated when the query specifies structural constraints; null otherwise.
-- `hypothetical_card` — canonical Wizards-authored MTG rules text describing what a card matching the query would do. Populated when the query has an ability-text component; null when the query is purely structural.
-
-**Planned v2 contract.** *[DRAFTED — REVIEW; lands with the fine-tuned embedder, Section 6.3]* After the embedder is fine-tuned on oracle tags, the rewriter's job narrows to filter extraction plus concept normalisation: a `concepts` field carries the query's functional intent in tag vocabulary where a tag fits ("board wipe" → "sweeper"), the user's own phrasing passes through where none does, and `hypothetical_card` becomes a fallback rather than the default. The v1 and v2 prompts are compared by rule count, example count, and output tokens as a direct measure of the simplification hypothesis.
+Our control prompt (v1) had two fields, `filters` and a full hypothetical card rules text, after Gao et al. (2022) (HyDE). v1 and v2 had 11 rules, 7 examples, 2,079 request tokens, 42 output tokens and 8 rules, 8 examples, 1,414 request tokens, 28 output tokens respectively. Temperature for both is 0. The client keeps only the first JSON object the model outputs.
 
 #### 3.2.2 Stage 2 — SQL pre-filter
 
-*[DRAFTED — REVIEW]*
+The second stage is where the identified attributes from Stage 1 become parameterised SQL `WHERE` clauses over Postgres columns. These attributes include colors, color identity, types, subtypes, mana value, power, toughness, format legality, and keywords. The rules during this stage are as follows: a color filter always includes colorless cards unless the query instructs exactly certain colors, and an empty color list is not constrained. Multiple types are ORed and subtypes are ANDed. Keyword filters are maintained only if the keyword exists in the corpus. Under v1, keyword filters were switched off entirely because the model inferred keywords from paraphrases in the query and the hard filter then removed every card that achieved the same effect without that keyword. In both v1 and v2 this stage provides the pre-filtering to achieve better matching within the desired subset of cards during the embedding stage.
 
-The structured filter attributes produced by Stage 1 are compiled into a PostgreSQL WHERE clause and used to narrow the candidate set. The schema exposes real columns for the well-defined attributes (colors, color_identity, cmc, type_line, keywords, layout, released_at) with GIN indexes on array columns and B-tree indexes on numeric columns, making common filter combinations inexpensive. Filter compilation is straightforward: array containment for colors and keywords, numeric comparison for cmc, LIKE pattern-matching on type_line for subtypes, JSONB path-extract for legalities.
+#### 3.2.3 Stage 3 — Semantic ranking
 
-**Pre-filter, not post-filter.** The semantic search stage runs within the SQL-narrowed candidate set. Post-filtering top-K vector results — the more common approach — collapses recall on structurally-constrained queries because relevant cards may fall outside the initial top-K if the encoder alone cannot bridge the query-document gap.
+Concept phrases from v2 or hypothetical text from v1 are embedded with Nomic Embed v1.5 (137 million parameters, 768 dimensions). There were two checkpoints for this stage: the stock model (control) and the fine-tuned model (`nomic-mtg-v1`). Even though some queries are functionally fully handled during Stage 1 and Stage 2, Stage 3 always runs. Therefore, even on a pure filter query, candidates are still ranked by the embedding stage. Every candidate that survived the filter stage is then scored by cosine similarity exactly, with no approximate index. The entire ranked candidate list is the result and is paginated in the UI.
 
-#### 3.2.3 Stage 3 — Semantic vector search
-
-*[DRAFTED — REVIEW]*
-
-The hypothetical card text produced by Stage 1 is embedded using `nomic-ai/nomic-embed-text-v1.5`, a 137M-parameter bi-encoder in the sentence-transformer lineage with 768-dimensional output. Nomic Embed requires task-specific prefixes on inputs — `search_document:` for corpus-side documents and `search_query:` for query-side text — applied at encode time via helper functions in `src/preprocess_text.py`. Omitting the prefixes measurably degrades retrieval quality.
-
-Cosine similarity between the query embedding and the pre-filtered candidate set's card embeddings is computed via pgvector's `<=>` operator, and the top-K results are returned. Because the semantic search operates on the SQL-narrowed set, this stage is inexpensive in practice — typically dozens to hundreds of candidates rather than the full ~32K corpus.
+Storage for the system is a single Postgres database with the pgvector extension that contains both the card attributes and the vectors (one row per face per model version) to handle both filtering and ranking with a single query.
 
 ### 3.3 Corpus text preparation
 
-*[DRAFTED — REVIEW]*
+The corpus text was prepared using keyword augmentation to unify the document space and remove possible ambiguity between cards that have only a keyword and cards that have both keywords and reminder text for those keywords. Example: a card that says only "Flash" gets "Flash (You may cast this spell any time you could cast an instant.)" added. Of our 31,972 entries, 9,929 faces had text added to them, and our dictionary covers 79% of keyword occurrences in the corpus. Our dictionary covers 240 definitions that are used for augmentation. 143 definitions were parsed automatically from reminder text in the existing database and 97 were hand-written (58 replacing narrow or incorrect harvested definitions and 39 new). Deliberately skipped keywords were Enchant, Food, Gift, and Machina. The excluded keywords had no correct generic wording to substitute or had multiple conflicting references that made augmentation unfeasible. Augmentation was applied early in the research process and was used in fine-tuning pairs. However, augmentation was never tested on its own, so its effect is unmeasured and remains an oversight in the research.
 
-Only the Oracle text of each card is embedded — not the type line, mana cost, or color, which live in SQL. Before embedding, the Oracle text is augmented with canonical Wizards-authored reminder text for any keyword the card has but does not already explain inline. The reminder-text dictionary is built once by scanning the full Scryfall corpus for parenthetical patterns: since Wizards inconsistently prints reminder text across printings, at least one printing of every keyword contains the canonical definition, and this can be harvested automatically. A small manual override file handles the handful of keywords Wizards has never printed reminders for.
+Finally, Nomic Embed requires a task prefix on every input, so each card text is prefixed with `search_document: ` before embedding and each query-side text with `search_query: ` at search time; without these prefixes retrieval quality drops.
 
 ### 3.4 Evaluation setup
 
-*[DRAFTED — REVIEW]*
+Twenty-six plain-language queries were hand-written to cover six kinds of input: jargon (13), natural language (4), fragmented (3), constrained (3), hybrid (2), mechanical (1). Jargon queries dominate the queries used for evaluation by design, to address the root question the project aimed to answer. Other categories are too small to support any claims on their own. The full list is in Appendix B.
 
-The evaluation set is a hand-curated collection of 26 queries with tri-state relevance judgments (relevant / partially relevant / not relevant). Queries span six categories established during eval-set construction: natural language, jargon, fragmented, hybrid, constrained, and mechanical. Metrics are recall@10 and MRR, following standard IR conventions.
+Each query has two reference sets:
 
-Configurations form a grid over the Stage 1 mode and the embedder, plus two ablations and the external comparator. Every cell is a retrieval run over the same 26 queries, logged as one `experiment_runs` row.
+1. **Tag pool.** 21 of the 26 queries map to the one Scryfall oracle tag that names the query's concept; the reference set is every corpus card carrying that tag or one of its child tags. The five remaining queries have no functional tag (keyword and structural queries) and are scored only by the second set.
+2. **Expert Scryfall query.** For all 26 queries, a Scryfall query is created to achieve the result an expert would get for the same request, in two versions: one with community tags allowed (`otag:`) and one without. The resulting set, restricted to the corpus, is the reference. The Scryfall queries were generated by Claude (a different model family from the rewriter) and are reviewed by me.
 
-| | Base Nomic Embed v1.5 | Tag-fine-tuned embedder |
-|---|---|---|
-| Stage 1: hypothetical card text (v1 prompt) | control — the pre-fine-tuning number | |
-| Stage 1: tag-normalised concepts (v2 prompt) | | main result |
-| Stage 1: raw query pass-through (no rewrite) | | |
+Results were measured using the full ranked candidate list (not top-k) against the reference set. R-precision shows the share of the system's first N results that are in the reference set; 1.0 means the first N results are exactly the reference set. Reachable is the share of the reference set that survives the Stage 2 filter, to isolate what the filter costs. R-precision (reachable) isolates ranking quality by counting only the cards the filter admitted. Depth to 90% is how far down the list a user reads to have seen 90% of the reference set, as a multiple of N. Measures against the expert set use the same R-precision, plus Jaccard overlap at depth N. Finally, we measure query complexity for each query by the length and number of operators of the expert's Scryfall query against the plain-language query, and whether `otag:` was needed. This serves as our accessibility proxy measurement, since no real human users were used.
 
-- **–SQL ablation** — the main configuration with the pre-filter removed; isolates Stage 2's contribution.
-- **Direct-tag lookup ablation** — HyDE's concept mapped straight to `card_tags` membership, no embedder. Bounds what the tuned embedder adds over a tag lookup; a system that only matched this row would be Scryfall's `otag:` search rebuilt locally.
-- **Scryfall comparator** — LLM-crafted expert-level Scryfall queries evaluated against the same eval set: what Scryfall can do when operated by an expert-adjacent LLM constructing its queries. Two measures are reported per query: *result parity* (overlap between the cascade's top-K and the expert query's result set, alongside the tri-state judgments) and *query complexity* (operator count and operator types in the expert Scryfall query versus the plain-language query the user typed) as a proxy for ease of use in the absence of a user study.
+Every evaluation run writes one row to an `experiment_runs` table with configuration, prompt version and hash, embedder version, and per-query results. All tables and figures for the results section are created from those rows by `generate_report.py`.
 
-The base-embedder rows are run and logged before any fine-tuned checkpoint is evaluated; the frozen base remains a permanent row in every results table.
-
----
+Interpreting the results has some nuances worth mentioning. Each query is about 1/21 (0.048) of a tag-pool average and 1/26 (0.038) of an expert-set average, so differences near those values are a single query. Tag membership is also the training signal, and the no-tag expert queries and the held-out tags are the checks that don't share it. The expert's query just represents one possible expert's choice. A syntax-free query is ambiguous, so our expert set is a standard to match, not a guarantee of sameness.
 
 ## 4. Experiments
 
