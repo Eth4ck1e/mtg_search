@@ -142,6 +142,18 @@ Rough-draft mode (Mitchell, 2026-10-05 evening): he writes, Claude inserts the t
 
 - §3.4 measures: "1/21 (0.048)" holds for the 21-query tag-pool averages; the 26-query parity averages are 1/26 (0.038). Claude changed "for this section" → "for the results section" (tables are in §5). "we/our" slips left for the voice pass.
 
+- **[M] (2026-10-19)** The 10-query rewriter test series (8B vs 27B) moves out of Results into §4.2 (how prompt v2 was arrived at). §5 is built only from logged `experiment_runs` rows: 5.1 grid, 5.2 fine-tuning probes, 5.3 Scryfall comparison, 5.4 per-category / per-query.
+- `generate_report.py` still emits P@10 / MRR columns; add a `--no-judged` (or make it default) so the paper tables match the decision to drop judged-list metrics. (Claude, mechanical.)
+
+- §5 restructured 2026-10-19: old drafted §5.3–5.7 (Tables 1–10 etc.) removed from the draft; recoverable from git at commit 119c767. Old §5.1–5.2 (test series) moved under §4.2 as 4.2.1 / 4.2.2.
+- §5.1 ¶1: interpretive clauses ("struggle to understand the context", "shows the contextual improvement") are *why* statements that belong in §6; "improved by more than 60%" flagged (control → headline is +137%, ×2.4; v1/tuned → headline is +56%).
+
+- §5.2: "the improvement in both indicates the model is making inferences… rather than memorizing" is interpretation (→ §6). NanoBEIR sentence gives no numbers (0.514 → 0.495); recall@100 numbers (0.164 → 0.327) not stated in prose; training facts (pairs/steps/time) only in the table.
+
+- §5.3 ¶2: "novice" for the no-tag Scryfall searcher — that user still writes 52 characters / 3.2 operators of syntax; "tag-unaware" or "intermediate" is more accurate. Last sentence: on the 5 identical queries the no-tag query is *the same* query as the expert's (e.g. `t:creature kw:flying`), so "significantly more complex" applies to the other 21, not those 5. Sentence starting with a numeral ("5 of the 26").
+
+- §5.4 ¶2 (per-query) was written by Claude at Mitchell's request from the per-query table; Mitchell to re-read and reword on the next pass. §5.4 ¶1 last sentence (examples-not-results clause) also Claude's wording at his request.
+
 ## Stage 2 — The paper, section by section
 
 Order is the order to *write* in, not the order of the document: results and method first, framing last.

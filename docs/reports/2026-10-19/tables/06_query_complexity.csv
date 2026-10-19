@@ -1,0 +1,6 @@
+,Plain language (this work),"Scryfall, tags allowed","Scryfall, no tags"
+Length,3.7 words,20 chars,52 chars
+Operators per query,0,1.7,3.2
+Queries needing `otag:`,—,81%,0%
+Recall of the tag-using expert's set,0.565,1.000 (reference),0.619
+Overlap with that set (Jaccard),0.492,1.000 (reference),0.598

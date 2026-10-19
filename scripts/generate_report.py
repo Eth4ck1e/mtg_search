@@ -254,6 +254,43 @@ def hbar_chart(
 # ---- report ----------------------------------------------------------------
 
 
+def no_tag_vs_expert_rows(headline_metrics: dict[str, Any]) -> list[list[str]]:
+    """Table 6 rows measuring each searcher against the tag-using expert's result set.
+
+    The tag-using expert is the reference (1.000). The no-tag Scryfall search is
+    scored as an unranked set from the cached Scryfall results (restricted to the
+    corpus); the plain-language column is the headline cascade's comparator
+    metrics against the same reference.
+    """
+    cache = settings.eval_dir / "scryfall_results_v1.json"
+    if not cache.exists():
+        return []
+    res = json.loads(cache.read_text(encoding="utf-8"))
+    with psycopg.connect(settings.database_url) as conn, conn.cursor() as cur:
+        cur.execute("SELECT DISTINCT oracle_id::text FROM cards")
+        corpus = {r[0] for r in cur.fetchall()}
+    recalls, jaccards = [], []
+    for key, entry in res.items():
+        qid, variant = key.split("|")
+        if variant != "expert" or f"{qid}|no_tag" not in res:
+            continue
+        e = set(entry["oracle_ids"]) & corpus
+        n = set(res[f"{qid}|no_tag"]["oracle_ids"]) & corpus
+        if not e:
+            continue
+        recalls.append(len(e & n) / len(e))
+        jaccards.append(len(e & n) / len(e | n) if e | n else 0.0)
+    if not recalls:
+        return []
+    hm = headline_metrics
+    return [
+        ["Recall of the tag-using expert's set", f3(hm.get("parity_r_precision")), "1.000 (reference)",
+         f"{sum(recalls) / len(recalls):.3f}"],
+        ["Overlap with that set (Jaccard)", f3(hm.get("parity_jaccard_at_n_mean")), "1.000 (reference)",
+         f"{sum(jaccards) / len(jaccards):.3f}"],
+    ]  # fmt: skip
+
+
 def _git_sha() -> str:
     try:
         return subprocess.check_output(
@@ -304,7 +341,10 @@ def build(args: argparse.Namespace, run: PipelineRun) -> Path:
     ]
 
     # -- Table 1: the grid
-    h1 = ["Configuration", "Embedder", "Row", "P@10", "MRR", "R-prec", "R-prec (reachable)",
+    judged = (
+        args.judged
+    )  # judged-list metrics (P@10, MRR) are off by default: dropped from the paper 2026-10-05
+    h1 = ["Configuration", "Embedder", "Row", *(["P@10", "MRR"] if judged else []), "R-prec", "R-prec (reachable)",
           "Reachable", "Depth to 90% (x set)", "Stage 1 ms", "Stage 1 out tokens"]  # fmt: skip
     t1: list[list[Any]] = []
     for cfg in configs:
@@ -315,7 +355,7 @@ def build(args: argparse.Namespace, run: PipelineRun) -> Path:
             x = r["metrics"]
             t1.append([
                 CONFIG_LABELS.get(cfg, cfg), embedder_label(m), r["id"],
-                f3(x.get("precision_at_10")), f3(x.get("mrr")), f3(x.get("set_r_precision")),
+                *([f3(x.get("precision_at_10")), f3(x.get("mrr"))] if judged else []), f3(x.get("set_r_precision")),
                 f3(x.get("set_r_precision_reachable")), f3(x.get("set_reachable_frac")),
                 "—" if x.get("set_depth90_x_target_median") is None else f"{x['set_depth90_x_target_median']:.2f}",
                 "—" if x.get("stage1_ms_mean") is None else f"{x['stage1_ms_mean']:.0f}",
@@ -325,8 +365,12 @@ def build(args: argparse.Namespace, run: PipelineRun) -> Path:
     md += [
         f"## {sec()}. Configuration grid",
         "",
-        "P@10 and MRR are against the hand-curated judgments (archetype precision). "
-        "R-precision, reachable, and depth are set-retrieval measures against each query's tag pool "
+        (
+            "P@10 and MRR are against the hand-curated judgments (archetype precision). "
+            if judged
+            else ""
+        )
+        + "R-precision, reachable, and depth are set-retrieval measures against each query's tag pool "
         "inside the Stage 2 candidate set (21 tag-mapped queries): *R-prec* charges the filter's "
         "exclusions to the cascade, *R-prec (reachable)* scores Stage 3's ranking of what the filter "
         "admitted, *Reachable* is the share of the pool the filter admitted.",
@@ -361,7 +405,7 @@ def build(args: argparse.Namespace, run: PipelineRun) -> Path:
 
     # -- Table 2: per-category
     if head and ctrl:
-        h2 = ["Category", "n", "Control P@10", "Headline P@10", "Control R-prec", "Headline R-prec"]
+        h2 = ["Category", "n", *(["Control P@10", "Headline P@10"] if judged else []), "Control R-prec", "Headline R-prec"]  # fmt: skip
         t2 = []
         for cat in CATEGORIES:
             cells = []
@@ -372,13 +416,13 @@ def build(args: argparse.Namespace, run: PipelineRun) -> Path:
                 p = sum(q.get("precision_at_10", 0) for q in qs) / n if n else None
                 sm = [q["set_metrics"]["r_precision"] for q in qs if q.get("set_metrics")]
                 cells.append((p, sum(sm) / len(sm) if sm else None))
-            t2.append([cat, n, f3(cells[0][0]), f3(cells[1][0]), f3(cells[0][1]), f3(cells[1][1])])
+            t2.append([cat, n, *([f3(cells[0][0]), f3(cells[1][0])] if judged else []), f3(cells[0][1]), f3(cells[1][1])])  # fmt: skip
         write_csv(out / "tables" / "02_by_category.csv", h2, t2)
         md += [f"## {sec()}. By query category (control vs headline)", "", md_table(h2, t2), ""]
 
     # -- Table 3: fine-tuning runs
     if finetunes:
-        h3 = ["Run", "Row", "Pairs", "Steps", "Train min", "Held-out ndcg@10 base → tuned",
+        h3 = ["Run", "Row", "Pairs", "Steps", "Train min", "Seen tags ndcg@10 base → tuned", "Held-out ndcg@10 base → tuned",
               "Held-out recall@100 base → tuned", "NanoBEIR mean ndcg@10 base → tuned"]  # fmt: skip
         t3 = []
         for r in finetunes:
@@ -397,6 +441,7 @@ def build(args: argparse.Namespace, run: PipelineRun) -> Path:
             t3.append([
                 c.get("run_name"), r["id"], f"{c.get('pairs_used', 0):,}", x.get("steps"),
                 f"{x.get('train_seconds', 0) / 60:.0f}",
+                f"{f3(g('dev_base_', 'cosine_ndcg@10'))} → {f3(g('dev_tuned_', 'cosine_ndcg@10'))}",
                 f"{f3(g('holdout_base_', 'cosine_ndcg@10'))} → {f3(g('holdout_tuned_', 'cosine_ndcg@10'))}",
                 f"{f3(g('holdout_base_', 'cosine_recall@100'))} → {f3(g('holdout_tuned_', 'cosine_recall@100'))}",
                 f"{f3(nb_base)} → {f3(nb_tuned)}",
@@ -515,11 +560,12 @@ def build(args: argparse.Namespace, run: PipelineRun) -> Path:
                  g(n, "complexity_operators_mean", "{:.1f}")],
                 ["Queries needing `otag:`", "—", g(e, "complexity_uses_otag_frac", "{:.0%}"),
                  g(n, "complexity_uses_otag_frac", "{:.0%}")],
+            ] + no_tag_vs_expert_rows(e) + ([
                 ["Expert set precision vs judgments", "—", g(e, "scryfall_precision_vs_judgments_mean", "{:.2f}"),
                  g(n, "scryfall_precision_vs_judgments_mean", "{:.2f}")],
                 ["Expert set recall vs judgments", "—", g(e, "scryfall_recall_vs_judgments_mean", "{:.2f}"),
                  g(n, "scryfall_recall_vs_judgments_mean", "{:.2f}")],
-            ]  # fmt: skip
+            ] if judged else [])  # fmt: skip
             write_csv(out / "tables" / "06_query_complexity.csv", h6, t6)
             md += [f"## {sec()}. What the user had to type", "", md_table(h6, t6), ""]
 
@@ -546,17 +592,19 @@ def build(args: argparse.Namespace, run: PipelineRun) -> Path:
         def setp(q: dict[str, Any] | None) -> str:
             return f3(q["set_metrics"]["r_precision"]) if q and q.get("set_metrics") else "—"
 
-        h7 = ["ID", "Query", "Category", "Control P@10", "Headline P@10", "Control R-prec",
+        h7 = ["ID", "Query", "Category", *(["Control P@10", "Headline P@10"] if judged else []), "Control R-prec",
               "Headline R-prec", "Control parity", "Headline parity"]  # fmt: skip
-        t7 = [[q["id"], q["query"], q.get("category"), f3(cq.get(q["id"], {}).get("precision_at_10")),
-               f3(q.get("precision_at_10")), setp(cq.get(q["id"])), setp(q), par(cpar, q["id"]), par(hpar, q["id"])]
+        t7 = [[q["id"], q["query"], q.get("category"),
+               *([f3(cq.get(q["id"], {}).get("precision_at_10")), f3(q.get("precision_at_10"))] if judged else []),
+               setp(cq.get(q["id"])), setp(q), par(cpar, q["id"]), par(hpar, q["id"])]
               for q in sorted(head["per_query"], key=lambda q: q["id"])]  # fmt: skip
         write_csv(out / "tables" / "07_per_query.csv", h7, t7)
         per_query_md = md_table(h7, t7)
         md += [
             f"## {sec()}. Per query: control vs headline",
             "",
-            "P@10 against the hand-curated judgments; R-prec against the query's tag pool (— where no tag is "
+            ("P@10 against the hand-curated judgments; " if judged else "")
+            + "R-prec against the query's tag pool (— where no tag is "
             "mapped); parity against the expert Scryfall result set (tags allowed).",
             "",
             per_query_md,
@@ -586,7 +634,7 @@ def build(args: argparse.Namespace, run: PipelineRun) -> Path:
 
     (out / "report.md").write_text("\n".join(md), encoding="utf-8")
     if args.paper:
-        update_paper_appendices(out, per_query_md, head, ctrl)
+        update_paper_appendices(out, per_query_md, head, ctrl, judged=args.judged)
     run.processed(len(evals))
     run.note(out=str(out), rows_read=len(rows), eval_cells=len(evals), finetunes=len(finetunes),
              comparator_rows=sum(len(v) for v in comparators.values()))  # fmt: skip
@@ -594,13 +642,14 @@ def build(args: argparse.Namespace, run: PipelineRun) -> Path:
 
 
 def update_paper_appendices(
-    out: Path, per_query_md: str, head: dict | None, ctrl: dict | None
+    out: Path, per_query_md: str, head: dict | None, ctrl: dict | None, *, judged: bool = False
 ) -> None:
     """Regenerate Appendices A-C of the paper draft from files and logged rows.
 
     Appendix A embeds the current rewriter prompt, B summarises the evaluation
-    set (queries, judgment counts, mapped tag, expert Scryfall query), C is the
-    per-query results table. Appendix D and everything else are left alone.
+    set (queries, mapped tag, expert Scryfall query; judgment counts only with
+    ``judged``), C is the per-query results table. Appendix D and everything
+    else are left alone.
     """
     import yaml
 
@@ -615,17 +664,10 @@ def update_paper_appendices(
     expert = yaml.safe_load(
         (settings.eval_dir / "scryfall_expert_queries_v1.yaml").read_text(encoding="utf-8")
     )["queries"]
-    hb = [
-        "ID",
-        "Query",
-        "Category",
-        "Relevant",
-        "Borderline",
-        "Mapped tag",
-        "Expert Scryfall query",
-        "Without tags",
-    ]
-    tb = [[q["id"], q["query"], q.get("category"), len(q.get("relevant") or []), len(q.get("borderline") or []),
+    hb = ["ID", "Query", "Category", *(["Relevant", "Borderline"] if judged else []), "Mapped tag",
+          "Expert Scryfall query", "Without tags"]  # fmt: skip
+    tb = [[q["id"], q["query"], q.get("category"),
+           *([len(q.get("relevant") or []), len(q.get("borderline") or [])] if judged else []),
            (oracle.get(q["id"], {}).get("tags") or ["—"])[0], f"`{expert[q['id']]['expert']}`",
            f"`{expert[q['id']]['no_tag']}`"] for q in sorted(ev["queries"], key=lambda q: q["id"])]  # fmt: skip
     examples = "\n\n".join(
@@ -658,8 +700,13 @@ def update_paper_appendices(
             "### Appendix B — Evaluation set",
             "",
             gen
-            + f" {len(tb)} queries (`data/eval/queries_v1_draft.yaml`, version {ev.get('version')}); the full relevance "
-            "judgments (card ids with a one-line reason each) are in that file. *Mapped tag* is the Scryfall oracle tag used as "
+            + f" {len(tb)} queries (`data/eval/queries_v1_draft.yaml`, version {ev.get('version')})."
+            + (
+                " The full relevance judgments (card ids with a one-line reason each) are in that file."
+                if judged
+                else ""
+            )
+            + " *Mapped tag* is the Scryfall oracle tag used as "
             "the set-retrieval target; the expert queries are the Scryfall comparator inputs.",
             "",
             md_table(hb, tb),
@@ -668,7 +715,8 @@ def update_paper_appendices(
             "",
             gen
             + f" Source: `{out.relative_to(settings.repo_root)}/tables/07_per_query.csv`, `experiment_runs` {rows}. "
-            "P@10 is against the hand-curated judgments, R-prec against the query's tag pool, parity against the expert "
+            + ("P@10 is against the hand-curated judgments, " if judged else "")
+            + "R-prec is against the query's tag pool, parity against the expert "
             "Scryfall result set (tags allowed).",
             "",
             per_query_md or "*No headline/control rows selected.*",
@@ -692,11 +740,17 @@ def main() -> int:
         "--control", default="cascade_hyde_v1", help="Control config (base embedder)."
     )
     parser.add_argument(
+        "--judged",
+        action="store_true",
+        help="Include the judged-list metrics (P@10, MRR). Off by default: dropped from the paper 2026-10-05.",
+    )
+    parser.add_argument(
         "--paper",
         action="store_true",
         help="Also regenerate Appendices A-C of docs/thesis/paper-draft.md.",
     )
     args = parser.parse_args()
+    args.out = args.out.resolve()  # relative --out broke the paper's provenance paths
     with PipelineRun("generate_report", inputs={"since": str(args.since), "headline": args.headline,
                                                 "control": args.control}) as run:  # fmt: skip
         out = build(args, run)

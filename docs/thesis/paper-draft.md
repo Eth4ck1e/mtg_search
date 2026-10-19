@@ -183,9 +183,9 @@ Before running the formal eval set, we conducted a 10-query test series designed
 
 ---
 
-## 5. Results
+*[Moved from §5 on 2026-10-19 per Mitchell's decision: the test series is how prompt v2 was arrived at, not a logged result. Outputs were never logged (Appendix D placeholder); keep as observations. DRAFTED — REVIEW.]*
 
-### 5.1 Test series — base 8B model
+#### 4.2.1 Test series — base 8B model
 
 *[YOUR PROSE for flicker example, integrated with drafted synthesis for the broader pattern]*
 
@@ -203,7 +203,7 @@ This surfaces a deeper architectural concern about filter semantics. The current
 
 **Summary.** Of the 10 test queries, the base 8B model produced clean structural filter output on all 10, but only 4 semantic hypotheticals were fully correct, 3 had partial or over-narrowing issues, and 3 were categorically wrong. All 3 fully-wrong cases were MTG-specific jargon queries.
 
-### 5.2 Model size comparison — 8B vs 27B
+#### 4.2.2 Model size comparison — 8B vs 27B
 
 *[DRAFTED — REVIEW, from our comparison run]*
 
@@ -221,174 +221,93 @@ Gemma 3 27B also resolved the compositional attention drift (correctly producing
 
 The finding is that a ~3× parameter jump within the same non-reasoning architecture class closes the jargon knowledge gap. The failures observed at 8B are not architectural — they reflect the domain-knowledge ceiling of a smaller model. Larger models know more MTG.
 
-### 5.3 Full cascade evaluation — base embedder (pre-fine-tuning)
+## 5. Results
 
-*[DRAFTED — REVIEW. Rows logged to `experiment_runs` 2026-09-18 (ids 11–14, eval set v1-draft). These are the base-embedder cells of the Section 3.4 grid: the control every fine-tuning claim is measured against. Tuned-embedder rows and the Scryfall comparator are pending.]*
+### 5.1 Rewriter × embedder
 
-All four base-embedder configurations were run over the 26-query evaluation set with the untuned Nomic Embed v1.5 encoder, the Llama 3.1 8B rewriter, and the v1 prompt. The keywords filter was off (selective strictness, Section 6.2). Precision@10 is reported alongside recall@10 because recall is capped by relevant-set size on this evaluation set — a query with 34 relevant cards can score at most 0.29 at K=10 with a perfect top ten — which makes recall unreadable as a headline number.
+Table 1 outlines the combined benefit of the v2 prompt rewriter stage along with embedder tuning, with the Stage 2 filter on, while highlighting the minimal benefits or even consequences of each change on their own. Our control shows the base embedder with the v1 rewriter with an R-precision of 0.215 against the tag pool for each query. Keeping the base embedder and using the v2 rewriter shows reduced precision, with an R-precision of 0.169, highlighting the base model's struggle to understand the context with reduced information. In both cases we see improvement using the tuned embedder, which shows the contextual improvement through fine-tuning for both v1 and v2 (R-precision 0.326 and 0.510 respectively). The most significant figure in the table is the improvement shown with the combined v2 rewriter and the tuned embedder. While v2 alone decreased our R-precision, in combination with the tuned embedder R-precision more than doubled the control.
 
-**Table 1 — Aggregate results, base embedder (n = 26 queries, macro-averaged).**
+**Table 1.** R-precision against tag pools, 21 tag-mapped queries, by Stage 1 input, Stage 2 filter, and embedder (`docs/reports/2026-10-19/tables/01_grid.csv`; rows 90, 97, 91, 98, 92, 101, 93, 100, 88, 95, 89, 96).
 
-| Configuration | Stage 1 | Stage 2 | P@10 | R@10 | MRR | p50 latency |
-|---|---|---|---|---|---|---|
-| Raw dense (floor) | none | none | 0.031 | 0.017 | 0.067 | 83 ms |
-| Pass-through | filters only | SQL | 0.050 | 0.028 | 0.130 | 985 ms |
-| –SQL ablation | filters + hypothetical | none | 0.085 | 0.036 | 0.269 | 967 ms |
-| **Full cascade (control)** | filters + hypothetical | SQL | **0.112** | **0.050** | **0.294** | 978 ms |
-
-Each stage adds, and the ordering is monotone. Removing the SQL pre-filter from the full cascade costs 0.027 P@10 and 0.025 MRR; removing the hypothetical text (pass-through) costs 0.062 P@10 and 0.164 MRR. On the base embedder the rewriter's hypothetical text is doing more work than the filter — which is the expected picture before fine-tuning, since the untuned encoder cannot bridge jargon on its own and depends on Stage 1 to translate it. Stage 1 accounts for roughly 0.9 s of the ~1 s median latency; Stages 2 and 3 together run under 100 ms at this corpus size.
-
-**Table 2 — Precision@10 by query category, base embedder.**
-
-| Category (n) | Raw dense | Pass-through | –SQL | Full cascade |
-|---|---|---|---|---|
-| natural (4) | 0.000 | 0.000 | 0.075 | 0.100 |
-| jargon (13) | 0.054 | 0.062 | 0.123 | 0.146 |
-| fragmented (3) | 0.000 | 0.000 | 0.000 | 0.000 |
-| hybrid (2) | 0.000 | 0.000 | 0.100 | 0.050 |
-| constrained (3) | 0.000 | 0.133 | 0.000 | 0.133 |
-| mechanical (1) | 0.100 | 0.100 | 0.100 | 0.100 |
-
-Three patterns in the per-category breakdown carry into the fine-tuning design:
-
-- **Constrained queries depend entirely on Stage 2.** The three purely structural queries ("instants that cost 1 mana", "red creatures under 3 mana", "free counterspell") score zero in both no-filter configurations and 0.133 in both filtered ones, regardless of what text is embedded. This is the pre-filter's contribution in isolation.
-- **Jargon is where the hypothetical text earns its place — and where it still fails.** The 13 jargon queries move from 0.054 (raw) to 0.146 (full cascade), but 8 of the 13 still score zero, including *flicker effects*, *ramp spells*, *tutor*, *wheels*, *ETB triggers*, and *mana dorks*. Two jargon queries hit zero candidates from rewriter hallucinations: "mana dorks" produced an invented subtype `Dork` with power/toughness 1/1, and "red pingers" placed power/toughness filters on instants and sorceries. These are the jargon-gap family from Section 5.1 reproduced at the retrieval level.
-- **Fragmented queries fail everywhere.** All three ("card draw engines", "graveyard recursion", "a card that lets me look at my deck and put a creature…") score zero in every configuration. The rewriter does not recover the intent, and the raw encoder does not either.
-
-Six queries returned filters but no hypothetical text, so the full cascade embedded the raw query for them. Two of those — "creatures with flying" and "haste creatures" — name a canonical keyword explicitly; with the keywords filter off they scored zero, which is the user-explicit case selective strictness is meant to keep strict (Section 6.2). A rule that applies the keywords filter only when the rewriter judged the query purely structural (filters present, no hypothetical text) is the cheapest candidate and is queued as an ablation row.
-
-### 5.4 Embedder fine-tuning on oracle tags
-
-*[DRAFTED — REVIEW. First run `nomic-mtg-v1`, 2026-09-18, `experiment_runs` id 19. Recipe per Section 6.3; run details in the 2026-09-18 journal §5b.]*
-
-The base encoder was fine-tuned for one epoch on 207,062 (anchor, card) pairs derived from 2,729 oracle tags, with 482 tags (15%, stratified by pool size) withheld entirely. Anchors were tag labels, aliases, and descriptions; positives were reminder-augmented Oracle text; the loss was in-batch-negative InfoNCE with tag-disjoint batching so that no card sharing a tag with an anchor could be sampled as its negative. Training took 71 minutes on an M3 laptop GPU. The training loss fell from chance (ln 256 ≈ 4.2) to 1.46; the in-training probe flattened after roughly 600 of 809 steps, so one epoch is near the knee.
-
-**Table 3 — Retrieval probes before and after fine-tuning (cosine, query = tag label).**
-
-| Probe | ndcg@10 | mrr@10 | map@10 | recall@100 |
-|---|---|---|---|---|
-| Training tags, 6.2k-card sub-corpus (in-distribution) — base | 0.195 | 0.249 | 0.150 | — |
-| Training tags — tuned | 0.536 | 0.600 | 0.467 | — |
-| **Held-out tags, full 31k corpus — base** | 0.114 | 0.193 | 0.079 | 0.164 |
-| **Held-out tags — tuned** | **0.242** | **0.325** | **0.187** | **0.327** |
-
-The in-distribution probe confirms the objective is doing what it should. The held-out probe is the result that matters for the argument in Section 6.4: on 482 functional tags the model never saw during training, queried by their label alone against the entire corpus, every metric roughly doubled. The encoder did not memorise a vocabulary list; it learned that a short functional phrase in player language maps to a region of rules text, and that mapping transferred to phrases it had not been shown. Absolute held-out scores are modest because many held-out tags are narrow (`bounceland`, `blood-artist-ability`) and compete with 31,000 distractors; the doubling of recall@100 is the cleaner read of the ranking shift.
-
-**Forgetting probe.** NanoBEIR ndcg@10 on three general-domain subsets, base → tuned: SciFact 0.731 → 0.736, FiQA 0.485 → 0.441, NFCorpus 0.326 → 0.309; mean 0.514 → 0.495. The fine-tune costs two points of general retrieval on average and four on the most query-like subset — mild, uneven forgetting consistent with the unregularised runs reported by Murtaza et al. (2026) and ChEmbed (2025), and nowhere near the collapse Murtaza et al. observed with aggressive settings. For a domain-specialised deployment this is an acceptable trade; the embedding-anchor regulariser or base-weight interpolation (Section 2.5) is the planned ablation should a later recipe push the loss past a few points.
-
-**Table 4 — The Section 3.4 grid with the tuned embedder (rows 20–23 vs 11–14; n = 26; keywords filter off).**
-
-| Configuration | Query-side text | P@10 base → tuned | MRR base → tuned |
+| Stage 1 input | Stage 2 filter | Base embedder | Tuned embedder (`nomic-mtg-v1`) |
 |---|---|---|---|
-| Raw dense | user query, no filters | 0.031 → 0.069 | 0.067 → 0.102 |
-| Pass-through | user query + HyDE filters | 0.050 → 0.081 | 0.130 → 0.206 |
-| Full cascade (v1 prompt) | hypothetical rules text + filters | **0.112** → 0.089 | **0.294** → 0.270 |
-| –SQL ablation | hypothetical rules text, no filters | 0.085 → 0.077 | 0.269 → 0.196 |
+| v1 prompt — hypothetical card text (control) | on | 0.215 | 0.326 |
+| v1 prompt — hypothetical card text | off | 0.273 | 0.459 |
+| v2 prompt — concept phrases (headline) | on | 0.169 | 0.510 |
+| v2 prompt — concept phrases | off | 0.215 | 0.623 |
+| Raw query, no rewriter (floor) | off | 0.211 | 0.598 |
+| Raw query, v1 filters only | on | 0.185 | 0.456 |
 
-The tuned embedder improved every configuration that embeds the user's own words and degraded every configuration that embeds hypothetical rules text. Both effects follow from the training data: anchors were short functional phrases, so the query-side representation moved toward short phrases and away from paragraph-length rules text used as a query. On the jargon category, pass-through with the tuned embedder (P@10 0.115) approaches the v1 cascade with the tuned embedder (0.131) without generating any hypothetical text, and beats it on latency by the full cost of Stage 1 for that text. The best single cell on this evaluation set, however, remains the v1 cascade on the *base* embedder (0.112 / 0.294).
+Our floor row shows fine-tuning alone moved raw-word retrieval from 0.211 to 0.598, which exceeds both our control and headline R-precision values on this measure. With filters turned on we actually see a decrease, which was not expected: 0.598 to 0.456 for raw words and 0.623 to 0.510 for the v2 rewriter, a drop of two to three queries' worth. Part of this is a false-negative effect on R-precision, because the returned set is compared against the entire tag pool's unfiltered set even when filtering was applied correctly, and part is real over-narrowing by the rewriter. This highlights a limitation of this particular test overly penalizing filtered results. With the filter off, the v2 rewriter on the tuned embedder scores 0.623, slightly above raw words at 0.598, a difference within about one query (0.048), so the rewriter's concept phrases add little over the user's own words once the embedder is tuned. Table 2 separates what the filter costs in coverage from what it does for ranking.
 
-Two observations qualify the pass-through result as a test of the Section 6.3 hypothesis. First, pass-through embeds raw user phrasing, whereas the hypothesis has the rewriter normalise that phrasing toward tag vocabulary before the embedder sees it; the cell that tests the hypothesis is the v2 prompt combined with the tuned embedder, which is future work at the time of writing. Second, the training anchors expose each concept through a handful of strings — `sweeper` was trained with the aliases *wipe*, *boardwipe*, *mass removal*, and *wrath of god* — and the eval query *"board wipes"* still scored zero through pass-through while scoring 0.20 through hypothetical text. Single-string exposure per synonym is not enough to cover user phrasing; the synthetic-query anchor source (Section 6.3) is designed to close that gap. Fragmented queries remain at zero in every cell of the grid, tuned or not.
+In Table 2 we can further see the negative effects of filtering when comparing to the full tag pool set using the reachable columns. Reachable is the fraction of the pool that is still in the candidate set after the filter is applied. A reachability of 1.0 means every pool card is still in the candidate set, which is always the case when no filter is applied. R-prec (reachable) is how well the candidate set ranks the pool cards the filter admitted: of those cards, how many sit inside a window of that size. As an illustration of R-precision, in our "tutor" query the tag pool has 1,120 cards; R-precision is 0.960, showing that of the first 1,120 results, about 1,075 are tutors. Our headline values show the v2 tuned embedder with filtering on achieved the best ranking and the second-best depth to 90%, at 0.681 and 1.24× respectively. Compared to our floor we saw a small decrease in R-prec caused primarily by filtering (we see a nearly identical drop due to filtering on and off from the headline vs floor rows). R-prec (reachable) is the highest with our headline row, and its depth to 90% is within 5% of the set of the best row (1.19×, raw words with v1 filters) and 0.88× of the set better than the same prompt with the filter off (2.12×).
 
-**The tag-label oracle.** *[DRAFTED — REVIEW; rows 26–29, journal §5d]* Before building a rewriter that emits concepts in tag vocabulary, its ceiling was measured directly: for each evaluation query a human selected the tag a flawless rewriter would emit, the harness embedded that tag's label in place of the user's words, and results were scored against the same judgments. The chosen tags cover 93–100% of each jargon query's relevant set, so the judgments are reachable through them. The oracle nonetheless scored **0.073 P@10 / 0.153 MRR** with the tuned embedder and filters (0.065 / 0.185 with the base), below both the pass-through row and the v1 control. Per-query precision falls monotonically with the tag's pool size: `extra-turn` (53 cards) 0.60, `fetchland` (53) 0.40, `wheel` (137) 0.20, `sweeper` (871) 0.10, and every tag above roughly 1,000 cards — `removal`, `ramp`, `recursion`, `draw` — 0.00.
+**Table 2.** What the Stage 2 filter costs and buys. Same runs as Table 1; *Reachable* is the share of the tag pool the filter admitted, *R-prec (reachable)* scores the ranking of the admitted cards only, *Depth to 90%* is how far down the list 90% of the pool has been seen, as a multiple of the pool size (`docs/reports/2026-10-19/tables/01_grid.csv`; rows 90, 91, 97, 98, 101, 100, 96, 95).
 
-The explanation is that a tag names a *category* while relevance judgments name its *archetypes*. "Ramp" covers 2,136 tagged cards; the evaluation set judges 28 of them relevant, the canonical ramp spells a player means by the word. The label embeds to the centre of the pool and retrieves ten arbitrary members; the hypothetical text "search your library for a basic land card and put it onto the battlefield" is more specific than the category and lands on the archetypes. This is the held-out probe's blind spot made visible: there, the whole pool counts as relevant, so category-level retrieval scores well; against human judgments it is too coarse. On judged precision alone the strong form of the Section 6.3 hypothesis — rewriter emits a tag, embedder does the rest — would look unsupported; the correction below shows that reading is an artefact of the judgments. What survives is the weaker and more useful form: the tuned embedder handles user phrasing directly (pass-through MRR 0.130 → 0.206), and the rewriter's job shrinks to filters plus a *short* hypothetical clause rather than a paragraph, which is measurable in output tokens. The hypothetical-text regression in Table 4 is a training-data effect, addressable by adding rules-text-shaped anchors, not evidence against the rewriter.
+| Stage 1 input | Embedder | Stage 2 filter | R-prec | Reachable | R-prec (reachable) | Depth to 90% |
+|---|---|---|---|---|---|---|
+| v1 prompt (control) | base | on | 0.215 | 0.680 | 0.346 | 8.38× |
+| v1 prompt | base | off | 0.273 | 1.000 | 0.273 | 13.23× |
+| v1 prompt | tuned | on | 0.326 | 0.680 | 0.517 | 3.00× |
+| v1 prompt | tuned | off | 0.459 | 1.000 | 0.459 | 3.76× |
+| v2 prompt (headline) | tuned | on | 0.510 | 0.717 | 0.681 | 1.24× |
+| v2 prompt | tuned | off | 0.623 | 1.000 | 0.623 | 2.12× |
+| Raw query, v1 filters | tuned | on | 0.456 | 0.680 | 0.641 | 1.19× |
+| Raw query (floor) | tuned | off | 0.598 | 1.000 | 0.598 | 3.38× |
 
-**Correction: the oracle's misses are annotation holes.** *[DRAFTED — REVIEW; journal §5e]* Scoring the same oracle runs against tag membership rather than the relevance judgments reverses the reading above. With the tuned embedder, 95% of the oracle's top-10 results are members of the intended tag's pool, against 35% for the base embedder and 56% for the v1 control; `ramp`, `recursion`, `flicker`, and `tutor` each go from 0-1 of 10 to 10 of 10, and `burn`, a tag withheld from training, also scores 10 of 10. The encoder learned the categories. The evaluation set judges roughly thirty archetypes per query out of pools of one to six thousand legitimate members and counts every unjudged member as a miss, the annotation-hole effect Thakur et al. (2021, §6) document for dense retrievers. Because the judgments were assembled from lexical Scryfall lookups, they favour cards that the hypothetical-text mode also favours. Neither metric alone settles the comparison: judged precision favours the control by construction and pool membership favours the oracle by construction (20 of 21 mapped tags were seen in training). The defensible claims are that the tuned embedder retrieves category members far more reliably than the base, that a bare label returns arbitrary rather than best-known members (a within-category ranking problem), and that the evaluation set needs its holes judged before the v2 comparison can be decided.
 
-### 5.5 Set retrieval: the measure that matches the goal
+### 5.2 Embedder fine-tuning
 
-*[YOUR PROSE, lightly edited — 2026-09-19]*
+Next we review the results of training in Table 3. ndcg@10 is another ranking score, but only of the first 10 results, to determine how well the first few cards match expected results, while recall@100 tells us how much of the set the model finds in the first hundred results. We see significant improvement in seen tags from 0.194 to 0.536 after fine-tuning, as expected since the model saw those tags. 482 tags (15%) were withheld from the training data, but the model's ndcg@10 score roughly doubled from 0.114 to 0.242, and recall@100 from 0.164 to 0.327. An important distinction in our results is that tags were held out and not cards, so the model was trained on virtually every card but not on the held-out tags, and many cards have more than one tag. The model showed smaller overall improvement on held-out tags, but the improvement in both indicates the model is making inferences from the training rather than memorizing the data. We also see a small decrease in NanoBEIR mean ndcg@10, from 0.514 to 0.495, showing the model got slightly worse at general text understanding.
 
-Relevance ranking is not actually the problem this system is trying to solve, and it is solvable separately. Scryfall gives the ability to sort results by EDHREC rank, which is a relevance marker based on popularity: cards that show up high in EDHREC sorting are the cards used most commonly and will naturally be the cards people are looking for. Scryfall filtering by tag with other basic attribute filtering does not give relevance-ranked results; it gives the set of results, good or bad. The metric that matters is therefore measured against that baseline. To restate the stance: we are not trying to produce a system that outperforms Scryfall's own capabilities. A stack that both produces the matching results and surfaces the most relevant automatically would be great, but it is beyond this scope. The goal is a system that provides every single card that could be a match, in descending order. Results are limited to a top *n* for evaluation, but in real use it would be all results split into *m* pages of *n* cards. Sorting by relevance then becomes no different from Scryfall's, assuming popularity sorting is a function available to both systems.
+**Table 3.** Embedder fine-tuning run (`docs/reports/2026-10-19/tables/03_finetune.csv`, `experiment_runs` row 19). Every arrow is base model → tuned model on the same test. *Seen tags*: a 100-query sample of tags used in training; *held-out*: 482 tags never used in training; *NanoBEIR*: mean over three small general-purpose retrieval benchmarks (SciFact, NFCorpus, FiQA).
 
-*[DRAFTED — REVIEW; journal §5f, `scripts/probes/set_retrieval_probe.py`]*
-
-Under that goal the appropriate measures are set-retrieval measures against the full target set rather than precision over ten hand-picked archetypes: R-precision (precision at a depth equal to the size of the target set), P@100, and the depth a user must page to in order to have seen 90% of the set. Table 5 reports them for the 21 evaluation queries with a functional tag, using the tag's full pool as the target and no filters.
-
-**Table 5 — Set retrieval against tag pools (mean over 21 queries; depth as a multiple of pool size, median).**
-
-| Query-side text | Embedder | P@100 | R-precision | Depth to 90% |
-|---|---|---|---|---|
-| Tag label | tuned | **0.82** | **0.73** | **1.8×** |
-| User's raw query | tuned | 0.74 | 0.60 | 3.4× |
-| Hypothetical text (v1 prompt) | tuned | 0.57 | 0.46 | 3.8× |
-| Hypothetical text (v1 prompt) | base | 0.47 | 0.27 | 13.2× |
-| User's raw query | base | 0.31 | 0.21 | 13.5× |
-| Tag label | base | 0.29 | 0.19 | 16.4× |
-
-The ordering of systems inverts relative to Table 4. The tuned embedder given the user's own words (0.60) outperforms hypothetical rules text on either embedder, and given tag vocabulary (0.73) it outperforms both; to see 90% of all tutor effects a user pages about 1,000 results instead of 12,000. `burn`, a tag withheld from training, reaches 0.92. This supports the Section 6.3 hypothesis in its original form: once the encoder understands the domain's functional vocabulary, the rewriter's job reduces to filter extraction and concept normalisation. Three caveats apply. Twenty of the 21 targets are tags seen in training, so the held-out results (Table 3, and `burn` here) carry the generalisation claim, and the expert-query Scryfall comparator remains the independent check. A dense ranking has no natural end, but this needs no stopping rule: only queries with no structural component rank the full corpus (11 of the 26 evaluation queries; the other 15 are pre-filtered to between 3 and 17,428 candidates), the vector search scores every candidate regardless of how many are returned, and the interface pages the full ranked set with the match score visible so users decide how far into the tail to look. Depth-to-90% is therefore a ranking-quality measure, and Table 5, run without filters, is pessimistic for the filtered majority. Finally, tag pools are community-curated and incomplete, so untagged true matches in the top ranks are counted as errors here; the human review in the results dashboard measures that directly.
-
-**Table 6 — Set retrieval inside the cascade (Stage 2 filters applied; tuned embedder unless noted; n = 21).**
-
-| Configuration | R-prec (full pool) | R-prec (reachable) | P@100 | Reachable | Depth to 90% |
-|---|---|---|---|---|---|
-| v1 cascade, base embedder (control) | 0.215 | — | 0.444 | 0.68 | 8.4× |
-| v1 cascade, tuned | 0.326 | 0.517 | 0.572 | 0.68 | 3.0× |
-| Raw query, no filters, tuned | 0.598 | 0.598 | 0.736 | 1.00 | 3.4× |
-| Pass-through (filters + raw query), tuned | 0.456 | **0.641** | 0.713 | 0.68 | **1.2×** |
-| Tag-label oracle + filters, tuned | 0.536 | **0.728** | 0.765 | 0.68 | **1.1×** |
-
-*[DRAFTED — REVIEW; journal §5g]* Measured inside the cascade, the pre-filter shows both of its faces at once. On every filtered configuration only 68% of each tag pool survives Stage 2 ("reachable"). Part of that is correct narrowing the user asked for — "instants that draw cards" should exclude non-instants, and the tag pool is then the wrong target — but part is inferred narrowing the user did not ask for: "ramp spells" receives a types filter of instant/sorcery and loses 1,784 ramp permanents; "burn spell that deals 3 damage" receives a mana-value filter of exactly 1. Within what Stage 2 admits, however, the tuned embedder ranks well: R-precision over the reachable set reaches 0.64 for the user's own words and 0.73 for tag vocabulary, and a user reaches 90% of the admitted set within 1.1–1.2× its size, against 3.4× with no filter at all. The pre-filter improves ranking inside the set while reducing coverage of it; the two effects are reported separately because a single number would hide the trade. Both fixes belong to the rewriter: filters should be derived only from constraints the user typed (selective strictness, Section 6.2), and the evaluation target for filtered queries should be the tag pool intersected with the user-explicit constraint.
-
-### 5.6 The v2 rewriter: concept normalisation with explicit-only filters
-
-*[DRAFTED — REVIEW; journal §5h, rows 51–53]*
-
-The second prompt version implements the Section 6.3 hypothesis directly. The rewriter emits (a) filters derived only from attributes the user literally typed, (b) one to three concept phrases in deckbuilder vocabulary with the community's standard term preferred ("board wipe" → "sweeper"), and (c) a one-sentence hypothetical only when no concept phrase captures the intent. Stage 3 embeds the concept phrases. Measured with the Llama 3.1 tokenizer, the v2 request is 1,414 tokens against 2,079 for v1 (−32%), with 8 rules against 11; the example count did not fall (8 vs 7) because the 8B model needed one demonstration per failure shape that a rule alone did not correct.
-
-**Table 7 — v1 vs v2 on the tuned embedder, filters applied (n = 21 tag-mapped queries).**
-
-| Rewriter | Query-side text | R-prec (full) | R-prec (reachable) | Reachable | P@10 | MRR | Stage 1 latency |
+| Run | Pairs | Steps | Train min | Seen tags ndcg@10 | Held-out tags ndcg@10 | Held-out tags recall@100 | NanoBEIR mean ndcg@10 |
 |---|---|---|---|---|---|---|---|
-| v1 | hypothetical paragraph | 0.326 | 0.517 | 0.68 | 0.088 | 0.270 | 1.19 s |
-| v1 | user's raw query | 0.456 | 0.641 | 0.68 | 0.081 | 0.206 | 1.06 s |
-| **v2** | **concept phrases** | **0.558** | **0.693** | **0.81** | 0.096 | 0.234 | 1.38 s |
-| v2 | one-sentence hypothetical | 0.533 | 0.625 | 0.81 | 0.085 | 0.153 | 1.39 s |
-| — | tag-label oracle (ceiling) | 0.536 | 0.728 | 0.68 | 0.073 | 0.153 | — |
+| nomic-mtg-v1 | 207,062 | 809 | 71 | 0.194 → 0.536 | 0.114 → 0.242 | 0.164 → 0.327 | 0.514 → 0.495 |
 
-Explicit-only filtering raised coverage from 68% to 81% of each target set — "ramp spells", "mana dorks", "board wipes", and "burn spell" no longer receive an inferred type or cost — and concept phrases outrank both the paragraph-length and the one-sentence hypothetical on the same filters. The v2 cascade is the strongest real configuration measured, and on full-pool R-precision it exceeds the hand-mapped oracle because it over-narrows less. Archetype precision is flat, as expected once ranking-by-popularity is treated as a separate sort. Two residual failures are knowledge-gap cases the 27B comparison predicted: "destroy target artifact" still receives an inferred instant filter, and "red pingers" receives an invented Flying keyword. Latency did not fall with the shorter prompt: the inference server caches the shared prompt prefix, so per-query cost is dominated by output tokens (about 62), which v2's three-field JSON did not reduce; trimming null fields from the output is the obvious next step, and the simplification claim is stated here in request tokens and rule count rather than wall-clock time.
+### 5.3 Comparison against expert Scryfall queries
 
-**Table 8 — Rewriter × embedder (R-precision against tag pools, filters applied, n = 21).**
+Finally, we see the Table 4 results, which investigate how close a plain-language search gets to a simulated expert Scryfall search.
 
-| | Base embedder | Tuned embedder |
-|---|---|---|
-| v1 rewriter (hypothetical paragraph) | 0.215 | 0.326 |
-| v2 rewriter (concept phrases, explicit-only filters) | 0.163 | **0.510** |
+Here we can see marked improvement from our control through our headline setup. Our best configuration achieves 57% of the expert's set within the first N results and has 49% overlap between the two sets' first N results. Depth to 90% also shows our headline configuration sees 90% of the expert's set within the first N results. Compared to our control we show a 0.222 improvement in parity, 0.219 in Jaccard, and an improvement of 0.37× of the set size in depth to 90%.
 
-*[DRAFTED — REVIEW; journal §5i]* The two interventions are not independent. On the base encoder the lighter v2 rewriter is *worse* than v1: a bare concept phrase such as "ramp" carries no signal for an encoder that never learned the domain's vocabulary, whereas a paragraph of hypothetical rules text at least overlaps lexically with card text. On the tuned encoder the same rewriter is the strongest configuration measured. Fine-tuning the encoder is what makes the simpler, cheaper rewriter viable; neither half delivers the result alone. With a final output rule that omits unset fields, the v2 rewriter produces about 28 output tokens per query and runs in 0.77 s on the same 8B model, against 1.19 s for v1 — the simplification claim now holds in wall-clock terms as well as in request size, at a cost of a few queries whose filters shifted under the changed prompt (R-precision 0.558 → 0.510 on the tuned encoder across that change).
+**Table 4.** Parity with the expert Scryfall result set, 26 queries (`docs/reports/2026-10-19/tables/04_scryfall_parity.csv`, "tags allowed" variant; rows 90, 95, 101). For each query the expert's Scryfall query (community tags allowed) was run against Scryfall, and its result set of N cards is the reference. *Parity* is the share of that set found in the system's first N results; *Jaccard* is the overlap between the system's first N results and the set; *Depth to 90%* is how far down the system's list 90% of the set has been seen, as a multiple of N. Each value is the mean over the 26 queries; 1.0 parity would mean the system's first N results are exactly the expert's set.
 
-### 5.7 Comparison against expert Scryfall queries
+| Configuration | Parity | Jaccard | Depth to 90% |
+|---|---|---|---|
+| Control (v1 prompt, base embedder, filters on) | 0.343 | 0.273 | 1.32× |
+| Floor (raw words, tuned embedder, no filter) | 0.417 | 0.319 | 2.19× |
+| Headline (v2 prompt, tuned embedder, filters + keywords on) | 0.565 | 0.492 | 0.95× |
 
-*[DRAFTED — REVIEW; journal §5j; numbers from the generated report `docs/reports/2026-10-03/` (grid rows 88–101, comparator rows 102–129). Expert queries in `data/eval/scryfall_expert_queries_v1.yaml` are LLM-drafted and reviewed by the author; result sets fetched 2026-09-22. Corrected 2026-10-03: an earlier draft of this section mixed figures from a 21-query run into tables labelled 26 queries.]*
+Next we compare our system to our Scryfall expert with tags and without tags, to simulate an expert query and a novice query on Scryfall. Our system and the Scryfall no-tags search are then compared against the Scryfall expert (with tags). Our system achieved 0.565 recall using an average of only 3.7 words compared to the reference, and in 81% of cases the expert required the use and knowledge of tags over pure filtering. When compared to the novice Scryfall searcher our system was only slightly lower (0.619 to 0.565 recall compared to the expert). Our system required no operators for any queries, compared to the 1.7 and 3.2 average across the 26 searches for each. 5 of the 26 searches did not require a tag, so both Scryfall queries were identical in those cases, giving the novice searcher an edge in pure filter-based searches but still requiring significantly more complex queries with many characters and operators.
 
-For each evaluation query an expert Scryfall search was written in two forms: with the community oracle tags (`otag:`) an expert would use today, and without them, from Oracle text and attributes alone. Each was run through Scryfall's search API (all pages, one request per second) and the result set restricted to the corpus. The cascade's full ranking was then scored against that set: R-precision (the fraction of the first |S| results that are in S), Jaccard overlap at depth |S|, and the depth needed to see 90% of S.
-
-**Table 9 — Result parity with the expert's Scryfall result set (n = 26).**
-
-| Cascade configuration | vs expert (tags) R-prec | Jaccard | Depth to 90% | vs expert (no tags) R-prec |
-|---|---|---|---|---|
-| v1 rewriter, base encoder (control) | 0.343 | 0.273 | 1.32× | 0.351 |
-| v2 rewriter, tuned encoder | 0.523 | 0.446 | 0.98× | 0.391 |
-| v2 rewriter, tuned encoder, keyword filter on | **0.565** | **0.492** | **0.95×** | — |
-
-A depth below 1.0× means the user sees 90% of the expert's set before scrolling past as many cards as the set contains. Per query, the best configuration reaches parity of 0.85 or higher on nine of the 26 queries (instants that cost 1 mana 1.00, haste creatures 1.00, tutor 0.96, cheap blue counterspells 0.95, extra turns 0.94, counterspells 0.92, fetch lands 0.91, instants that draw cards 0.86, red creatures under 3 mana 0.85) and fails on the rewriter's known knowledge-gap cases. One "failure" is instructive: for *a card that destroys all creatures* the expert wrote `o:"destroy all creatures"` (84 cards) while the cascade retrieved the whole sweeper category (870 cards) — broader than the expert, not wrong.
-
-The comparator is itself imperfect. Against the hand-curated judgments, the tagged expert sets have 9% precision and 92% recall; the untagged sets 14% and 77%. This is the annotation-hole effect of Section 5.4 seen from the other side, and it is why parity with the expert set rather than precision against thirty judged archetypes is the number reported.
-
-**Table 10 — What the user had to type (mean over 26 queries; from `docs/reports/2026-10-03/tables/06_query_complexity.csv`).**
+**Table 5.** What each searcher had to type, and how much of the tag-using expert's result set each reaches (`docs/reports/2026-10-19/tables/06_query_complexity.csv`). *Plain language* is the headline system; *Scryfall, no tags* is the expert's best query written without community tags, scored as a set against the tag-using expert's set.
 
 | | Plain language (this work) | Scryfall, tags allowed | Scryfall, no tags |
 |---|---|---|---|
-| Length | 3.7 words | 20 characters | 52 characters |
-| Operators | 0 | 1.7 | 3.2 |
-| Requires `otag:` | — | 81% of queries | — |
-| Boolean grouping or negation | 0 | rare | common |
+| Length | 3.7 words | 20 chars | 52 chars |
+| Operators per query | 0 | 1.7 | 3.2 |
+| Queries needing `otag:` | — | 81% | 0% |
+| Recall of the tag-using expert's set | 0.565 | 1.000 (reference) | 0.619 |
+| Overlap with that set (Jaccard) | 0.492 | 1.000 (reference) | 0.598 |
 
-The expert path is short only because community tags exist, and using them requires knowing the tag's exact slug: `sweeper`, not "board wipe"; `counterspell-free`; `mana-dork`. Without tags the same intent takes three operators, quoted Oracle phrases, and boolean grouping, and still reaches only 77% recall of the judged cards. The cascade takes the 3.7-word query with no syntax and reaches 0.57 R-precision against the tagged expert's result set. That is the accessibility claim of Section 1.1 with a measurement attached: not that the system beats Scryfall, but that it reaches most of what an expert reaches without the user learning the grammar.
+### 5.4 By category and by query
 
-*[TODO — eval v2: pool top-10 across all logged rows, judge the holes, freeze; pairs_v2 with doc-like anchors and synthetic queries, retrain, re-run grid; hyde_v2 with a one-sentence hypothetical and trimmed rules (measure tokens/latency); Scryfall comparator; direct-tag-lookup ablation (expected to fail on broad tags for the same reason — the argument for embedding over lookup).]*
+Table 6 shows the per-category results. The gain from jargon (13 of the 26 queries) between our control and our headline configuration is nearly tripled, from 0.257 to 0.756, and is where most of our gain lives. The natural language category shows a small improvement (0.129 to 0.171) and our hybrid category shows a moderate improvement from 0.149 to 0.257. Fragmented and constrained categories show no improvement over the control, and mechanical decreased by 0.177. Outside of jargon, each category has only one to four queries, so these rows are examples rather than results; the mechanical decrease is a single query.
 
----
+**Table 6.** R-precision against tag pools by query category, control vs headline (`docs/reports/2026-10-19/tables/02_by_category.csv`; rows 90 and 101). *n* is the number of queries in the category; categories with fewer than five queries are illustrative only.
+
+| Category | n | Control | Headline |
+|---|---|---|---|
+| Jargon | 13 | 0.257 | 0.756 |
+| Natural language | 4 | 0.129 | 0.171 |
+| Fragmented | 3 | 0.157 | 0.157 |
+| Hybrid | 2 | 0.149 | 0.257 |
+| Constrained | 3 | 0.077 | 0.077 |
+| Mechanical | 1 | 0.382 | 0.205 |
+
+The per-query results in Appendix C show both ends of the range. At the top, "instants that cost 1 mana" (0.999), "haste creatures" (0.998), and "tutor" (0.958) reach near-perfect parity with the expert's set. The first two are pure filter queries where our rewriter produced the same filters as the expert, and the third is a jargon term that maps cleanly to a single tag. At the bottom, "a card that lets me look at my deck and put a creature into the battlefield" and "creatures that get bigger every time I cast a spell" both score 0.00, "a card that destroys all creatures" scores 0.08 where the expert's set has 84 cards and our system returns the full 870-card sweeper category, and "free counterspell" scores 0.08 against a 13-card set. On the jargon queries the control to headline change is large: "ramp spells" moved from 0.084 to 0.683, "flicker effects" from 0.000 to 0.734, and "tutor" from 0.107 to 0.958. Overall, 9 of the 26 queries score 0.85 or above and 7 score below 0.30.
 
 ## 6. Discussion
 
@@ -573,7 +492,7 @@ Zhang, L., Wu, Y., Yang, Q., & Nie, J. (2024). Exploring the Best Practices of Q
 
 ### Appendix A — Query-rewriter prompt (v2)
 
-*Generated by `scripts/generate_report.py --paper` on 2026-10-03; do not edit by hand.* The original v1 prompt is `prompts/hyde_v1.yaml` in the repository.
+*Generated by `scripts/generate_report.py --paper` on 2026-10-19; do not edit by hand.* The original v1 prompt is `prompts/hyde_v1.yaml` in the repository.
 
 **System prompt**
 
@@ -699,69 +618,69 @@ Output: {
 
 ### Appendix B — Evaluation set
 
-*Generated by `scripts/generate_report.py --paper` on 2026-10-03; do not edit by hand.* 26 queries (`data/eval/queries_v1_draft.yaml`, version v1-draft); the full relevance judgments (card ids with a one-line reason each) are in that file. *Mapped tag* is the Scryfall oracle tag used as the set-retrieval target; the expert queries are the Scryfall comparator inputs.
+*Generated by `scripts/generate_report.py --paper` on 2026-10-19; do not edit by hand.* 26 queries (`data/eval/queries_v1_draft.yaml`, version v1-draft). *Mapped tag* is the Scryfall oracle tag used as the set-retrieval target; the expert queries are the Scryfall comparator inputs.
 
-| ID | Query | Category | Relevant | Borderline | Mapped tag | Expert Scryfall query | Without tags |
-|---|---|---|---|---|---|---|---|
-| q_001 | creatures with flying | fragmented | 30 | 0 | — | `t:creature kw:flying` | `t:creature kw:flying` |
-| q_002 | destroy target artifact | mechanical | 30 | 0 | removal-artifact | `otag:removal-artifact o:destroy` | `o:"destroy target artifact"` |
-| q_003 | instants that draw cards | fragmented | 17 | 8 | draw | `t:instant otag:draw` | `t:instant o:"draw"` |
-| q_004 | burn spell that deals 3 damage to any target | natural | 20 | 0 | burn | `otag:burn-any o:"3 damage"` | `o:"deals 3 damage to any target"` |
-| q_005 | haste creatures | fragmented | 30 | 0 | — | `t:creature kw:haste` | `t:creature kw:haste` |
-| q_006 | ramp spells | jargon | 28 | 5 | ramp | `otag:ramp` | `(o:"search your library for" o:"land card" o:"onto the battlefield") or (o:"add" o:"mana" -t:land -o:"{T}: Add")` |
-| q_007 | counterspells | jargon | 30 | 0 | counterspell | `otag:counterspell` | `o:"counter target" (t:instant or t:creature or t:enchantment)` |
-| q_008 | board wipes | jargon | 76 | 0 | sweeper | `otag:sweeper` | `o:"destroy all creatures" or o:"exile all creatures" or (o:"all creatures get -" o:"until end of turn") or o:"destroy all nonland permanents"` |
-| q_009 | removal | jargon | 72 | 4 | removal | `otag:removal` | `(o:"destroy target" or o:"exile target") (o:creature or o:permanent or o:"nonland permanent")` |
-| q_010 | card draw engines | jargon | 20 | 1 | draw-engine | `otag:draw-engine` | `-t:instant -t:sorcery (o:"whenever" or o:"at the beginning") o:"draw a card"` |
-| q_011 | tutor | jargon | 37 | 0 | tutor | `otag:tutor` | `o:"search your library for a" -o:"basic land card" -t:land` |
-| q_012 | graveyard recursion | jargon | 33 | 1 | recursion | `otag:recursion` | `o:"from your graveyard" (o:"return target" or o:"return up to" or o:"put target")` |
-| q_013 | fetch lands | jargon | 16 | 7 | fetchland | `otag:fetchland` | `t:land o:"search your library for" o:"land card" o:"sacrifice"` |
-| q_014 | flicker effects | jargon | 32 | 3 | flicker | `otag:flicker` | `o:"exile" o:"return" o:"to the battlefield under" (o:"target creature" or o:"target permanent" or o:"another target")` |
-| q_015 | ETB triggers | jargon | 33 | 0 | — | `t:creature o:"when" o:"enters"` | `t:creature o:"when" o:"enters"` |
-| q_016 | mana dorks | jargon | 23 | 1 | mana-dork | `otag:mana-dork` | `t:creature o:"{T}: Add"` |
-| q_017 | wheels | jargon | 9 | 4 | wheel | `otag:wheel` | `o:"discards" o:"hand" o:"draws seven cards"` |
-| q_018 | extra turns | jargon | 17 | 2 | extra-turn | `otag:extra-turn` | `o:"take an extra turn"` |
-| q_019 | free counterspell | constrained | 11 | 0 | counterspell-free | `otag:counterspell-free` | `o:"counter target spell" (o:"rather than pay" or o:"without paying" or mv=0)` |
-| q_020 | red creatures under 3 mana | constrained | 17 | 0 | — | `t:creature c:r mv<3` | `t:creature c:r mv<3` |
-| q_021 | instants that cost 1 mana | constrained | 25 | 0 | — | `t:instant mv=1` | `t:instant mv=1` |
-| q_022 | a card that lets me look at my deck and put a creature into the battlefield | natural | 10 | 0 | tutor-creature | `otag:tutor-creature o:"onto the battlefield"` | `o:"search your library for a creature card" o:"onto the battlefield"` |
-| q_023 | creatures that get bigger every time I cast a spell | natural | 18 | 0 | cast-trigger-you | `t:creature otag:cast-trigger-you o:"+1/+1"` | `t:creature o:"whenever you cast" o:"+1/+1"` |
-| q_024 | a card that destroys all creatures | natural | 12 | 0 | sweeper | `otag:sweeper o:"destroy all creatures"` | `o:"destroy all creatures"` |
-| q_025 | red pingers under 3 mana | hybrid | 11 | 3 | pinger | `otag:pinger c:r mv<3` | `c:r mv<3 o:"{T}:" o:"deals 1 damage"` |
-| q_026 | cheap blue counterspells | hybrid | 16 | 1 | counterspell | `otag:counterspell c:u mv<=2` | `c:u mv<=2 o:"counter target"` |
+| ID | Query | Category | Mapped tag | Expert Scryfall query | Without tags |
+|---|---|---|---|---|---|
+| q_001 | creatures with flying | fragmented | — | `t:creature kw:flying` | `t:creature kw:flying` |
+| q_002 | destroy target artifact | mechanical | removal-artifact | `otag:removal-artifact o:destroy` | `o:"destroy target artifact"` |
+| q_003 | instants that draw cards | fragmented | draw | `t:instant otag:draw` | `t:instant o:"draw"` |
+| q_004 | burn spell that deals 3 damage to any target | natural | burn | `otag:burn-any o:"3 damage"` | `o:"deals 3 damage to any target"` |
+| q_005 | haste creatures | fragmented | — | `t:creature kw:haste` | `t:creature kw:haste` |
+| q_006 | ramp spells | jargon | ramp | `otag:ramp` | `(o:"search your library for" o:"land card" o:"onto the battlefield") or (o:"add" o:"mana" -t:land -o:"{T}: Add")` |
+| q_007 | counterspells | jargon | counterspell | `otag:counterspell` | `o:"counter target" (t:instant or t:creature or t:enchantment)` |
+| q_008 | board wipes | jargon | sweeper | `otag:sweeper` | `o:"destroy all creatures" or o:"exile all creatures" or (o:"all creatures get -" o:"until end of turn") or o:"destroy all nonland permanents"` |
+| q_009 | removal | jargon | removal | `otag:removal` | `(o:"destroy target" or o:"exile target") (o:creature or o:permanent or o:"nonland permanent")` |
+| q_010 | card draw engines | jargon | draw-engine | `otag:draw-engine` | `-t:instant -t:sorcery (o:"whenever" or o:"at the beginning") o:"draw a card"` |
+| q_011 | tutor | jargon | tutor | `otag:tutor` | `o:"search your library for a" -o:"basic land card" -t:land` |
+| q_012 | graveyard recursion | jargon | recursion | `otag:recursion` | `o:"from your graveyard" (o:"return target" or o:"return up to" or o:"put target")` |
+| q_013 | fetch lands | jargon | fetchland | `otag:fetchland` | `t:land o:"search your library for" o:"land card" o:"sacrifice"` |
+| q_014 | flicker effects | jargon | flicker | `otag:flicker` | `o:"exile" o:"return" o:"to the battlefield under" (o:"target creature" or o:"target permanent" or o:"another target")` |
+| q_015 | ETB triggers | jargon | — | `t:creature o:"when" o:"enters"` | `t:creature o:"when" o:"enters"` |
+| q_016 | mana dorks | jargon | mana-dork | `otag:mana-dork` | `t:creature o:"{T}: Add"` |
+| q_017 | wheels | jargon | wheel | `otag:wheel` | `o:"discards" o:"hand" o:"draws seven cards"` |
+| q_018 | extra turns | jargon | extra-turn | `otag:extra-turn` | `o:"take an extra turn"` |
+| q_019 | free counterspell | constrained | counterspell-free | `otag:counterspell-free` | `o:"counter target spell" (o:"rather than pay" or o:"without paying" or mv=0)` |
+| q_020 | red creatures under 3 mana | constrained | — | `t:creature c:r mv<3` | `t:creature c:r mv<3` |
+| q_021 | instants that cost 1 mana | constrained | — | `t:instant mv=1` | `t:instant mv=1` |
+| q_022 | a card that lets me look at my deck and put a creature into the battlefield | natural | tutor-creature | `otag:tutor-creature o:"onto the battlefield"` | `o:"search your library for a creature card" o:"onto the battlefield"` |
+| q_023 | creatures that get bigger every time I cast a spell | natural | cast-trigger-you | `t:creature otag:cast-trigger-you o:"+1/+1"` | `t:creature o:"whenever you cast" o:"+1/+1"` |
+| q_024 | a card that destroys all creatures | natural | sweeper | `otag:sweeper o:"destroy all creatures"` | `o:"destroy all creatures"` |
+| q_025 | red pingers under 3 mana | hybrid | pinger | `otag:pinger c:r mv<3` | `c:r mv<3 o:"{T}:" o:"deals 1 damage"` |
+| q_026 | cheap blue counterspells | hybrid | counterspell | `otag:counterspell c:u mv<=2` | `c:u mv<=2 o:"counter target"` |
 
 ### Appendix C — Per-query results
 
-*Generated by `scripts/generate_report.py --paper` on 2026-10-03; do not edit by hand.* Source: `docs/reports/2026-10-03/tables/07_per_query.csv`, `experiment_runs` rows 90 (control) and 101 (headline). P@10 is against the hand-curated judgments, R-prec against the query's tag pool, parity against the expert Scryfall result set (tags allowed).
+*Generated by `scripts/generate_report.py --paper` on 2026-10-19; do not edit by hand.* Source: `docs/reports/2026-10-19/tables/07_per_query.csv`, `experiment_runs` rows 90 (control) and 101 (headline). R-prec is against the query's tag pool, parity against the expert Scryfall result set (tags allowed).
 
-| ID | Query | Category | Control P@10 | Headline P@10 | Control R-prec | Headline R-prec | Control parity | Headline parity |
-|---|---|---|---|---|---|---|---|---|
-| q_001 | creatures with flying | fragmented | 0.000 | 0.000 | — | — | 0.598 | 0.664 |
-| q_002 | destroy target artifact | mechanical | 0.100 | 0.000 | 0.382 | 0.205 | 0.486 | 0.094 |
-| q_003 | instants that draw cards | fragmented | 0.000 | 0.100 | 0.157 | 0.157 | 0.706 | 0.862 |
-| q_004 | burn spell that deals 3 damage to any target | natural | 0.100 | 0.100 | 0.067 | 0.034 | 0.021 | 0.028 |
-| q_005 | haste creatures | fragmented | 0.000 | 0.100 | — | — | 0.902 | 0.998 |
-| q_006 | ramp spells | jargon | 0.000 | 0.000 | 0.088 | 0.704 | 0.084 | 0.683 |
-| q_007 | counterspells | jargon | 0.200 | 0.100 | 0.669 | 0.916 | 0.671 | 0.916 |
-| q_008 | board wipes | jargon | 0.400 | 0.000 | 0.183 | 0.611 | 0.182 | 0.609 |
-| q_009 | removal | jargon | 0.400 | 0.000 | 0.410 | 0.839 | 0.215 | 0.328 |
-| q_010 | card draw engines | jargon | 0.000 | 0.100 | 0.228 | 0.527 | 0.228 | 0.526 |
-| q_011 | tutor | jargon | 0.000 | 0.100 | 0.106 | 0.960 | 0.107 | 0.958 |
-| q_012 | graveyard recursion | jargon | 0.100 | 0.000 | 0.573 | 0.767 | 0.562 | 0.743 |
-| q_013 | fetch lands | jargon | 0.300 | 0.400 | 0.604 | 0.906 | 0.604 | 0.906 |
-| q_014 | flicker effects | jargon | 0.000 | 0.100 | 0.000 | 0.743 | 0.000 | 0.734 |
-| q_015 | ETB triggers | jargon | 0.000 | 0.000 | — | — | 0.166 | 0.164 |
-| q_016 | mana dorks | jargon | 0.000 | 0.200 | 0.000 | 0.415 | 0.000 | 0.417 |
-| q_017 | wheels | jargon | 0.000 | 0.200 | 0.022 | 0.745 | 0.022 | 0.743 |
-| q_018 | extra turns | jargon | 0.500 | 0.600 | 0.208 | 0.943 | 0.208 | 0.943 |
-| q_019 | free counterspell | constrained | 0.100 | 0.100 | 0.077 | 0.077 | 0.077 | 0.077 |
-| q_020 | red creatures under 3 mana | constrained | 0.000 | 0.000 | — | — | 0.852 | 0.850 |
-| q_021 | instants that cost 1 mana | constrained | 0.300 | 0.000 | — | — | 0.999 | 0.999 |
-| q_022 | a card that lets me look at my deck and put a creature into the battlefield | natural | 0.000 | 0.000 | 0.015 | 0.000 | 0.023 | 0.000 |
-| q_023 | creatures that get bigger every time I cast a spell | natural | 0.000 | 0.000 | 0.249 | 0.000 | 0.105 | 0.000 |
-| q_024 | a card that destroys all creatures | natural | 0.300 | 0.000 | 0.183 | 0.651 | 0.298 | 0.083 |
-| q_025 | red pingers under 3 mana | hybrid | 0.000 | 0.100 | 0.000 | 0.148 | 0.000 | 0.422 |
-| q_026 | cheap blue counterspells | hybrid | 0.100 | 0.200 | 0.298 | 0.366 | 0.806 | 0.950 |
+| ID | Query | Category | Control R-prec | Headline R-prec | Control parity | Headline parity |
+|---|---|---|---|---|---|---|
+| q_001 | creatures with flying | fragmented | — | — | 0.598 | 0.664 |
+| q_002 | destroy target artifact | mechanical | 0.382 | 0.205 | 0.486 | 0.094 |
+| q_003 | instants that draw cards | fragmented | 0.157 | 0.157 | 0.706 | 0.862 |
+| q_004 | burn spell that deals 3 damage to any target | natural | 0.067 | 0.034 | 0.021 | 0.028 |
+| q_005 | haste creatures | fragmented | — | — | 0.902 | 0.998 |
+| q_006 | ramp spells | jargon | 0.088 | 0.704 | 0.084 | 0.683 |
+| q_007 | counterspells | jargon | 0.669 | 0.916 | 0.671 | 0.916 |
+| q_008 | board wipes | jargon | 0.183 | 0.611 | 0.182 | 0.609 |
+| q_009 | removal | jargon | 0.410 | 0.839 | 0.215 | 0.328 |
+| q_010 | card draw engines | jargon | 0.228 | 0.527 | 0.228 | 0.526 |
+| q_011 | tutor | jargon | 0.106 | 0.960 | 0.107 | 0.958 |
+| q_012 | graveyard recursion | jargon | 0.573 | 0.767 | 0.562 | 0.743 |
+| q_013 | fetch lands | jargon | 0.604 | 0.906 | 0.604 | 0.906 |
+| q_014 | flicker effects | jargon | 0.000 | 0.743 | 0.000 | 0.734 |
+| q_015 | ETB triggers | jargon | — | — | 0.166 | 0.164 |
+| q_016 | mana dorks | jargon | 0.000 | 0.415 | 0.000 | 0.417 |
+| q_017 | wheels | jargon | 0.022 | 0.745 | 0.022 | 0.743 |
+| q_018 | extra turns | jargon | 0.208 | 0.943 | 0.208 | 0.943 |
+| q_019 | free counterspell | constrained | 0.077 | 0.077 | 0.077 | 0.077 |
+| q_020 | red creatures under 3 mana | constrained | — | — | 0.852 | 0.850 |
+| q_021 | instants that cost 1 mana | constrained | — | — | 0.999 | 0.999 |
+| q_022 | a card that lets me look at my deck and put a creature into the battlefield | natural | 0.015 | 0.000 | 0.023 | 0.000 |
+| q_023 | creatures that get bigger every time I cast a spell | natural | 0.249 | 0.000 | 0.105 | 0.000 |
+| q_024 | a card that destroys all creatures | natural | 0.183 | 0.651 | 0.298 | 0.083 |
+| q_025 | red pingers under 3 mana | hybrid | 0.000 | 0.148 | 0.000 | 0.422 |
+| q_026 | cheap blue counterspells | hybrid | 0.298 | 0.366 | 0.806 | 0.950 |
 
 ### Appendix D — Failure-mode test series
 
